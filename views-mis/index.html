@@ -398,6 +398,22 @@ body.silent .page-head,body.silent .kpi,body.silent .chart-card,body.silent .car
 .fo-tgt{display:inline-flex;flex-direction:column;gap:2px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:7px 13px;min-width:84px}
 .fo-tgt span{font-size:10.5px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.3px}
 .fo-tgt b{font-size:16px;font-family:'JetBrains Mono',monospace;color:var(--t1)}
+/* Workspace switcher pills */
+.ws-row{display:flex;gap:10px;flex-wrap:wrap}
+.ws-pill{display:inline-flex;align-items:stretch;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;transition:all .16s}
+.ws-pill.on{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-soft)}
+.ws-pill-main{display:inline-flex;align-items:center;gap:8px;border:none;background:transparent;cursor:pointer;padding:8px 12px;font-size:13px;color:var(--t1);font-family:inherit}
+.ws-pill-main:hover{background:var(--bg-soft)}
+.ws-dot{width:8px;height:8px;border-radius:50%;background:var(--t4)}
+.ws-pill.on .ws-dot{background:var(--ok)}
+.ws-name{font-weight:600;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ws-badge{font-size:9.5px;font-weight:800;color:var(--ok);background:var(--ok-soft);border-radius:5px;padding:1px 6px;letter-spacing:.4px;text-transform:uppercase}
+.ws-mini{border:none;border-left:1px solid var(--border);background:transparent;cursor:pointer;padding:0 10px;color:var(--t4);font-size:12px}
+.ws-mini:hover{background:var(--bg-soft);color:var(--t1)}
+/* Inline "+ New" links under workspace / HQ selects */
+.fo-newrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.fo-newbtn{border:1px dashed var(--border-2,var(--border));background:transparent;color:var(--brand);font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:7px;cursor:pointer;font-family:inherit;transition:all .15s}
+.fo-newbtn:hover{background:var(--brand-soft);border-color:var(--brand)}
 </style>
 </head>
 <body>
@@ -1569,10 +1585,27 @@ function toggleFormLock(){
    ════════════════════════════════════════════════════════════════ */
 const FO_CTX_FIELDS=['programme_id','project_id','donor_id','geography_id','district','block','gram_panchayat','village'];
 const FO_FORMS=['beneficiaries','shgs','crops','progress','activities'];
-function getFO(){ try{ return JSON.parse(localStorage.getItem('vmis_focontext')||'{}'); }catch(e){ return {}; } }
-function foActive(){ const f=getFO(); return !!(f.active && f.project_id && f.geography_id); }
-function setFO(o){ try{ localStorage.setItem('vmis_focontext', JSON.stringify(o)); }catch(e){} }
-function clearFO(){ try{ localStorage.removeItem('vmis_focontext'); }catch(e){} }
+/* ── MANY workspaces at once ── Multiple officers work multiple projects in
+   parallel, so we keep a LIST of named workspaces (per officer / project /
+   village) and switch the ACTIVE one in a click. Every form inherits the
+   active workspace. Stored per-browser; an HQ target row is a ready-made
+   work unit you can quick-start a workspace from. */
+function getWorkspaces(){ try{ return JSON.parse(localStorage.getItem('vmis_workspaces')||'[]'); }catch(e){ return []; } }
+function saveWorkspaces(a){ try{ localStorage.setItem('vmis_workspaces', JSON.stringify(a||[])); }catch(e){} }
+function getActiveWsId(){ try{ return localStorage.getItem('vmis_ws_active')||''; }catch(e){ return ''; } }
+function setActiveWsId(id){ try{ localStorage.setItem('vmis_ws_active', id||''); }catch(e){} }
+function getActiveWs(){ const id=getActiveWsId(); return getWorkspaces().find(w=>String(w.id)===String(id))||null; }
+function getFO(){ const w=getActiveWs(); return w? Object.assign({active:true},w) : {}; }
+function foActive(){ const w=getActiveWs(); return !!(w && w.project_id && w.geography_id); }
+function foMigrateLegacy(){ /* fold an older single context into the new list, once */
+  try{ const old=JSON.parse(localStorage.getItem('vmis_focontext')||'null');
+    if(old && old.active && old.project_id){ const ws=getWorkspaces();
+      if(!ws.some(w=>w.project_id===old.project_id && w.geography_id===old.geography_id)){
+        const id='ws'+Date.now(); ws.push(Object.assign({id,name:foAutoName(old)},old)); saveWorkspaces(ws); if(!getActiveWsId()) setActiveWsId(id); }
+      localStorage.removeItem('vmis_focontext'); }
+  }catch(e){}
+}
+function foAutoName(ctx){ const bits=[lblOf(LOOKUPS.projects,ctx.project_id), (ctx.village||lblOf(LOOKUPS.geographies,ctx.geography_id)), ctx.district].filter(x=>x&&x!=='—'); return bits.join(' · ')||'Workspace'; }
 function lblOf(arr,id){ const o=(arr||[]).find(x=>String(x.id)===String(id)); return o?o.label:(id||'—'); }
 function foDerive(pid){
   const prj=(LOOKUPS.projects||[]).find(p=>String(p.id)===String(pid));
@@ -1584,97 +1617,143 @@ function foGeoIn(flt){ return (LOOKUPS.geographies||[]).filter(g=>
   (!flt.gram_panchayat || String(g.gram_panchayat||'')===flt.gram_panchayat)); }
 function foDistinct(list,field){ const s=new Set(); (list||[]).forEach(g=>{ const v=String(g[field]||'').trim(); if(v) s.add(v); }); return [...s].sort((a,b)=>a.localeCompare(b,'en',{numeric:true,sensitivity:'base'})); }
 
-/* ── Field-Office workspace setup card (renders into #fo-card) ── */
-let FO_DRAFT=null;
-function foInitDraft(){ const f=getFO();
-  FO_DRAFT = (f.active) ? {district:f.district||'',project_id:f.project_id||'',block:f.block||'',gram_panchayat:f.gram_panchayat||'',geography_id:f.geography_id||''}
-                        : {district:'',project_id:'',block:'',gram_panchayat:'',geography_id:''}; }
-function foDraftSet(field,val){ if(!FO_DRAFT) foInitDraft(); FO_DRAFT[field]=val;
-  if(field==='district'){ FO_DRAFT.block=''; FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; }
-  if(field==='block'){ FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; }
-  if(field==='gram_panchayat'){ FO_DRAFT.geography_id=''; }
-  const host=$('fo-card'); if(host) host.innerHTML=foCardHTML();
-}
+/* ── Field-Office workspaces panel (renders into #fo-card) ── */
+let FO_DRAFT=null, FO_MODE='list', FO_EDIT_ID='', __HQ_ASSIGN=[], __deTab='fo';
 function foChip(label,val){ return `<span class="fo-chip"><span class="fo-chip-k">${esc(label)}</span><b>${esc(val||'—')}</b></span>`; }
-function foCardHTML(){
-  if(!FO_DRAFT) foInitDraft();
-  if(foActive()){
-    const f=getFO();
-    return `<div class="card fo-card-active">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
-        <div><div class="card-title" style="margin:0">📍 Field-Office Workspace — <span style="color:var(--ok)">active</span></div>
-          <div class="card-sub" style="margin-top:2px">Every new record below inherits this context automatically — Donor, Thematic Area, Project &amp; place are filled for you, so you never re-type them.</div></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" type="button" onclick="foChange()">✎ Change</button>
-          <button class="btn btn-ghost btn-sm" type="button" onclick="foClear()">✕ Clear</button></div>
-      </div>
-      <div style="margin-top:13px;display:flex;gap:8px;flex-wrap:wrap">
-        ${foChip('Donor',lblOf(LOOKUPS.donors,f.donor_id))}
-        ${foChip('Thematic Area',lblOf(LOOKUPS.programmes,f.programme_id))}
-        ${foChip('Project',lblOf(LOOKUPS.projects,f.project_id))}
-        ${foChip('District',f.district)}
-        ${foChip('Block',f.block)}
-        ${foChip('Gram Panchayat',f.gram_panchayat)}
-        ${foChip('Village / Ward',f.village||lblOf(LOOKUPS.geographies,f.geography_id))}
+function foInitDraftBlank(){ FO_DRAFT={district:'',project_id:'',block:'',gram_panchayat:'',geography_id:'',name:''}; }
+function syncEntryLock(){ const cards=$('de-fo-cards'); if(cards) cards.classList.toggle('de-locked',!foActive());
+  const hint=$('de-fo-hint'); if(hint) hint.style.display=foActive()?'none':''; }
+function foRerender(){ const h=$('fo-card'); if(!h) return; h.innerHTML=foCardHTML();
+  if(FO_MODE==='list'){ syncEntryLock(); if(foActive()) foLoadTargets(); } }
+function foCardHTML(){ return FO_MODE==='edit' ? foSetupHTML() : foListHTML(); }
+
+/* List + switcher of saved workspaces, with the active one summarised. */
+function foListHTML(){
+  const wss=getWorkspaces(), activeId=getActiveWsId();
+  const pills = wss.length ? wss.map(w=>{
+    const on=String(w.id)===String(activeId);
+    return `<div class="ws-pill ${on?'on':''}">
+      <button type="button" class="ws-pill-main" onclick="foActivateWs('${w.id}')" title="Switch to this workspace"><span class="ws-dot"></span><span class="ws-name">${esc(w.name)}</span>${on?'<span class="ws-badge">active</span>':''}</button>
+      <button type="button" class="ws-mini" title="Edit" onclick="foEditWorkspace('${w.id}')">✎</button>
+      <button type="button" class="ws-mini" title="Remove" onclick="foDeleteWs('${w.id}')">✕</button>
+    </div>`; }).join('')
+    : `<div style="color:var(--t4);font-size:13px;padding:4px 0">No workspaces yet. Create one below — keep several (one per officer / project / village) and switch in a click.</div>`;
+  const a=getActiveWs();
+  const summary = a ? `
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+        ${foChip('Donor',lblOf(LOOKUPS.donors,a.donor_id))}${foChip('Thematic Area',lblOf(LOOKUPS.programmes,a.programme_id))}${foChip('Project',lblOf(LOOKUPS.projects,a.project_id))}
+        ${foChip('District',a.district)}${foChip('Block',a.block)}${foChip('Gram Panchayat',a.gram_panchayat)}${foChip('Village / Ward',a.village||lblOf(LOOKUPS.geographies,a.geography_id))}
       </div>
       <div id="fo-target-summary" style="margin-top:12px"></div>
-    </div>`;
-  }
-  // ── setup mode (cascading: District → Project → Block → GP → Village) ──
+      <div style="margin-top:10px"><button class="btn btn-ghost btn-sm" type="button" onclick="foDeactivate()">Pause — enter without a workspace</button></div>`
+    : `<div style="margin-top:12px;font-size:12.5px;color:var(--t3)">Pick a workspace above (or create one) — then every form below auto-fills its Donor, Thematic Area, Project &amp; place.</div>`;
+  return `<div class="card fo-card-active">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><div class="card-title" style="margin:0">📍 Field-Office Workspaces</div>
+        <div class="card-sub" style="margin-top:2px">Many officers, many projects — keep a workspace for each and switch in one click. The active one auto-fills every form.</div></div>
+      <button class="btn btn-primary btn-sm" type="button" onclick="foNewWorkspace()">＋ New workspace</button>
+    </div>
+    <div class="ws-row" style="margin-top:13px">${pills}</div>
+    ${summary}
+  </div>`;
+}
+
+/* Cascading setup form for creating / editing one workspace. */
+function foSetupHTML(){
+  if(!FO_DRAFT) foInitDraftBlank();
   const d=FO_DRAFT;
   const districts=rptGeoList('district');
-  const inD=foGeoIn({district:d.district});
-  const blocks=foDistinct(inD,'block');
-  const inB=foGeoIn({district:d.district,block:d.block});
-  const gps=foDistinct(inB,'gram_panchayat');
+  const inD=foGeoIn({district:d.district}), blocks=foDistinct(inD,'block');
+  const inB=foGeoIn({district:d.district,block:d.block}), gps=foDistinct(inB,'gram_panchayat');
   const villages=foGeoIn({district:d.district,block:d.block,gram_panchayat:d.gram_panchayat});
   const der=foDerive(d.project_id);
   const opt=(v,sel)=>`<option value="${esc(v)}" ${String(sel)===String(v)?'selected':''}>${esc(v)}</option>`;
-  const ready = d.district && d.project_id && d.geography_id;
+  const ready=d.district&&d.project_id&&d.geography_id;
+  const nb=(res,label)=> canWriteResource(res)?`<button type="button" class="fo-newbtn" onclick="deNewRecord('${res}')">＋ ${esc(label)}</button>`:'';
   return `<div class="card" style="background:linear-gradient(135deg,#f3f8ff,#fff);border:1.5px solid var(--brand-soft)">
-    <div class="card-title" style="margin:0">📍 Set your Field-Office Workspace</div>
-    <div class="card-sub" style="margin-top:2px">Choose your District &amp; Project once. The Donor &amp; Thematic Area appear automatically; then pick your Block, GP &amp; Village. After that, every form opens pre-filled — you only enter the record's own details.</div>
-    <div class="fo-grid">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><div class="card-title" style="margin:0">${FO_EDIT_ID?'✎ Edit workspace':'＋ New workspace'}</div>
+        <div class="card-sub" style="margin-top:2px">Pick District &amp; Project — Donor &amp; Thematic appear automatically — then Block, GP &amp; Village. Not in a list? Use the small ＋ links to add it.</div></div>
+      <button class="btn btn-ghost btn-sm" type="button" onclick="foCancelSetup()">← Back</button>
+    </div>
+    ${foHqAssignmentPickerHTML()}
+    <div class="fo-grid" style="margin-top:12px">
       <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
-        <select class="r-inp" onchange="foDraftSet('district',this.value)"><option value="">— Select district —</option>${districts.map(o=>opt(o.id,d.district)).join('')}</select></div>
+        <select class="r-inp" onchange="foDraftSet('district',this.value)"><option value="">— Select district —</option>${districts.map(o=>opt(o.id,d.district)).join('')}</select>${nb('geographies','New district')}</div>
       <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>
-        <select class="r-inp" onchange="foDraftSet('project_id',this.value)"><option value="">— Select project —</option>${(LOOKUPS.projects||[]).map(p=>`<option value="${esc(p.id)}" ${String(d.project_id)===String(p.id)?'selected':''}>${esc(p.label)}</option>`).join('')}</select></div>
+        <select class="r-inp" onchange="foDraftSet('project_id',this.value)"><option value="">— Select project —</option>${(LOOKUPS.projects||[]).map(p=>`<option value="${esc(p.id)}" ${String(d.project_id)===String(p.id)?'selected':''}>${esc(p.label)}</option>`).join('')}</select>${nb('projects','New project')}</div>
       <div class="f"><label>Donor <span class="fo-auto">auto</span></label>
-        <input class="r-inp" readonly value="${esc(der.donor_id?lblOf(LOOKUPS.donors,der.donor_id):'')}" placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
+        <input class="r-inp" readonly value="${esc(der.donor_id?lblOf(LOOKUPS.donors,der.donor_id):'')}" placeholder="— shown after project —" style="background:var(--bg-soft)">${nb('donors','New donor')}</div>
       <div class="f"><label>Thematic Area <span class="fo-auto">auto</span></label>
-        <input class="r-inp" readonly value="${esc(der.programme_id?lblOf(LOOKUPS.programmes,der.programme_id):'')}" placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
+        <input class="r-inp" readonly value="${esc(der.programme_id?lblOf(LOOKUPS.programmes,der.programme_id):'')}" placeholder="— shown after project —" style="background:var(--bg-soft)">${nb('programmes','New thematic area')}</div>
       <div class="f"><label>Block</label>
-        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('block',this.value)"><option value="">${d.district?'— Select block —':'pick district first'}</option>${blocks.map(b=>opt(b,d.block)).join('')}</select></div>
+        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('block',this.value)"><option value="">${d.district?'— Select block —':'pick district first'}</option>${blocks.map(b=>opt(b,d.block)).join('')}</select>${nb('geographies','New block')}</div>
       <div class="f"><label>Gram Panchayat</label>
-        <select class="r-inp" ${d.block?'':'disabled'} onchange="foDraftSet('gram_panchayat',this.value)"><option value="">${d.block?'— Select GP —':'pick block first'}</option>${gps.map(g=>opt(g,d.gram_panchayat)).join('')}</select></div>
+        <select class="r-inp" ${d.block?'':'disabled'} onchange="foDraftSet('gram_panchayat',this.value)"><option value="">${d.block?'— Select GP —':'pick block first'}</option>${gps.map(g=>opt(g,d.gram_panchayat)).join('')}</select>${nb('geographies','New gram panchayat')}</div>
       <div class="f"><label>Village / Ward <span style="color:var(--bad)">*</span></label>
-        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('geography_id',this.value)"><option value="">${d.district?'— Select village —':'pick district first'}</option>${villages.map(v=>`<option value="${esc(v.id)}" ${String(d.geography_id)===String(v.id)?'selected':''}>${esc(v.village||v.label)}</option>`).join('')}</select></div>
+        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('geography_id',this.value)"><option value="">${d.district?'— Select village —':'pick district first'}</option>${villages.map(v=>`<option value="${esc(v.id)}" ${String(d.geography_id)===String(v.id)?'selected':''}>${esc(v.village||v.label)}</option>`).join('')}</select>${nb('geographies','New village / ward')}</div>
+      <div class="f"><label>Workspace name</label>
+        <input class="r-inp" id="fo-ws-name" value="${esc(d.name||'')}" placeholder="auto from project · village"></div>
     </div>
     <div class="form-actions" style="margin-top:14px">
-      <button class="btn btn-primary" type="button" ${ready?'':'disabled'} onclick="foActivate()">📍 Activate workspace</button>
-      <span style="font-size:12.5px;color:var(--t4)">${ready?'Ready — every form below will inherit this context.':'Select District, Project &amp; Village to activate.'}</span>
+      <button class="btn btn-primary" type="button" ${ready?'':'disabled'} onclick="foSaveWorkspace()">${FO_EDIT_ID?'💾 Save changes':'📍 Save & activate'}</button>
+      <span style="font-size:12.5px;color:var(--t4)">${ready?'Ready — this workspace auto-fills every form.':'Select District, Project &amp; Village.'}</span>
     </div>
   </div>`;
 }
-function foActivate(){
-  const d=FO_DRAFT||{}; if(!(d.district&&d.project_id&&d.geography_id)){ toast('⚠ Select District, Project & Village first','t-err'); return; }
+function foHqAssignmentPickerHTML(){
+  if(!__HQ_ASSIGN.length) return '';
+  return `<div style="margin-top:12px;background:var(--bg-soft);border-radius:10px;padding:11px 13px">
+    <label style="font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">⚡ Quick start from an HQ assignment</label>
+    <select class="r-inp" onchange="foPickAssignment(this.value)"><option value="">— Choose a planned Project · District —</option>${__HQ_ASSIGN.map((r,i)=>`<option value="${i}">${esc(lblOf(LOOKUPS.projects,r.project_id))} · ${esc(r.district||'—')}</option>`).join('')}</select>
+  </div>`;
+}
+function foPickAssignment(i){ const r=__HQ_ASSIGN[+i]; if(!r) return; if(!FO_DRAFT) foInitDraftBlank();
+  FO_DRAFT.project_id=r.project_id||''; FO_DRAFT.district=r.district||''; FO_DRAFT.block=''; FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; foRerender(); }
+async function foLoadAssignments(){ try{ const d=await apiGet('?resource=hq_targets&limit=1000'); __HQ_ASSIGN=d.rows||[]; }catch(e){ __HQ_ASSIGN=[]; } if(FO_MODE==='edit') foRerender(); }
+function foDraftSet(field,val){ if(!FO_DRAFT) foInitDraftBlank();
+  const nm=$('fo-ws-name'); if(nm) FO_DRAFT.name=nm.value;
+  FO_DRAFT[field]=val;
+  if(field==='district'){ FO_DRAFT.block=''; FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; }
+  if(field==='block'){ FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; }
+  if(field==='gram_panchayat'){ FO_DRAFT.geography_id=''; }
+  foRerender();
+}
+function foNewWorkspace(){ foInitDraftBlank(); FO_EDIT_ID=''; FO_MODE='edit'; foRerender(); foLoadAssignments(); }
+function foEditWorkspace(id){ const w=getWorkspaces().find(x=>String(x.id)===String(id)); if(!w) return;
+  FO_DRAFT={district:w.district||'',project_id:w.project_id||'',block:w.block||'',gram_panchayat:w.gram_panchayat||'',geography_id:w.geography_id||'',name:w.name||''};
+  FO_EDIT_ID=id; FO_MODE='edit'; foRerender(); foLoadAssignments(); }
+function foCancelSetup(){ FO_MODE='list'; FO_EDIT_ID=''; foRerender(); }
+function foSaveWorkspace(){
+  const d=FO_DRAFT||{}; const nm=$('fo-ws-name'); if(nm) d.name=nm.value;
+  if(!(d.district&&d.project_id&&d.geography_id)){ toast('⚠ Select District, Project & Village first','t-err'); return; }
   const der=foDerive(d.project_id);
   const g=(LOOKUPS.geographies||[]).find(x=>String(x.id)===String(d.geography_id))||{};
-  setFO({ active:true, project_id:d.project_id, programme_id:der.programme_id, donor_id:der.donor_id,
-    geography_id:d.geography_id, district:(g.district||d.district||''), block:(g.block||d.block||''),
-    gram_panchayat:(g.gram_panchayat||d.gram_panchayat||''), village:(g.village||'') });
-  const host=$('fo-card'); if(host) host.innerHTML=foCardHTML();
-  foLoadTargets();
-  const cards=$('de-fo-cards'); if(cards) cards.classList.remove('de-locked');
-  const hint=$('de-fo-hint'); if(hint) hint.style.display='none';
-  toast('📍 Workspace activated — forms will inherit this context');
+  const ctx={ project_id:d.project_id, programme_id:der.programme_id, donor_id:der.donor_id, geography_id:d.geography_id,
+    district:(g.district||d.district||''), block:(g.block||d.block||''), gram_panchayat:(g.gram_panchayat||d.gram_panchayat||''), village:(g.village||'') };
+  ctx.name = (d.name&&d.name.trim()) ? d.name.trim() : foAutoName(ctx);
+  const wss=getWorkspaces();
+  if(FO_EDIT_ID){ const i=wss.findIndex(w=>String(w.id)===String(FO_EDIT_ID)); if(i>=0){ ctx.id=FO_EDIT_ID; wss[i]=ctx; } else { ctx.id='ws'+Date.now(); wss.push(ctx); } }
+  else { ctx.id='ws'+Date.now(); wss.push(ctx); }
+  saveWorkspaces(wss); setActiveWsId(ctx.id);
+  FO_MODE='list'; FO_EDIT_ID=''; foRerender();
+  toast('📍 Workspace "'+ctx.name+'" active — forms will inherit it');
 }
-function foChange(){ const f=getFO(); f.active=false; setFO(f); foInitDraft();
-  if(f.project_id){ FO_DRAFT.project_id=f.project_id; FO_DRAFT.district=f.district||''; FO_DRAFT.block=f.block||''; FO_DRAFT.gram_panchayat=f.gram_panchayat||''; FO_DRAFT.geography_id=f.geography_id||''; }
-  const host=$('fo-card'); if(host) host.innerHTML=foCardHTML(); }
-function foClear(){ clearFO(); foInitDraft(); const host=$('fo-card'); if(host) host.innerHTML=foCardHTML();
-  const cards=$('de-fo-cards'); if(cards) cards.classList.add('de-locked');
-  const hint=$('de-fo-hint'); if(hint) hint.style.display='';
-  toast('Workspace cleared'); }
+function foActivateWs(id){ setActiveWsId(id); FO_MODE='list'; foRerender(); const w=getActiveWs(); toast('📍 Switched to '+(w?w.name:'workspace')); }
+function foDeactivate(){ setActiveWsId(''); foRerender(); toast('Workspace paused — forms open empty'); }
+function foDeleteWs(id){ if(!confirm('Remove this workspace? (Your saved records are not affected.)')) return;
+  const wss=getWorkspaces().filter(w=>String(w.id)!==String(id)); saveWorkspaces(wss);
+  if(String(getActiveWsId())===String(id)) setActiveWsId(''); foRerender(); }
+/* Open a real master form to add a missing District/Project/Donor/etc., then return
+   to this Data-Entry tab with the in-progress workspace / HQ rows intact. */
+function deNewRecord(res){ deStashResume(); openForm(res); }
+function deNewBtn(res,label){ return canWriteResource(res)?`<button type="button" class="fo-newbtn" onclick="deNewRecord('${res}')">＋ ${esc(label)}</button>`:''; }
+function deStashResume(){
+  const r={tab:__deTab||'fo'};
+  if(r.tab==='fo'){ r.foMode=FO_MODE; r.foDraft=FO_DRAFT; r.foEdit=FO_EDIT_ID; }
+  if(r.tab==='hq'){ r.hqProject=($('hq-project')||{}).value||''; r.hqRows=HQ_ROWS; }
+  try{ sessionStorage.setItem('vmis_de_resume', JSON.stringify(r)); }catch(e){}
+}
 
 /* Fetch the HQ target row matching the active workspace (project + district) and show it. */
 async function foFetchTarget(){
@@ -1743,7 +1822,8 @@ function hqRowHTML(r,i){
     </div>
     <div class="fo-grid">
       <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
-        <select onchange="HQ_ROWS[${i}].district=this.value"><option value="">— Select district —</option>${districts.map(o=>`<option value="${esc(o.id)}" ${r.district===o.id?'selected':''}>${esc(o.label)}</option>`).join('')}</select></div>
+        <select onchange="HQ_ROWS[${i}].district=this.value"><option value="">— Select district —</option>${districts.map(o=>`<option value="${esc(o.id)}" ${r.district===o.id?'selected':''}>${esc(o.label)}</option>`).join('')}</select>
+        <div class="fo-newrow">${deNewBtn('geographies','New district')}${deNewBtn('geographies','New block')}${deNewBtn('geographies','New gram panchayat')}${deNewBtn('geographies','New village / ward')}</div></div>
       ${numF('target_blocks','Total Blocks — target')}
       ${numF('target_villages','Total Villages — target')}
       ${numF('target_indicators','Indicators — target')}
@@ -1809,9 +1889,12 @@ function renderHQSetupHTML(){
     <div class="card-sub" style="margin-top:2px">One donor can fund many districts. Pick the Project (Donor &amp; Thematic Area fill in automatically), then add each District with its planned targets. Each district is saved as its own target row.</div>
     <div class="fo-grid" style="margin-top:14px">
       <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>
-        <select id="hq-project" onchange="hqOnProject()"><option value="">— Select project —</option>${projOpts}</select></div>
-      <div class="f"><label>Donor <span class="fo-auto">auto</span></label><input id="hq-donor" readonly placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
-      <div class="f"><label>Thematic Area <span class="fo-auto">auto</span></label><input id="hq-prog" readonly placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
+        <select id="hq-project" onchange="hqOnProject()"><option value="">— Select project —</option>${projOpts}</select>
+        <div class="fo-newrow">${deNewBtn('projects','New project')}</div></div>
+      <div class="f"><label>Donor <span class="fo-auto">auto</span></label><input id="hq-donor" readonly placeholder="— shown after project —" style="background:var(--bg-soft)">
+        <div class="fo-newrow">${deNewBtn('donors','New donor')}</div></div>
+      <div class="f"><label>Thematic Area <span class="fo-auto">auto</span></label><input id="hq-prog" readonly placeholder="— shown after project —" style="background:var(--bg-soft)">
+        <div class="fo-newrow">${deNewBtn('programmes','New thematic area')}</div></div>
     </div>
     <div id="hq-rows" style="margin-top:8px"></div>
     <div class="form-actions" style="margin-top:2px;justify-content:flex-start">
@@ -1825,6 +1908,7 @@ function renderHQSetupHTML(){
 }
 /* ── Data Entry tab switcher (Field Office / HQ Setup) ── */
 function deTab(which){
+  __deTab=which;
   const fo=$('de-tab-fo'), hq=$('de-tab-hq');
   if(fo) fo.style.display = which==='hq'?'none':'';
   if(hq) hq.style.display = which==='hq'?'':'none';
@@ -3954,7 +4038,11 @@ function renderDataEntry(){
       <span><span class="de-imp-lbl">${l}</span><span class="de-imp-sub">Bulk upload .xlsx / .csv</span></span>
     </button>`).join('');
 
-  foInitDraft();
+  foMigrateLegacy();
+  // Returning from a "+ New …" master form? restore the tab + in-progress state.
+  let __rz=null; try{ __rz=JSON.parse(sessionStorage.getItem('vmis_de_resume')||'null'); sessionStorage.removeItem('vmis_de_resume'); }catch(e){}
+  if(__rz && __rz.tab==='fo'){ FO_MODE=__rz.foMode||'list'; FO_DRAFT=__rz.foDraft||null; FO_EDIT_ID=__rz.foEdit||''; }
+  else { FO_MODE='list'; FO_EDIT_ID=''; }
   $('main').innerHTML = `
     <div class="page-head">
       <div><div class="page-title">Data Entry</div>
@@ -3995,7 +4083,14 @@ function renderDataEntry(){
 
     <div id="de-tab-hq" style="display:none">${can('write')?renderHQSetupHTML():'<div class="empty-state"><div class="empty-title">HQ Setup is available to HQ staff</div><div class="empty-sub">You have data-entry access — use the Field-Office Entry tab.</div></div>'}</div>`;
   loadEntryCounts();
-  if(foActive()) foLoadTargets();
+  syncEntryLock();
+  if(FO_MODE==='edit') foLoadAssignments();
+  // Restore the HQ tab + its in-progress project when returning from a "+ New …" form
+  if(__rz && __rz.tab==='hq' && can('write')){
+    if(Array.isArray(__rz.hqRows) && __rz.hqRows.length) HQ_ROWS=__rz.hqRows;
+    deTab('hq');
+    if(__rz.hqProject){ const hp=$('hq-project'); if(hp){ hp.value=__rz.hqProject; hqOnProject(); } }
+  } else { __deTab='fo'; if(foActive()) foLoadTargets(); }
 }
 /* Live record counts on each Data Entry card. */
 async function loadEntryCounts(){
