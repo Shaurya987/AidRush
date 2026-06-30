@@ -1,0 +1,11 @@
+# ── Local deploy secrets — NEVER commit real DB credentials ──
+views-mis/api/config.php
+
+# ── OS / editor junk ──
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# ── Python caches (sql/_generate.py helper) ──
+__pycache__/
+*.pyc
