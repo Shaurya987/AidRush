@@ -382,6 +382,22 @@ body.silent .page-head,body.silent .kpi,body.silent .chart-card,body.silent .car
 .seg button{border:none;background:transparent;color:var(--t3);font-size:12.5px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;transition:all .18s;font-family:inherit;line-height:1}
 .seg button:hover{color:var(--t1)}
 .seg button.active{background:#fff;color:var(--brand);box-shadow:var(--sh-1)}
+/* ── Two-tier Data Entry: tabs, workspace chips & target pills ── */
+.de-tabs{display:inline-flex;gap:4px;background:var(--bg-soft,#f1f5f9);border:1px solid var(--border);border-radius:11px;padding:4px;margin-bottom:16px;flex-wrap:wrap}
+.de-tab{border:none;background:transparent;color:var(--t3);font-family:'Plus Jakarta Sans',inherit;font-weight:700;font-size:13.5px;padding:9px 18px;border-radius:8px;cursor:pointer;transition:all .18s}
+.de-tab:hover{color:var(--t1)}
+.de-tab.active{background:#fff;color:var(--brand);box-shadow:var(--sh-1)}
+.de-locked{opacity:.96}
+.fo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
+.fo-grid .f label{font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
+.fo-grid select,.fo-grid input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;background:#fff;outline:none}
+.fo-auto{font-size:9.5px;font-weight:800;color:var(--brand);background:var(--brand-soft);border-radius:5px;padding:1px 6px;letter-spacing:.4px;vertical-align:middle}
+.fo-chip{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:5px 13px;font-size:13px;color:var(--t1)}
+.fo-chip-k{font-size:10.5px;font-weight:800;color:var(--t4);text-transform:uppercase;letter-spacing:.4px}
+.fo-card-active{background:linear-gradient(135deg,#eef6ff,#fff);border:1.5px solid var(--brand-soft)}
+.fo-tgt{display:inline-flex;flex-direction:column;gap:2px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:7px 13px;min-width:84px}
+.fo-tgt span{font-size:10.5px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.3px}
+.fo-tgt b{font-size:16px;font-family:'JetBrains Mono',monospace;color:var(--t1)}
 </style>
 </head>
 <body>
@@ -1473,7 +1489,9 @@ async function openForm(key,id){
         </div>
       </form>
     </div>`;
-  if(!id&&hasCtx){ updateLockBtn(); if(formLockOn()) applyLock(); }
+  if(!id&&foActive()&&FO_FORMS.includes(key)){ applyFieldOfficeContext(key); }
+  else if(!id&&hasCtx){ updateLockBtn(); if(formLockOn()) applyLock(); }
+  if(!id&&(key==='progress'||key==='activities')) injectEntryFreq(key);
   setTimeout(()=>{ const el=document.querySelector('#entry-form input:not([readonly]):not([disabled]):not([type=hidden]), #entry-form select:not([disabled])'); if(el) el.focus(); },50);
 }
 let __formReturn='dataentry';
@@ -1536,6 +1554,312 @@ function toggleFormLock(){
   if(lk.on){ localStorage.setItem('vmis_lock', JSON.stringify({on:false, values:lk.values||{}})); setLockStyle(false); toast('🔓 Fields unlocked'); }
   else { const values={}; LOCK_FIELDS.forEach(fk=>{ const e=$('ff-'+fk); if(e && e.value) values[fk]=e.value; }); localStorage.setItem('vmis_lock', JSON.stringify({on:true, values})); setLockStyle(true); toast('🔒 Fields locked on this screen'); }
   updateLockBtn();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   TWO-TIER DATA ENTRY  —  HQ Targets  +  Field-Office Workspace
+   ────────────────────────────────────────────────────────────────
+   • HQ tier: set, per Donor × Thematic × Project × District, the planned
+     targets (Blocks, Villages, Indicators, Beneficiaries, Activities,
+     Output). Stored in the hq_targets table (one row per district).
+   • Field-Office tier: pick District + Project ONCE → Donor & Thematic
+     show automatically → set Block / GP / Village ONCE → every new
+     Beneficiary / SHG / Output / Activity / Indicator-Progress record
+     inherits that context, so those fields are removed from the form.
+   ════════════════════════════════════════════════════════════════ */
+const FO_CTX_FIELDS=['programme_id','project_id','donor_id','geography_id','district','block','gram_panchayat','village'];
+const FO_FORMS=['beneficiaries','shgs','crops','progress','activities'];
+function getFO(){ try{ return JSON.parse(localStorage.getItem('vmis_focontext')||'{}'); }catch(e){ return {}; } }
+function foActive(){ const f=getFO(); return !!(f.active && f.project_id && f.geography_id); }
+function setFO(o){ try{ localStorage.setItem('vmis_focontext', JSON.stringify(o)); }catch(e){} }
+function clearFO(){ try{ localStorage.removeItem('vmis_focontext'); }catch(e){} }
+function lblOf(arr,id){ const o=(arr||[]).find(x=>String(x.id)===String(id)); return o?o.label:(id||'—'); }
+function foDerive(pid){
+  const prj=(LOOKUPS.projects||[]).find(p=>String(p.id)===String(pid));
+  return { programme_id: prj?(prj.programme_id||''):'', donor_id:(LOOKUPS.project_donor||{})[pid]||'' };
+}
+function foGeoIn(flt){ return (LOOKUPS.geographies||[]).filter(g=>
+  (!flt.district || String(g.district||'')===flt.district) &&
+  (!flt.block || String(g.block||'')===flt.block) &&
+  (!flt.gram_panchayat || String(g.gram_panchayat||'')===flt.gram_panchayat)); }
+function foDistinct(list,field){ const s=new Set(); (list||[]).forEach(g=>{ const v=String(g[field]||'').trim(); if(v) s.add(v); }); return [...s].sort((a,b)=>a.localeCompare(b,'en',{numeric:true,sensitivity:'base'})); }
+
+/* ── Field-Office workspace setup card (renders into #fo-card) ── */
+let FO_DRAFT=null;
+function foInitDraft(){ const f=getFO();
+  FO_DRAFT = (f.active) ? {district:f.district||'',project_id:f.project_id||'',block:f.block||'',gram_panchayat:f.gram_panchayat||'',geography_id:f.geography_id||''}
+                        : {district:'',project_id:'',block:'',gram_panchayat:'',geography_id:''}; }
+function foDraftSet(field,val){ if(!FO_DRAFT) foInitDraft(); FO_DRAFT[field]=val;
+  if(field==='district'){ FO_DRAFT.block=''; FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; }
+  if(field==='block'){ FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; }
+  if(field==='gram_panchayat'){ FO_DRAFT.geography_id=''; }
+  const host=$('fo-card'); if(host) host.innerHTML=foCardHTML();
+}
+function foChip(label,val){ return `<span class="fo-chip"><span class="fo-chip-k">${esc(label)}</span><b>${esc(val||'—')}</b></span>`; }
+function foCardHTML(){
+  if(!FO_DRAFT) foInitDraft();
+  if(foActive()){
+    const f=getFO();
+    return `<div class="card fo-card-active">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+        <div><div class="card-title" style="margin:0">📍 Field-Office Workspace — <span style="color:var(--ok)">active</span></div>
+          <div class="card-sub" style="margin-top:2px">Every new record below inherits this context automatically — Donor, Thematic Area, Project &amp; place are filled for you, so you never re-type them.</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" type="button" onclick="foChange()">✎ Change</button>
+          <button class="btn btn-ghost btn-sm" type="button" onclick="foClear()">✕ Clear</button></div>
+      </div>
+      <div style="margin-top:13px;display:flex;gap:8px;flex-wrap:wrap">
+        ${foChip('Donor',lblOf(LOOKUPS.donors,f.donor_id))}
+        ${foChip('Thematic Area',lblOf(LOOKUPS.programmes,f.programme_id))}
+        ${foChip('Project',lblOf(LOOKUPS.projects,f.project_id))}
+        ${foChip('District',f.district)}
+        ${foChip('Block',f.block)}
+        ${foChip('Gram Panchayat',f.gram_panchayat)}
+        ${foChip('Village / Ward',f.village||lblOf(LOOKUPS.geographies,f.geography_id))}
+      </div>
+      <div id="fo-target-summary" style="margin-top:12px"></div>
+    </div>`;
+  }
+  // ── setup mode (cascading: District → Project → Block → GP → Village) ──
+  const d=FO_DRAFT;
+  const districts=rptGeoList('district');
+  const inD=foGeoIn({district:d.district});
+  const blocks=foDistinct(inD,'block');
+  const inB=foGeoIn({district:d.district,block:d.block});
+  const gps=foDistinct(inB,'gram_panchayat');
+  const villages=foGeoIn({district:d.district,block:d.block,gram_panchayat:d.gram_panchayat});
+  const der=foDerive(d.project_id);
+  const opt=(v,sel)=>`<option value="${esc(v)}" ${String(sel)===String(v)?'selected':''}>${esc(v)}</option>`;
+  const ready = d.district && d.project_id && d.geography_id;
+  return `<div class="card" style="background:linear-gradient(135deg,#f3f8ff,#fff);border:1.5px solid var(--brand-soft)">
+    <div class="card-title" style="margin:0">📍 Set your Field-Office Workspace</div>
+    <div class="card-sub" style="margin-top:2px">Choose your District &amp; Project once. The Donor &amp; Thematic Area appear automatically; then pick your Block, GP &amp; Village. After that, every form opens pre-filled — you only enter the record's own details.</div>
+    <div class="fo-grid">
+      <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
+        <select class="r-inp" onchange="foDraftSet('district',this.value)"><option value="">— Select district —</option>${districts.map(o=>opt(o.id,d.district)).join('')}</select></div>
+      <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>
+        <select class="r-inp" onchange="foDraftSet('project_id',this.value)"><option value="">— Select project —</option>${(LOOKUPS.projects||[]).map(p=>`<option value="${esc(p.id)}" ${String(d.project_id)===String(p.id)?'selected':''}>${esc(p.label)}</option>`).join('')}</select></div>
+      <div class="f"><label>Donor <span class="fo-auto">auto</span></label>
+        <input class="r-inp" readonly value="${esc(der.donor_id?lblOf(LOOKUPS.donors,der.donor_id):'')}" placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
+      <div class="f"><label>Thematic Area <span class="fo-auto">auto</span></label>
+        <input class="r-inp" readonly value="${esc(der.programme_id?lblOf(LOOKUPS.programmes,der.programme_id):'')}" placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
+      <div class="f"><label>Block</label>
+        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('block',this.value)"><option value="">${d.district?'— Select block —':'pick district first'}</option>${blocks.map(b=>opt(b,d.block)).join('')}</select></div>
+      <div class="f"><label>Gram Panchayat</label>
+        <select class="r-inp" ${d.block?'':'disabled'} onchange="foDraftSet('gram_panchayat',this.value)"><option value="">${d.block?'— Select GP —':'pick block first'}</option>${gps.map(g=>opt(g,d.gram_panchayat)).join('')}</select></div>
+      <div class="f"><label>Village / Ward <span style="color:var(--bad)">*</span></label>
+        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('geography_id',this.value)"><option value="">${d.district?'— Select village —':'pick district first'}</option>${villages.map(v=>`<option value="${esc(v.id)}" ${String(d.geography_id)===String(v.id)?'selected':''}>${esc(v.village||v.label)}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-actions" style="margin-top:14px">
+      <button class="btn btn-primary" type="button" ${ready?'':'disabled'} onclick="foActivate()">📍 Activate workspace</button>
+      <span style="font-size:12.5px;color:var(--t4)">${ready?'Ready — every form below will inherit this context.':'Select District, Project &amp; Village to activate.'}</span>
+    </div>
+  </div>`;
+}
+function foActivate(){
+  const d=FO_DRAFT||{}; if(!(d.district&&d.project_id&&d.geography_id)){ toast('⚠ Select District, Project & Village first','t-err'); return; }
+  const der=foDerive(d.project_id);
+  const g=(LOOKUPS.geographies||[]).find(x=>String(x.id)===String(d.geography_id))||{};
+  setFO({ active:true, project_id:d.project_id, programme_id:der.programme_id, donor_id:der.donor_id,
+    geography_id:d.geography_id, district:(g.district||d.district||''), block:(g.block||d.block||''),
+    gram_panchayat:(g.gram_panchayat||d.gram_panchayat||''), village:(g.village||'') });
+  const host=$('fo-card'); if(host) host.innerHTML=foCardHTML();
+  foLoadTargets();
+  const cards=$('de-fo-cards'); if(cards) cards.classList.remove('de-locked');
+  const hint=$('de-fo-hint'); if(hint) hint.style.display='none';
+  toast('📍 Workspace activated — forms will inherit this context');
+}
+function foChange(){ const f=getFO(); f.active=false; setFO(f); foInitDraft();
+  if(f.project_id){ FO_DRAFT.project_id=f.project_id; FO_DRAFT.district=f.district||''; FO_DRAFT.block=f.block||''; FO_DRAFT.gram_panchayat=f.gram_panchayat||''; FO_DRAFT.geography_id=f.geography_id||''; }
+  const host=$('fo-card'); if(host) host.innerHTML=foCardHTML(); }
+function foClear(){ clearFO(); foInitDraft(); const host=$('fo-card'); if(host) host.innerHTML=foCardHTML();
+  const cards=$('de-fo-cards'); if(cards) cards.classList.add('de-locked');
+  const hint=$('de-fo-hint'); if(hint) hint.style.display='';
+  toast('Workspace cleared'); }
+
+/* Fetch the HQ target row matching the active workspace (project + district) and show it. */
+async function foFetchTarget(){
+  const f=getFO(); if(!f.project_id) return null;
+  try{ const d=await apiGet('?resource=hq_targets&project_id='+encodeURIComponent(f.project_id)+'&limit=500');
+    const rows=(d.rows||[]).filter(r=>!f.district || String(r.district||'').trim()===String(f.district||'').trim());
+    return rows[0]||null;
+  }catch(e){ return null; }
+}
+async function foLoadTargets(){
+  const box=$('fo-target-summary'); if(!box) return;
+  const t=await foFetchTarget();
+  if(!t){ box.innerHTML=`<div style="font-size:12px;color:var(--t4)">No HQ targets set for this District &amp; Project yet — ${can('write')?'set them in the <a onclick="deTab(\'hq\')" style="color:var(--brand);cursor:pointer">HQ Setup</a> tab.':'ask your HQ to add them.'}</div>`; return; }
+  const cell=(lbl,v)=>`<span class="fo-tgt"><span>${esc(lbl)}</span><b>${v==null||v===''?'—':fmt(v)}</b></span>`;
+  box.innerHTML=`<div style="font-size:11.5px;color:var(--t3);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">🎯 HQ Targets for this workspace</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${cell('Blocks',t.target_blocks)}${cell('Villages',t.target_villages)}${cell('Indicators',t.target_indicators)}
+      ${cell('Beneficiaries',t.target_beneficiaries)}${cell('Activities',t.target_activities)}${cell('Output'+(t.output_unit?(' ('+t.output_unit+')'):''),t.target_output)}
+    </div>`;
+}
+
+/* ── Apply the active workspace to a freshly-opened form: pre-fill the
+   context fields, HIDE them, and show a context banner instead. ── */
+function foHideField(k){ const host=$('combo-'+k)||$('ff-'+k); if(host){ const w=host.closest('.f'); if(w) w.style.display='none'; } }
+function applyFieldOfficeContext(key){
+  const f=getFO(); if(!f.active) return;
+  const present=new Set((RES[key].fields||[]).map(x=>x[0]));
+  if(present.has('programme_id') && f.programme_id){ comboSet('programme_id',f.programme_id); if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(f.programme_id); }
+  if(present.has('project_id') && f.project_id) comboSet('project_id',f.project_id);
+  if(present.has('donor_id') && f.donor_id) comboSet('donor_id',f.donor_id);
+  if(present.has('geography_id') && f.geography_id){ if(__COMBO['geography_id']) __COMBO['geography_id'].opts=LOOKUPS.geographies||[]; comboSet('geography_id',f.geography_id); autofillFromGeography(f.geography_id); if(__COMBO['beneficiary_id']) filterBeneficiaryByGeography(f.geography_id); }
+  ['district','block','gram_panchayat','village'].forEach(k=>{ if(present.has(k) && f[k]!=null){ const e=$('ff-'+k); if(e) e.value=f[k]; } });
+  FO_CTX_FIELDS.forEach(k=>{ if(present.has(k)) foHideField(k); });
+  const lb=$('form-lock-btn'); if(lb) lb.style.display='none';   // workspace replaces the per-field lock
+  // Context banner at the top of the form
+  const form=$('entry-form');
+  if(form && !$('fo-banner')){
+    const chips=[['Donor',lblOf(LOOKUPS.donors,f.donor_id)],['Thematic',lblOf(LOOKUPS.programmes,f.programme_id)],['Project',lblOf(LOOKUPS.projects,f.project_id)],['District',f.district],['Block',f.block],['Village',f.village||lblOf(LOOKUPS.geographies,f.geography_id)]]
+      .filter(c=>c[1]&&c[1]!=='—').map(c=>`<span class="fo-chip"><span class="fo-chip-k">${esc(c[0])}</span><b>${esc(c[1])}</b></span>`).join('');
+    const div=document.createElement('div'); div.id='fo-banner';
+    div.style.cssText='grid-column:1/-1;background:linear-gradient(135deg,#eef6ff,#fff);border:1px solid var(--brand-soft);border-radius:11px;padding:12px 14px;margin-bottom:6px';
+    div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px"><span style="font-size:12px;font-weight:700;color:var(--brand)">📍 FIELD-OFFICE WORKSPACE — auto-filled</span><a onclick="goPage('dataentry')" style="font-size:12px;color:var(--brand);cursor:pointer">change workspace ↗</a></div><div style="display:flex;gap:7px;flex-wrap:wrap">${chips}</div><div id="fo-form-target" style="margin-top:10px"></div>`;
+    const fg=form.querySelector('.fg'); if(fg) fg.parentNode.insertBefore(div,fg);
+  }
+  if(key==='progress'||key==='activities'||key==='beneficiaries') foInjectFormTarget(key);
+}
+async function foInjectFormTarget(key){
+  const box=$('fo-form-target'); if(!box) return;
+  const t=await foFetchTarget(); if(!t) return;
+  const map={progress:['target_indicators','Indicator target'],activities:['target_activities','Activity target'],beneficiaries:['target_beneficiaries','Beneficiary target']};
+  const m=map[key]; if(!m) return; const v=t[m[0]];
+  if(v==null||v==='') return;
+  box.innerHTML=`<span class="fo-tgt" style="background:var(--ok-soft);border-color:var(--ok)"><span>🎯 ${esc(m[1])} (HQ)</span><b style="color:var(--ok)">${fmt(v)}</b></span>`;
+}
+
+/* ════════════════ HQ SETUP & TARGETS ════════════════ */
+let HQ_ROWS=[];
+function hqBlankRow(){ return {district:'',target_blocks:'',target_villages:'',target_indicators:'',target_beneficiaries:'',target_activities:'',target_output:'',output_unit:''}; }
+function hqRowHTML(r,i){
+  const districts=rptGeoList('district');
+  const numF=(k,lbl)=>`<div class="f"><label>${lbl}</label><input type="number" step="any" min="0" value="${esc(r[k])}" oninput="HQ_ROWS[${i}].${k}=this.value"></div>`;
+  return `<div class="hq-row" style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;background:#fff">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-weight:700;color:var(--brand);font-size:13px">District #${i+1}</div>
+      ${HQ_ROWS.length>1?`<button class="btn btn-ghost btn-xs" type="button" onclick="hqRemoveRow(${i})">✕ Remove</button>`:''}
+    </div>
+    <div class="fo-grid">
+      <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
+        <select onchange="HQ_ROWS[${i}].district=this.value"><option value="">— Select district —</option>${districts.map(o=>`<option value="${esc(o.id)}" ${r.district===o.id?'selected':''}>${esc(o.label)}</option>`).join('')}</select></div>
+      ${numF('target_blocks','Total Blocks — target')}
+      ${numF('target_villages','Total Villages — target')}
+      ${numF('target_indicators','Indicators — target')}
+      ${numF('target_beneficiaries','Total Beneficiaries — target')}
+      ${numF('target_activities','Activities — target')}
+      ${numF('target_output','Output / Production — target')}
+      <div class="f"><label>Output Unit</label><input value="${esc(r.output_unit)}" placeholder="e.g. kg, ₹, events" oninput="HQ_ROWS[${i}].output_unit=this.value"></div>
+    </div>
+  </div>`;
+}
+function renderHQRows(){ const host=$('hq-rows'); if(host) host.innerHTML=HQ_ROWS.map((r,i)=>hqRowHTML(r,i)).join(''); }
+function hqAddRow(){ HQ_ROWS.push(hqBlankRow()); renderHQRows(); }
+function hqRemoveRow(i){ HQ_ROWS.splice(i,1); if(!HQ_ROWS.length) HQ_ROWS.push(hqBlankRow()); renderHQRows(); }
+function hqOnProject(){
+  const pid=($('hq-project')||{}).value||''; const der=foDerive(pid);
+  const de=$('hq-donor'), pe=$('hq-prog');
+  if(de) de.value = der.donor_id ? lblOf(LOOKUPS.donors,der.donor_id) : '';
+  if(pe) pe.value = der.programme_id ? lblOf(LOOKUPS.programmes,der.programme_id) : '';
+  $('hq-donor').dataset.id=der.donor_id||''; $('hq-prog').dataset.id=der.programme_id||'';
+}
+async function saveHQTargets(){
+  const pid=($('hq-project')||{}).value||'';
+  if(!pid){ toast('⚠ Select a Project first','t-err'); return; }
+  const der=foDerive(pid);
+  const rows=HQ_ROWS.filter(r=>String(r.district||'').trim());
+  if(!rows.length){ toast('⚠ Add at least one district with targets','t-err'); return; }
+  let ok=0;
+  for(const r of rows){
+    const payload={ donor_id:der.donor_id, programme_id:der.programme_id, project_id:pid, district:r.district,
+      target_blocks:r.target_blocks||0, target_villages:r.target_villages||0, target_indicators:r.target_indicators||0,
+      target_beneficiaries:r.target_beneficiaries||0, target_activities:r.target_activities||0,
+      target_output:r.target_output||0, output_unit:r.output_unit||'' };
+    try{ await apiPost('?resource=hq_targets',payload); ok++; }catch(e){ toast('⚠ '+e.message,'t-err'); }
+  }
+  if(ok){ toast('✓ Saved targets for '+ok+' district'+(ok>1?'s':'')); HQ_ROWS=[hqBlankRow()]; renderHQRows(); loadHQList(); }
+}
+async function loadHQList(){
+  const box=$('hq-list'); if(!box) return;
+  let rows=[];
+  try{ const d=await apiGet('?resource=hq_targets&limit=1000'); rows=d.rows||[]; }catch(e){}
+  if(!rows.length){ box.innerHTML=`<div class="empty-state"><div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="empty-title">No HQ targets yet</div><div class="empty-sub">Pick a Project, add one or more districts with their targets, and Save.</div></div>`; return; }
+  const cols=['Donor','Thematic','Project','District','Blocks','Villages','Indicators','Beneficiaries','Activities','Output'];
+  box.innerHTML=`<div class="table-wrap" style="max-height:none"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}<th></th></tr></thead><tbody>${
+    rows.map(r=>`<tr>
+      <td>${esc(lblOf(LOOKUPS.donors,r.donor_id))}</td>
+      <td>${esc(lblOf(LOOKUPS.programmes,r.programme_id))}</td>
+      <td>${esc(lblOf(LOOKUPS.projects,r.project_id))}</td>
+      <td class="t-name">${esc(r.district||'—')}</td>
+      <td class="mono">${fmt(r.target_blocks)}</td><td class="mono">${fmt(r.target_villages)}</td>
+      <td class="mono">${fmt(r.target_indicators)}</td><td class="mono">${fmt(r.target_beneficiaries)}</td>
+      <td class="mono">${fmt(r.target_activities)}</td><td class="mono">${fmt(r.target_output)}${r.output_unit?(' '+esc(r.output_unit)):''}</td>
+      <td>${can('delete')?`<button class="btn btn-ghost btn-xs" onclick="hqDelete(${r.id})">🗑</button>`:''}</td>
+    </tr>`).join('')
+  }</tbody></table></div>`;
+}
+async function hqDelete(id){ if(!confirm('Delete this HQ target row?')) return;
+  try{ await apiDel('?resource=hq_targets&id='+id); toast('✓ Deleted'); loadHQList(); }catch(e){ toast('⚠ '+e.message,'t-err'); } }
+
+function renderHQSetupHTML(){
+  const projOpts=(LOOKUPS.projects||[]).map(p=>`<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
+  return `<div class="card" style="background:linear-gradient(135deg,#fef9f3,#fff);border:1.5px solid #fde9cf">
+    <div class="card-title" style="margin:0">🏢 HQ Setup — Plan &amp; Targets</div>
+    <div class="card-sub" style="margin-top:2px">One donor can fund many districts. Pick the Project (Donor &amp; Thematic Area fill in automatically), then add each District with its planned targets. Each district is saved as its own target row.</div>
+    <div class="fo-grid" style="margin-top:14px">
+      <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>
+        <select id="hq-project" onchange="hqOnProject()"><option value="">— Select project —</option>${projOpts}</select></div>
+      <div class="f"><label>Donor <span class="fo-auto">auto</span></label><input id="hq-donor" readonly placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
+      <div class="f"><label>Thematic Area <span class="fo-auto">auto</span></label><input id="hq-prog" readonly placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
+    </div>
+    <div id="hq-rows" style="margin-top:8px"></div>
+    <div class="form-actions" style="margin-top:2px;justify-content:flex-start">
+      <button class="btn btn-ghost btn-sm" type="button" onclick="hqAddRow()">＋ Add another district</button>
+    </div>
+    <div class="form-actions" style="margin-top:12px">
+      <button class="btn btn-primary" type="button" onclick="saveHQTargets()">💾 Save HQ Targets</button>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="card-title">Existing HQ Targets</div><div class="card-sub">All planned targets by Donor · Thematic · Project · District</div><div id="hq-list" style="margin-top:10px"></div></div>`;
+}
+/* ── Data Entry tab switcher (Field Office / HQ Setup) ── */
+function deTab(which){
+  const fo=$('de-tab-fo'), hq=$('de-tab-hq');
+  if(fo) fo.style.display = which==='hq'?'none':'';
+  if(hq) hq.style.display = which==='hq'?'':'none';
+  document.querySelectorAll('.de-tab').forEach(b=>b.classList.toggle('active', b.dataset.t===which));
+  if(which==='hq'){ if(!HQ_ROWS.length) HQ_ROWS=[hqBlankRow()]; renderHQRows(); loadHQList(); }
+  else if(foActive()){ foLoadTargets(); }
+}
+
+/* ── Monthly / Quarterly data-entry selector for Indicator-Progress & Activity forms.
+   Quarterly = the existing quarter field; Monthly = pick a month, which fills the
+   reporting period and maps to the right quarter automatically. ── */
+function injectEntryFreq(key){
+  const form=$('entry-form'); if(!form || $('entry-freq-wrap')) return;
+  const months=['April','May','June','July','August','September','October','November','December','January','February','March'];
+  const monthSel = (key==='progress')
+    ? `<select id="entry-month" style="display:none" onchange="freqMonthPick()"><option value="">— Select month —</option>${months.map(m=>`<option>${m}</option>`).join('')}</select>` : '';
+  const div=document.createElement('div'); div.id='entry-freq-wrap';
+  div.style.cssText='grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--bg-soft);border-radius:10px;padding:11px 14px;margin-bottom:6px';
+  div.innerHTML=`<span style="font-size:12px;font-weight:700;color:var(--t2)">🗓 Data entry frequency</span>
+    <select id="entry-freq" onchange="freqChange('${key}')"><option value="Q">Quarterly</option><option value="M">Monthly</option></select>
+    ${monthSel}<span id="entry-freq-note" style="font-size:12px;color:var(--t4);display:none">Enter the monthly figure — it rolls up into the quarterly columns below.</span>`;
+  const fg=form.querySelector('.fg'); if(fg) fg.parentNode.insertBefore(div,fg);
+}
+function freqChange(key){
+  const f=($('entry-freq')||{}).value||'Q'; const mo=$('entry-month'), note=$('entry-freq-note');
+  if(mo) mo.style.display=(key==='progress'&&f==='M')?'':'none';
+  if(note) note.style.display=(key==='activities'&&f==='M')?'':'none';
+  if(key==='progress' && f==='Q'){ const rp=$('ff-reporting_period'), q=$('ff-quarter'); if(rp&&q&&q.value){ const yr=($('ff-reporting_year')||{}).value||''; rp.value=(q.value+(yr?(' '+yr):'')).trim(); } }
+}
+function freqMonthPick(){
+  const mo=($('entry-month')||{}).value||''; if(!mo) return;
+  const Q={April:'Q1',May:'Q1',June:'Q1',July:'Q2',August:'Q2',September:'Q2',October:'Q3',November:'Q3',December:'Q3',January:'Q4',February:'Q4',March:'Q4'};
+  const yr=($('ff-reporting_year')||{}).value||'';
+  const rp=$('ff-reporting_period'); if(rp) rp.value=(mo+(yr?(' '+yr):'')).trim();
+  const q=$('ff-quarter'); if(q && Q[mo]) q.value=Q[mo];
 }
 
 /* ────── ADMIN-ONLY USER FORM with permission matrix ────── */
@@ -3630,36 +3954,48 @@ function renderDataEntry(){
       <span><span class="de-imp-lbl">${l}</span><span class="de-imp-sub">Bulk upload .xlsx / .csv</span></span>
     </button>`).join('');
 
+  foInitDraft();
   $('main').innerHTML = `
     <div class="page-head">
       <div><div class="page-title">Data Entry</div>
-        <div class="page-sub">Every form in one place — click a button to open the form, or bulk-import from Excel below.</div></div>
+        <div class="page-sub">Two tiers — HQ sets the plan &amp; targets; Field Offices enter the data against it.</div></div>
     </div>
 
-    <div style="font-size:12.5px;color:var(--t3);background:var(--bg-soft);border-radius:10px;padding:10px 14px;margin-bottom:16px">💡 <b>Faster entry:</b> every dropdown is search-by-name · in Production, pick a beneficiary (or pick a geography to narrow the list) and the project / donor / geography fill in automatically · pick a geography and the address fills in · after saving, click <b>➕ Add another</b> to keep the same project &amp; place for the next record.</div>
-
-    ${groups}
-
-    <div class="page-head" style="margin:26px 0 12px"><div>
-      <div class="page-title" style="font-size:22px">📥 Import Data via Excel</div>
-      <div class="page-sub">Drop your existing spreadsheets — the importer auto-detects columns, resolves names to IDs (e.g. "ABC Foundation" → DON-CSR-001), validates &amp; bulk-saves. Templates ready in every dialog.</div></div>
+    <div class="de-tabs">
+      <button class="de-tab active" data-t="fo" type="button" onclick="deTab('fo')">📍 Field-Office Entry</button>
+      ${can('write')?`<button class="de-tab" data-t="hq" type="button" onclick="deTab('hq')">🏢 HQ Setup &amp; Targets</button>`:''}
     </div>
 
-    <div class="card" style="background:linear-gradient(135deg,#ecfdf5,#ffffff);border:1.5px solid #a7f3d0;margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-        <div>
-          <div class="card-title" style="margin:0">🪄 Smart Multi-Sheet Import</div>
-          <div class="card-sub" style="margin-top:2px">One workbook → many tables. The system auto-routes every sheet (Thematic Areas → thematic areas, Beneficiaries → beneficiaries, …) and imports the lot in one go.</div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-ghost" onclick="downloadSmartTemplate()">⬇ Download Template</button>
-          <button class="btn btn-success" onclick="openSmartImport()">🪄 Upload Workbook</button>
+    <div id="de-tab-fo">
+      <div id="fo-card">${foCardHTML()}</div>
+      <div id="de-fo-hint" style="font-size:12.5px;color:var(--t3);background:var(--bg-soft);border-radius:10px;padding:10px 14px;margin:14px 0;display:${foActive()?'none':''}">💡 <b>Set your workspace above once</b> and every form below auto-fills Donor, Thematic Area, Project &amp; place — you only type the record's own details. (You can still open any form without a workspace; it just won't be pre-filled.)</div>
+
+      <div id="de-fo-cards" class="${foActive()?'':'de-locked'}">${groups}</div>
+
+      <div class="page-head" style="margin:26px 0 12px"><div>
+        <div class="page-title" style="font-size:22px">📥 Import Data via Excel</div>
+        <div class="page-sub">Drop your existing spreadsheets — the importer auto-detects columns, resolves names to IDs (e.g. "ABC Foundation" → DON-CSR-001), validates &amp; bulk-saves. Templates ready in every dialog.</div></div>
+      </div>
+
+      <div class="card" style="background:linear-gradient(135deg,#ecfdf5,#ffffff);border:1.5px solid #a7f3d0;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div>
+            <div class="card-title" style="margin:0">🪄 Smart Multi-Sheet Import</div>
+            <div class="card-sub" style="margin-top:2px">One workbook → many tables. The system auto-routes every sheet (Thematic Areas → thematic areas, Beneficiaries → beneficiaries, …) and imports the lot in one go.</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="downloadSmartTemplate()">⬇ Download Template</button>
+            <button class="btn btn-success" onclick="openSmartImport()">🪄 Upload Workbook</button>
+          </div>
         </div>
       </div>
+
+      <div class="de-imp-grid">${importCards}</div>
     </div>
 
-    <div class="de-imp-grid">${importCards}</div>`;
+    <div id="de-tab-hq" style="display:none">${can('write')?renderHQSetupHTML():'<div class="empty-state"><div class="empty-title">HQ Setup is available to HQ staff</div><div class="empty-sub">You have data-entry access — use the Field-Office Entry tab.</div></div>'}</div>`;
   loadEntryCounts();
+  if(foActive()) foLoadTargets();
 }
 /* Live record counts on each Data Entry card. */
 async function loadEntryCounts(){

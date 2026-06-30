@@ -38,6 +38,7 @@ $RES = [
   'objectives'=>'programme_objectives',
   'project_objectives'=>'project_objectives',
   'shg_members'=>'shg_members',
+  'hq_targets'=>'hq_targets',
 ];
 
 /* resource → [id_column, prefix, zero-pad] (auto-generated on POST) */
@@ -51,6 +52,7 @@ $ID_GEN = [
   'progress'=>['progress_id','PROG',3], 'objectives'=>['objective_id','OBJ',3],
   'project_objectives'=>['objective_id','POBJ',3],
   'shg_members'=>['member_id','MEM',4],
+  'hq_targets'=>['target_id','HQT',4],
 ];
 
 /* Foreign key → [table, id_col, name_col]  — used by enrich_names() */
