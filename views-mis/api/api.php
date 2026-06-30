@@ -516,6 +516,8 @@ if ($action==='options') {
     'indicators'=>$q("SELECT indicator_id id, indicator_name name, programme_id, project_id FROM indicators WHERE indicator_id IS NOT NULL ORDER BY indicator_name"),
     'shgs'=>$q("SELECT shg_id id, shg_name name FROM shgs WHERE shg_id IS NOT NULL ORDER BY shg_name"),
     'geographies'=>$q("SELECT geography_id id, CONCAT_WS(' · ', NULLIF(village_or_ward,''), NULLIF(gram_panchayat,''), NULLIF(block,''), NULLIF(district,'')) name, district, block, gram_panchayat, village_or_ward village FROM geographies WHERE geography_id IS NOT NULL AND geography_id<>'' ORDER BY district, block, gram_panchayat, village_or_ward"),
+    /* staff — for assigning HQ work units to field officers (username is the stable key) */
+    'staff'=>$q("SELECT username id, COALESCE(NULLIF(user_name,''),username) name, role FROM users WHERE username IS NOT NULL AND username<>'' ORDER BY name"),
   ]);
 }
 

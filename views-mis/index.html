@@ -729,6 +729,7 @@ async function ensureLookups(){
     LOOKUPS.indicators=(d.indicators||[]).map(x=>({id:x.id,label:x.name,programme_id:x.programme_id,project_id:x.project_id}));
     LOOKUPS.shgs=(d.shgs||[]).map(x=>({id:x.id,label:x.name}));
     LOOKUPS.geographies=(d.geographies||[]).map(x=>({id:x.id,label:x.name||x.id,district:x.district,block:x.block,gram_panchayat:x.gram_panchayat,village:x.village})).sort((a,b)=>String(a.label).localeCompare(String(b.label),'en',{numeric:true,sensitivity:'base'}));
+    LOOKUPS.staff=(d.staff||[]).map(x=>({id:x.id,label:(x.name||x.id)+(x.role?(' · '+x.role):'')}));
     // NOTE: beneficiaries (~2,700) are loaded lazily by ensureBeneficiaries() — only the Production
     // form needs them — so options stays small & fast for login / dashboard / every save.
     // donor → [{project_id, project_name, programme_id}, ...]  and the reverse project → donor
@@ -1647,6 +1648,19 @@ function foListHTML(){
       <div id="fo-target-summary" style="margin-top:12px"></div>
       <div style="margin-top:10px"><button class="btn btn-ghost btn-sm" type="button" onclick="foDeactivate()">Pause — enter without a workspace</button></div>`
     : `<div style="margin-top:12px;font-size:12.5px;color:var(--t3)">Pick a workspace above (or create one) — then every form below auto-fills its Donor, Thematic Area, Project &amp; place.</div>`;
+  const me=(CU&&(CU.username||''))||'';
+  const mine=(__HQ_ASSIGN||[]).filter(r=>me && String(r.assigned_to||'')===String(me));
+  const myPanel = mine.length ? `
+    <div style="margin-top:16px;border-top:1px dashed var(--border);padding-top:14px">
+      <div style="font-size:11.5px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px">📋 My assignments (${mine.length})</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${mine.map(r=>{ const i=(__HQ_ASSIGN||[]).indexOf(r);
+          return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;padding:9px 13px">
+            <div><b>${esc(lblOf(LOOKUPS.projects,r.project_id))}</b> · ${esc(r.district||'—')}${r.target_beneficiaries?`<span style="color:var(--t4);font-size:12px;margin-left:8px">🎯 ${fmt(r.target_beneficiaries)} beneficiaries</span>`:''}</div>
+            <button class="btn btn-primary btn-sm" type="button" onclick="foStartAssignment(${i})">Start ▸</button>
+          </div>`; }).join('')}
+      </div>
+    </div>` : '';
   return `<div class="card fo-card-active">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
       <div><div class="card-title" style="margin:0">📍 Field-Office Workspaces</div>
@@ -1655,6 +1669,7 @@ function foListHTML(){
     </div>
     <div class="ws-row" style="margin-top:13px">${pills}</div>
     ${summary}
+    ${myPanel}
   </div>`;
 }
 
@@ -1710,7 +1725,11 @@ function foHqAssignmentPickerHTML(){
 }
 function foPickAssignment(i){ const r=__HQ_ASSIGN[+i]; if(!r) return; if(!FO_DRAFT) foInitDraftBlank();
   FO_DRAFT.project_id=r.project_id||''; FO_DRAFT.district=r.district||''; FO_DRAFT.block=''; FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; foRerender(); }
-async function foLoadAssignments(){ try{ const d=await apiGet('?resource=hq_targets&limit=1000'); __HQ_ASSIGN=d.rows||[]; }catch(e){ __HQ_ASSIGN=[]; } if(FO_MODE==='edit') foRerender(); }
+/* Officer clicks "Start" on one of their assignments → a new workspace, pre-filled with that project + district. */
+function foStartAssignment(i){ const r=__HQ_ASSIGN[+i]; if(!r) return;
+  foInitDraftBlank(); FO_EDIT_ID=''; FO_MODE='edit';
+  FO_DRAFT.project_id=r.project_id||''; FO_DRAFT.district=r.district||''; foRerender(); }
+async function foLoadAssignments(){ try{ const d=await apiGet('?resource=hq_targets&limit=1000'); __HQ_ASSIGN=d.rows||[]; }catch(e){ __HQ_ASSIGN=[]; } foRerender(); }
 function foDraftSet(field,val){ if(!FO_DRAFT) foInitDraftBlank();
   const nm=$('fo-ws-name'); if(nm) FO_DRAFT.name=nm.value;
   FO_DRAFT[field]=val;
@@ -1811,7 +1830,7 @@ async function foInjectFormTarget(key){
 
 /* ════════════════ HQ SETUP & TARGETS ════════════════ */
 let HQ_ROWS=[];
-function hqBlankRow(){ return {district:'',target_blocks:'',target_villages:'',target_indicators:'',target_beneficiaries:'',target_activities:'',target_output:'',output_unit:''}; }
+function hqBlankRow(){ return {district:'',target_blocks:'',target_villages:'',target_indicators:'',target_beneficiaries:'',target_activities:'',target_output:'',output_unit:'',assigned_to:''}; }
 function hqRowHTML(r,i){
   const districts=rptGeoList('district');
   const numF=(k,lbl)=>`<div class="f"><label>${lbl}</label><input type="number" step="any" min="0" value="${esc(r[k])}" oninput="HQ_ROWS[${i}].${k}=this.value"></div>`;
@@ -1831,6 +1850,8 @@ function hqRowHTML(r,i){
       ${numF('target_activities','Activities — target')}
       ${numF('target_output','Output / Production — target')}
       <div class="f"><label>Output Unit</label><input value="${esc(r.output_unit)}" placeholder="e.g. kg, ₹, events" oninput="HQ_ROWS[${i}].output_unit=this.value"></div>
+      <div class="f"><label>Assigned to (officer)</label>
+        <select onchange="HQ_ROWS[${i}].assigned_to=this.value"><option value="">— Unassigned —</option>${(LOOKUPS.staff||[]).map(s=>`<option value="${esc(s.id)}" ${String(r.assigned_to)===String(s.id)?'selected':''}>${esc(s.label)}</option>`).join('')}</select></div>
     </div>
   </div>`;
 }
@@ -1855,7 +1876,7 @@ async function saveHQTargets(){
     const payload={ donor_id:der.donor_id, programme_id:der.programme_id, project_id:pid, district:r.district,
       target_blocks:r.target_blocks||0, target_villages:r.target_villages||0, target_indicators:r.target_indicators||0,
       target_beneficiaries:r.target_beneficiaries||0, target_activities:r.target_activities||0,
-      target_output:r.target_output||0, output_unit:r.output_unit||'' };
+      target_output:r.target_output||0, output_unit:r.output_unit||'', assigned_to:r.assigned_to||'' };
     try{ await apiPost('?resource=hq_targets',payload); ok++; }catch(e){ toast('⚠ '+e.message,'t-err'); }
   }
   if(ok){ toast('✓ Saved targets for '+ok+' district'+(ok>1?'s':'')); HQ_ROWS=[hqBlankRow()]; renderHQRows(); loadHQList(); }
@@ -1865,7 +1886,7 @@ async function loadHQList(){
   let rows=[];
   try{ const d=await apiGet('?resource=hq_targets&limit=1000'); rows=d.rows||[]; }catch(e){}
   if(!rows.length){ box.innerHTML=`<div class="empty-state"><div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="empty-title">No HQ targets yet</div><div class="empty-sub">Pick a Project, add one or more districts with their targets, and Save.</div></div>`; return; }
-  const cols=['Donor','Thematic','Project','District','Blocks','Villages','Indicators','Beneficiaries','Activities','Output'];
+  const cols=['Donor','Thematic','Project','District','Blocks','Villages','Indicators','Beneficiaries','Activities','Output','Assigned to'];
   box.innerHTML=`<div class="table-wrap" style="max-height:none"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}<th></th></tr></thead><tbody>${
     rows.map(r=>`<tr>
       <td>${esc(lblOf(LOOKUPS.donors,r.donor_id))}</td>
@@ -1875,6 +1896,7 @@ async function loadHQList(){
       <td class="mono">${fmt(r.target_blocks)}</td><td class="mono">${fmt(r.target_villages)}</td>
       <td class="mono">${fmt(r.target_indicators)}</td><td class="mono">${fmt(r.target_beneficiaries)}</td>
       <td class="mono">${fmt(r.target_activities)}</td><td class="mono">${fmt(r.target_output)}${r.output_unit?(' '+esc(r.output_unit)):''}</td>
+      <td>${r.assigned_to?`<span class="fchip">${esc(lblOf(LOOKUPS.staff,r.assigned_to))}</span>`:'<span style="color:var(--t4)">—</span>'}</td>
       <td>${can('delete')?`<button class="btn btn-ghost btn-xs" onclick="hqDelete(${r.id})">🗑</button>`:''}</td>
     </tr>`).join('')
   }</tbody></table></div>`;
@@ -4084,13 +4106,13 @@ function renderDataEntry(){
     <div id="de-tab-hq" style="display:none">${can('write')?renderHQSetupHTML():'<div class="empty-state"><div class="empty-title">HQ Setup is available to HQ staff</div><div class="empty-sub">You have data-entry access — use the Field-Office Entry tab.</div></div>'}</div>`;
   loadEntryCounts();
   syncEntryLock();
-  if(FO_MODE==='edit') foLoadAssignments();
   // Restore the HQ tab + its in-progress project when returning from a "+ New …" form
   if(__rz && __rz.tab==='hq' && can('write')){
     if(Array.isArray(__rz.hqRows) && __rz.hqRows.length) HQ_ROWS=__rz.hqRows;
     deTab('hq');
     if(__rz.hqProject){ const hp=$('hq-project'); if(hp){ hp.value=__rz.hqProject; hqOnProject(); } }
-  } else { __deTab='fo'; if(foActive()) foLoadTargets(); }
+  } else { __deTab='fo'; }
+  foLoadAssignments();   // populates "My assignments" + the quick-start picker, then re-renders
 }
 /* Live record counts on each Data Entry card. */
 async function loadEntryCounts(){

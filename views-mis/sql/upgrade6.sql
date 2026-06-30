@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `hq_targets` (
   `target_activities` INT,
   `target_output` DECIMAL(16,2),
   `output_unit` VARCHAR(80),
+  `assigned_to` VARCHAR(190),
   `remarks` TEXT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
