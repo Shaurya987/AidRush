@@ -843,8 +843,14 @@ if ($action==='report') {
     return [$w? ' WHERE '.implode(' AND ',$w) : '', $vals];
   };
 
-  // 1) Beneficiaries breakdown
+  // 1) Beneficiaries breakdown — additionally scoped by the Duration date window
+  //    (registration_date), when a from/to is supplied. Stored as YYYY-MM-DD text,
+  //    so LEFT(...,10) makes the string comparison safe.
   [$wB,$pB]=$applyFilter('beneficiaries');
+  if(($from||$to) && in_array('registration_date',table_columns('beneficiaries'))){
+    $dc=[]; if($from){$dc[]="LEFT(`beneficiaries`.`registration_date`,10)>=?"; $pB[]=$from;} if($to){$dc[]="LEFT(`beneficiaries`.`registration_date`,10)<=?"; $pB[]=$to;}
+    if($dc){ $wB .= ($wB?' AND ':' WHERE ').implode(' AND ',$dc); }
+  }
   $st=$pdo->prepare("SELECT COUNT(*) c,
                             COALESCE(SUM(current_income_per_annum_inr),0) inc,
                             COALESCE(SUM(total_land_acre),0) land
