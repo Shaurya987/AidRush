@@ -1576,7 +1576,7 @@ async function gotoNewRecord(createResource, targetCombo){
 }
 /* ── Per-user field LOCK — keeps the context fields filled across entries, ONLY on this
    browser/screen (localStorage). Multi-desk safe: never affects another user's form. ── */
-const LOCK_FIELDS=['programme_id','project_id','donor_id','geography_id','registration_date','district','block','gram_panchayat','village'];
+const LOCK_FIELDS=['programme_id','project_id','donor_id','geography_id','registration_date','country','state','district','block','gram_panchayat','village','village_or_ward'];
 const LOCK_COMBOS=['programme_id','project_id','donor_id','geography_id'];
 function getLock(){ try{ return JSON.parse(localStorage.getItem('vmis_lock')||'{}'); }catch(e){ return {}; } }
 function formLockOn(){ return !!getLock().on; }
@@ -1595,7 +1595,7 @@ function applyLock(){
   const lk=getLock(); if(!lk.on||!lk.values) return; const v=lk.values;
   if(v.programme_id){ comboSet('programme_id',v.programme_id); if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(v.programme_id); }
   ['project_id','donor_id','geography_id'].forEach(fk=>{ if(v[fk]) comboSet(fk,v[fk]); });
-  ['registration_date','district','block','gram_panchayat','village'].forEach(fk=>{ if(v[fk]!=null){ const e=$('ff-'+fk); if(e) e.value=v[fk]; } });
+  ['registration_date','country','state','district','block','gram_panchayat','village','village_or_ward'].forEach(fk=>{ if(v[fk]!=null){ const e=$('ff-'+fk); if(e) e.value=v[fk]; } });
   if(v.geography_id && __COMBO['beneficiary_id']) filterBeneficiaryByGeography(v.geography_id);
   setLockStyle(true);
 }
@@ -1956,9 +1956,7 @@ function renderHQSetupHTML(){
         <div class="fo-newrow">${deNewBtn('programmes','New thematic area')}</div></div>
     </div>
     <div id="hq-rows" style="margin-top:8px"></div>
-    <div class="form-actions" style="margin-top:2px;justify-content:flex-start">
-      <button class="btn btn-ghost btn-sm" type="button" onclick="hqAddRow()">＋ Add another district</button>
-    </div>
+    <div style="font-size:12px;color:var(--t4);margin:2px 0 10px">One district per save — after saving, the form clears for the next district (one donor can fund many districts).</div>
     <div class="form-actions" style="margin-top:12px">
       <button class="btn btn-primary" type="button" onclick="saveHQTargets()">💾 Save HQ Targets</button>
     </div>
@@ -4236,10 +4234,6 @@ async function renderReports(){
     <div class="page-head"><div><div class="page-title">Reports &amp; Analytics</div>
       <div class="page-sub">Donor-wise · Thematic Area-wise summaries from live data — plus one-click donor reports.</div></div>
       <div class="page-actions">
-        <div class="x-menu-wrap">
-          <button class="btn btn-success btn-sm" onclick="toggleRptExport(event)">⬇ Export ▾</button>
-          <div class="x-menu" id="xmenu-reports"></div>
-        </div>
         <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print / PDF</button>
       </div></div>
 
