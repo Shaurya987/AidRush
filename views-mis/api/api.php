@@ -1099,21 +1099,30 @@ if ($method==='POST') {
   }
   if(!can_write($resource)) out(['error'=>'You do not have permission to add records'],403);
   $b=body(); $cols=table_columns($table);
-  $genId=null;
+  $genId=null; $lockName=null;
+  // Serialise business-ID generation across simultaneous saves (many users at once):
+  // a per-resource MySQL named lock guarantees no two concurrent creates get the same ID.
   if(isset($ID_GEN[$resource])){
     $idCol=$ID_GEN[$resource][0];
-    if(in_array($idCol,$cols)){ $genId=next_business_id($resource); $b[$idCol]=$genId; }
+    if(in_array($idCol,$cols)){
+      $lockName='vmis_id_'.$resource;
+      try{ $lk=db()->prepare("SELECT GET_LOCK(?,5)"); $lk->execute([$lockName]); }catch(Exception $e){ $lockName=null; }
+      $genId=next_business_id($resource); $b[$idCol]=$genId;
+    }
   }
+  $releaseLock=function() use(&$lockName){ if($lockName){ try{ db()->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); }catch(Exception $e){} $lockName=null; } };
   $set=[]; $ph=[]; $vals=[];
   foreach($b as $k=>$v){
     if(in_array($k,$cols) && !in_array($k,['id','created_at','updated_at'])){
       $set[]="`$k`"; $ph[]='?'; $vals[]=($v===''?null:$v);
     }
   }
-  if(!$set) out(['error'=>'No valid fields'],400);
+  if(!$set){ $releaseLock(); out(['error'=>'No valid fields'],400); }
   $sql="INSERT INTO `$table` (".implode(',',$set).") VALUES (".implode(',',$ph).")";
-  $st=db()->prepare($sql); $st->execute($vals);
+  try{ $st=db()->prepare($sql); $st->execute($vals); }
+  catch(Exception $e){ $releaseLock(); out(['error'=>'Save failed','detail'=>$e->getMessage()],500); }
   $newid=db()->lastInsertId();
+  $releaseLock();
   audit('create',$resource,$genId?:$newid,"Added $resource ".($genId?:('#'.$newid)),null,$b);
   out(['ok'=>true,'id'=>$newid,'business_id'=>$genId],201);
 }
