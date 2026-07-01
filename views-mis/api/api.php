@@ -818,20 +818,28 @@ if ($action==='report') {
   require_session();
   $pdo=db();
 
-  $period = strtoupper($_GET['period'] ?? 'Y');  // M / Q / Y
+  $period = strtoupper($_GET['period'] ?? 'Y');  // M / Q / Y / C
   $donor  = trim($_GET['donor_id']     ?? '');
   $prog   = trim($_GET['programme_id'] ?? '');
   $proj   = trim($_GET['project_id']   ?? '');
+  $district = trim($_GET['district'] ?? '');
+  $block    = trim($_GET['block'] ?? '');
+  $geo      = trim($_GET['geography_id'] ?? '');
+  $shg      = trim($_GET['shg_id'] ?? '');
   $from   = trim($_GET['from'] ?? '');
   $to     = trim($_GET['to']   ?? '');
 
-  // Build WHERE that applies only to tables that have the column
-  $applyFilter = function($table) use($pdo,$donor,$prog,$proj){
+  // Build WHERE that applies only to tables that have the column — supports every report dimension
+  $applyFilter = function($table) use($pdo,$donor,$prog,$proj,$district,$block,$geo,$shg){
     $cols = table_columns($table);
     $w=[]; $vals=[];
-    if($donor && in_array('donor_id',$cols))     { $w[]="`$table`.`donor_id`=?";     $vals[]=$donor; }
-    if($prog  && in_array('programme_id',$cols)) { $w[]="`$table`.`programme_id`=?"; $vals[]=$prog; }
-    if($proj  && in_array('project_id',$cols))   { $w[]="`$table`.`project_id`=?";   $vals[]=$proj; }
+    if($donor && in_array('donor_id',$cols))       { $w[]="`$table`.`donor_id`=?";     $vals[]=$donor; }
+    if($prog  && in_array('programme_id',$cols))   { $w[]="`$table`.`programme_id`=?"; $vals[]=$prog; }
+    if($proj  && in_array('project_id',$cols))     { $w[]="`$table`.`project_id`=?";   $vals[]=$proj; }
+    if($district && in_array('district',$cols))    { $w[]="`$table`.`district`=?";     $vals[]=$district; }
+    if($block && in_array('block',$cols))          { $w[]="`$table`.`block`=?";        $vals[]=$block; }
+    if($geo && in_array('geography_id',$cols))     { $w[]="`$table`.`geography_id`=?"; $vals[]=$geo; }
+    if($shg && in_array('shg_id',$cols))           { $w[]="`$table`.`shg_id`=?";       $vals[]=$shg; }
     return [$w? ' WHERE '.implode(' AND ',$w) : '', $vals];
   };
 
