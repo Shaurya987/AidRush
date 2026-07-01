@@ -638,7 +638,7 @@ const RES={
   loans:{label:'SHG Loans',sub:'Loans received by SHGs — source, purpose & repayment status',icon:'M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
     cols:[['shg_id','SHG'],['financial_year','FY'],['loan_amount_inr','Amount','inr'],['loan_source','Source'],['repayment_status','Status','status']],
     filters:[['financial_year','FY',['2023-24','2024-25','2025-26','2026-27','2027-28','2028-29','2029-30','2030-31']],['repayment_status','Status',['Ongoing','Repaid','Overdue','Not applicable']],['loan_source','Source',['Bank linkage','Donor','Government scheme','Other']]],
-    fields:[['loan_record_id','Loan ID',1],['shg_id','SHG ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['financial_year','Financial Year','sel',['2023-24','2024-25','2025-26','2026-27','2027-28','2028-29','2029-30','2030-31']],['loan_receiving_date','Loan Date','date'],['loan_amount_inr','Loan Amount (₹)','num'],['loan_source','Loan Source','sel',['Bank linkage','Donor','Government scheme','Other']],['purpose_of_loan','Purpose'],['repayment_status','Repayment Status','sel',['Ongoing','Repaid','Overdue','Not applicable']],['remarks','Remarks']]},
+    fields:[['loan_record_id','Loan ID',1],['shg_id','SHG — search by name','ref','shgs'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['financial_year','Financial Year','sel',['2023-24','2024-25','2025-26','2026-27','2027-28','2028-29','2029-30','2030-31']],['loan_receiving_date','Loan Date','date'],['loan_amount_inr','Loan Amount (₹)','num'],['loan_source','Loan Source','sel',['Bank linkage','Donor','Government scheme','Other']],['purpose_of_loan','Purpose'],['repayment_status','Repayment Status','sel',['Ongoing','Repaid','Overdue','Not applicable']],['remarks','Remarks']]},
   indicators:{label:'Indicators',sub:'Add UNLIMITED indicators for ANY sector — Output / Outcome / Process / Financial',icon:'M22 12h-4l-3 9L9 3l-3 9H2',
     cols:[['indicator_name','Name'],['indicator_type','Type'],['unit','Unit'],['baseline_value','Baseline','num'],['project_target','Target','num']],
     filters:[['indicator_type','Types',['Output','Outcome','Process','Financial']],'programme_id','project_id','donor_id'],
@@ -727,7 +727,7 @@ async function ensureLookups(){
     LOOKUPS.projects=(d.projects||[]).map(x=>({id:x.id,label:x.name,programme_id:x.programme_id}));
     LOOKUPS.donors=(d.donors||[]).map(x=>({id:x.id,label:x.name,reporting_frequency:x.reporting_frequency,donor_type:x.donor_type,budget:x.total_approved_budget_inr}));
     LOOKUPS.indicators=(d.indicators||[]).map(x=>({id:x.id,label:x.name,programme_id:x.programme_id,project_id:x.project_id}));
-    LOOKUPS.shgs=(d.shgs||[]).map(x=>({id:x.id,label:x.name}));
+    LOOKUPS.shgs=(d.shgs||[]).map(x=>({id:x.id,label:x.name,programme_id:x.programme_id,project_id:x.project_id,donor_id:x.donor_id}));
     LOOKUPS.geographies=(d.geographies||[]).map(x=>({id:x.id,label:x.name||x.id,district:x.district,block:x.block,gram_panchayat:x.gram_panchayat,village:x.village})).sort((a,b)=>String(a.label).localeCompare(String(b.label),'en',{numeric:true,sensitivity:'base'}));
     LOOKUPS.staff=(d.staff||[]).map(x=>({id:x.id,label:(x.name||x.id)+(x.role?(' · '+x.role):'')}));
     // NOTE: beneficiaries (~2,700) are loaded lazily by ensureBeneficiaries() — only the Production
@@ -855,6 +855,7 @@ function comboPick(key,id,label){
   else if(key==='geography_id'){ autofillFromGeography(id); if(__COMBO['beneficiary_id']) filterBeneficiaryByGeography(id); }
   else if(key==='beneficiary_id') autofillFromBeneficiary(id);
   else if(key==='indicator_id') autofillFromIndicator(id);
+  else if(key==='shg_id' && __formKey==='loans') autofillFromShg(id);
 }
 /* Project already maps to a donor — fill it so nobody re-enters the donor. */
 function autofillDonorFromProject(pid){
@@ -942,6 +943,15 @@ function comboSet(key,id){ const h=$('ff-'+key); if(h) h.value=(id==null?'':id);
 function autofillFromGeography(gid){
   const g=(LOOKUPS.geographies||[]).find(x=>String(x.id)===String(gid)); if(!g) return;
   setIf('district',g.district); setIf('block',g.block); setIf('gram_panchayat',g.gram_panchayat); setIf('village',g.village);
+}
+/* SHG → fill its Thematic Area / Project / Donor on the Loan form (the SHG already
+   carries them) and hide those fields, so a loan is just: pick the SHG + loan details. */
+function autofillFromShg(sid){
+  const s=(LOOKUPS.shgs||[]).find(x=>String(x.id)===String(sid)); if(!s) return;
+  if(s.programme_id){ comboSet('programme_id',s.programme_id); if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(s.programme_id); }
+  if(s.project_id) comboSet('project_id',s.project_id);
+  if(s.donor_id) comboSet('donor_id',s.donor_id);
+  ['programme_id','project_id','donor_id'].forEach(k=>{ if(__COMBO[k]) foHideField(k); });
 }
 /* Indicator → fill its Programme & Project on the Indicator-Progress form. */
 function autofillFromIndicator(iid){
@@ -1966,6 +1976,14 @@ function injectEntryFreq(key){
     <select id="entry-freq" onchange="freqChange('${key}')"><option value="Q">Quarterly</option><option value="M">Monthly</option></select>
     ${monthSel}<span id="entry-freq-note" style="font-size:12px;color:var(--t4);display:none">Enter the monthly figure — it rolls up into the quarterly columns below.</span>`;
   const fg=form.querySelector('.fg'); if(fg) fg.parentNode.insertBefore(div,fg);
+  if(key==='progress'){
+    // "Reporting Period" is set automatically by the frequency picker — make it read-only.
+    const rp=$('ff-reporting_period');
+    if(rp){ rp.readOnly=true; rp.placeholder='Set automatically from the frequency ▲'; rp.style.background='var(--bg-soft)'; rp.style.color='var(--t3)'; }
+    const recompute=()=>{ if((($('entry-freq')||{}).value||'Q')==='Q'){ const q=$('ff-quarter'); if(rp&&q){ const yr=($('ff-reporting_year')||{}).value||''; rp.value=q.value?((q.value+(yr?(' '+yr):'')).trim()):''; } } };
+    const q=$('ff-quarter'); if(q) q.addEventListener('change',recompute);
+    const yr=$('ff-reporting_year'); if(yr) yr.addEventListener('input',recompute);
+  }
 }
 function freqChange(key){
   const f=($('entry-freq')||{}).value||'Q'; const mo=$('entry-month'), note=$('entry-freq-note');

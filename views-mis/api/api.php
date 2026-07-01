@@ -514,7 +514,7 @@ if ($action==='options') {
     /* donor → list of project IDs that donor funds (donor_mappings) — used to drive multi-project donor reports */
     'donor_projects'=>$q("SELECT m.donor_id, m.project_id, p.project_name, p.programme_id FROM donor_mappings m LEFT JOIN projects p ON p.project_id=m.project_id WHERE m.donor_id IS NOT NULL AND m.project_id IS NOT NULL GROUP BY m.donor_id, m.project_id"),
     'indicators'=>$q("SELECT indicator_id id, indicator_name name, programme_id, project_id FROM indicators WHERE indicator_id IS NOT NULL ORDER BY indicator_name"),
-    'shgs'=>$q("SELECT shg_id id, shg_name name FROM shgs WHERE shg_id IS NOT NULL ORDER BY shg_name"),
+    'shgs'=>$q("SELECT shg_id id, shg_name name, programme_id, project_id, donor_id FROM shgs WHERE shg_id IS NOT NULL ORDER BY shg_name"),
     'geographies'=>$q("SELECT geography_id id, CONCAT_WS(' · ', NULLIF(village_or_ward,''), NULLIF(gram_panchayat,''), NULLIF(block,''), NULLIF(district,'')) name, district, block, gram_panchayat, village_or_ward village FROM geographies WHERE geography_id IS NOT NULL AND geography_id<>'' ORDER BY district, block, gram_panchayat, village_or_ward"),
     /* staff — for assigning HQ work units to field officers (username is the stable key) */
     'staff'=>$q("SELECT username id, COALESCE(NULLIF(user_name,''),username) name, role FROM users WHERE username IS NOT NULL AND username<>'' ORDER BY name"),
