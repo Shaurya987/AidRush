@@ -473,6 +473,9 @@ if ($action==='bulk_create') {
       if($idCol && in_array($idCol,$bcols)){
         $genId = next_business_id($bres); $row[$idCol] = $genId;
       }
+      // stamp the importer's username on bulk-imported rows too
+      $mu=current_user();
+      if($mu && in_array('created_by',$bcols)) $row['created_by']=$mu['username'];
       $set=[]; $ph=[]; $vals=[];
       foreach($row as $k=>$v){
         if(in_array($k,$bcols) && !in_array($k,['id','created_at','updated_at','active_session_token','active_tab_id','session_expires_at','last_login','last_seen','failed_login_count','locked_until'])){
@@ -1099,6 +1102,9 @@ if ($method==='POST') {
   }
   if(!can_write($resource)) out(['error'=>'You do not have permission to add records'],403);
   $b=body(); $cols=table_columns($table);
+  // Multi-user accountability — stamp who entered the record (column exists after upgrade8)
+  $me=current_user();
+  if($me && in_array('created_by',$cols)) $b['created_by']=$me['username'];
   $genId=null; $lockName=null;
   // Serialise business-ID generation across simultaneous saves (many users at once):
   // a per-resource MySQL named lock guarantees no two concurrent creates get the same ID.
@@ -1165,6 +1171,10 @@ if ($method==='PUT') {
   }
   if(!can_write($resource)) out(['error'=>'You do not have permission to edit records'],403);
   $b=body(); $cols=table_columns($table);
+  // Multi-user accountability — stamp who last changed the record (column exists after upgrade8)
+  $me=current_user();
+  if($me && in_array('updated_by',$cols)) $b['updated_by']=$me['username'];
+  unset($b['created_by']);   // never let an edit overwrite who originally entered it
   $st=db()->prepare("SELECT * FROM `$table` WHERE id=?"); $st->execute([$id]); $before=$st->fetch();
   $set=[]; $vals=[];
   foreach($b as $k=>$v){

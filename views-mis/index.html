@@ -782,6 +782,8 @@ function setActiveNav(key){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.getAttribute('data-page')===key));
 }
 function goPage(key){
+  if(formDirty() && !confirm('You have unsaved changes on this form — leave and discard them?')) return;
+  __FORM_INITIAL=null;
   CP=key; setActiveNav(key); __PENDING=[];
   if(key==='dash')return renderDashboard();
   if(key==='reports')return renderReports();
@@ -923,6 +925,7 @@ function showAddAnotherPrompt(key, businessId, carry){
 async function addAnotherConfirm(){
   const st=__ADD_ANOTHER; closeModal(); if(!st) return;
   await openForm(st.key); applyCarryOver(st.key, st.carry);
+  formMarkClean();   // carried context is auto-filled, not user-typed — start clean
 }
 function addAnotherDone(){ __ADD_ANOTHER=null; closeModal(); goPage(__formReturn||'dataentry'); }
 function comboClose(key){ const l=$('clist-'+key); if(l) l.classList.remove('open'); }
@@ -984,6 +987,33 @@ async function autofillFromBeneficiary(bid){
   }catch(e){}
 }
 /* ════════ Smart data entry: duplicate guard · sticky defaults · inline geography ════════ */
+/* ── Data-quality validation — friendly guards that stop garbage at entry ──
+   Age must be 0–120; phone fields must be a valid 10-digit Indian mobile
+   (+91 / 0 prefixes tolerated); money & quantity fields can't be negative
+   (variance and net profit MAY be negative — a loss is real data). */
+function validatePayload(key, payload){
+  const cfg=RES[key]; if(!cfg) return null;
+  if(payload.age!=null && String(payload.age).trim()!==''){
+    const a=Number(payload.age);
+    if(!isFinite(a)||a<0||a>120) return 'Age must be between 0 and 120';
+  }
+  for(const pk of ['contact_number','phone','phone_number','village_contact_person_cell_no']){
+    const raw=payload[pk]; if(raw==null||String(raw).trim()==='') continue;
+    let d=String(raw).replace(/\D/g,'');
+    if(d.length===12&&d.startsWith('91')) d=d.slice(2);
+    if(d.length===11&&d.startsWith('0'))  d=d.slice(1);
+    if(!/^[6-9]\d{9}$/.test(d)) return 'Contact number must be a valid 10-digit Indian mobile (starts 6–9)';
+    payload[pk]=d;   // save the clean 10-digit form
+  }
+  for(const f of (cfg.fields||[])){
+    const [k,l,type]=f;
+    if(type!=='num'&&type!=='blinc') continue;
+    if(/variance|net_profit/.test(k)) continue;
+    const v=payload[k]; if(v==null||String(v).trim()==='') continue;
+    if(Number(v)<0) return l+' cannot be negative';
+  }
+  return null;
+}
 async function checkDuplicate(key, payload){
   try{
     let parts=null;
@@ -1524,6 +1554,7 @@ async function openForm(key,id){
       </div>
     </div>
     ${!id&&idCol?'<div style="font-size:12.5px;color:var(--t3);background:var(--brand-soft);border-radius:10px;padding:10px 14px;margin-bottom:14px">✦ The ID is created automatically — just fill the details and Save. Use <b>Tab</b> to move between fields.</div>':''}
+    ${id&&(row.created_by||row.updated_by)?`<div style="font-size:12.5px;color:var(--t3);background:var(--bg-soft);border-radius:10px;padding:9px 14px;margin-bottom:14px">👤 ${row.created_by?('Added by <b>'+esc(row.created_by)+'</b>'):''}${row.created_by&&row.updated_by?' · ':''}${row.updated_by?('Last updated by <b>'+esc(row.updated_by)+'</b>'):''}</div>`:''}
     <div class="card" style="max-width:1120px;margin:0 auto">
       <form id="entry-form" autocomplete="off"
         onsubmit="event.preventDefault();saveForm('${key}',${id||0});"
@@ -1542,12 +1573,19 @@ async function openForm(key,id){
   if(key==='activities') wireActivityTotals();
   if(!id&&key==='loans') injectLoanShgFilter();
   if(!id&&key==='geographies') geoPrefillSticky();
+  formMarkClean();   // baseline for the unsaved-changes guard (after all auto-fills)
   setTimeout(()=>{ const el=document.querySelector('#entry-form input:not([readonly]):not([disabled]):not([type=hidden]), #entry-form select:not([disabled])'); if(el) el.focus(); },50);
 }
 let __formReturn='dataentry';
 let __formKey='', __formId=0, __PENDING=[];
+/* ── Unsaved-changes guard — warn before discarding anything the user typed ── */
+let __FORM_INITIAL=null;
+function formMarkClean(){ try{ __FORM_INITIAL=(CP==='__form')?JSON.stringify(captureFormState()):null; }catch(e){ __FORM_INITIAL=null; } }
+function formDirty(){ if(CP!=='__form'||__FORM_INITIAL==null) return false; try{ return JSON.stringify(captureFormState())!==__FORM_INITIAL; }catch(e){ return false; } }
 function formCancel(){
   if(__PENDING.length && __PENDING[__PENDING.length-1].createResource===__formKey){
+    if(formDirty() && !confirm('You have unsaved changes on this form — leave and discard them?')) return;
+    __FORM_INITIAL=null;
     const pend=__PENDING.pop();
     openForm(pend.returnKey, pend.returnId||undefined).then(()=>restoreFormState(pend.snapshot));
     return;
@@ -1573,6 +1611,7 @@ async function gotoNewRecord(createResource, targetCombo){
   if(createResource==='projects' && snapshot.programme_id) prefill.programme_id=snapshot.programme_id;
   __PENDING.push({ returnKey:__formKey, returnId:__formId, targetCombo, createResource, snapshot, prefill });
   await openForm(createResource); applyPrefill(prefill);
+  formMarkClean();   // prefill is automatic, not user-typed
 }
 /* ── Per-user field LOCK — keeps the context fields filled across entries, ONLY on this
    browser/screen (localStorage). Multi-desk safe: never affects another user's form. ── */
@@ -2546,7 +2585,9 @@ async function shgmDel(id){
     if(CP==='shgs') reloadResource('shgs');
   }catch(e){ toast('⚠ '+e.message,'t-err'); }
 }
+let __SAVE_BUSY=false;   /* double-submit guard — a double-clicked Save must never create two records */
 async function saveForm(key,id){
+  if(__SAVE_BUSY) return;
   const cfg=RES[key]; const payload={}; const idCol=AUTO_ID[key];
   for(const f of cfg.fields){ const el=$('ff-'+f[0]); if(el)payload[f[0]]=el.value; }
   // required check (skip the auto-generated ID field)
@@ -2555,6 +2596,8 @@ async function saveForm(key,id){
     if(f[2]===1 && !String(payload[f[0]]||'').trim()){ toast('⚠ '+f[1]+' is required','t-err'); return; }
   }
   if(key==='users' && !id){ payload.username=(payload.email||payload.user_name||'user').split('@')[0].toLowerCase().replace(/[^a-z0-9]/g,''); payload.password_hash=''; }
+  // Data-quality validation (age / phone / negative amounts)
+  { const vErr=validatePayload(key,payload); if(vErr){ toast('⚠ '+vErr,'t-err'); return; } }
   // Baseline income validation — the activity breakdown total must match the registration income
   if(key==='beneficiaries'){
     const blKeys=['bl_paddy_income','bl_millet_income','bl_vegetable_income','bl_mushroom_income','bl_goat_income','bl_poultry_income','bl_micro_enterprise_income'];
@@ -2587,14 +2630,17 @@ async function saveForm(key,id){
     }
   }
   if(key==='geographies') geoRememberSticky(payload);   // speed up the next village in the same area
+  __SAVE_BUSY=true;
+  const __sb=document.querySelector('#entry-form button[type=submit]');
+  if(__sb){ __sb.disabled=true; __sb.dataset.lbl=__sb.innerHTML; __sb.innerHTML='Saving…'; }
   try{
     if(id){
-      await apiPut('?resource='+key+'&id='+id,payload); toast('✓ Saved');
+      await apiPut('?resource='+key+'&id='+id,payload); toast('✓ Saved'); __FORM_INITIAL=null;
       if(key==='beneficiaries') LOOKUPS._benLoaded=false;
       LOOKUPS._loaded=false; await ensureLookups(); goPage(__formReturn||key);
     } else {
       const r=await apiPost('?resource='+key,payload);
-      toast('✓ Created'+(r&&r.business_id?' — ID '+r.business_id:''));
+      toast('✓ Created'+(r&&r.business_id?' — ID '+r.business_id:'')); __FORM_INITIAL=null;
       if(key==='beneficiaries') LOOKUPS._benLoaded=false;
       LOOKUPS._loaded=false; await ensureLookups();
       // Created via a "＋ New …" redirect? Return to the form we came from and select the new record.
@@ -2619,6 +2665,7 @@ async function saveForm(key,id){
       }
     }
   }catch(e){ toast('⚠ '+e.message,'t-err'); }
+  finally{ __SAVE_BUSY=false; const sb=document.querySelector('#entry-form button[type=submit]'); if(sb){ sb.disabled=false; if(sb.dataset.lbl) sb.innerHTML=sb.dataset.lbl; } }
 }
 async function delRow(key,id){
   if(!confirm('Delete this record?'))return;
@@ -2879,7 +2926,7 @@ async function exportDashboardView(){
   if((d.topActivities||[]).length) sheets.push({
     name:'Top Activities', title:'Top Activity Performance', subtitle:nowIST(),
     rows: d.topActivities.map(a=>{const t=+a.tgt||0,c=+a.ach||0,p=t?Math.round(100*c/t):0;return {Activity:a.nm,'Total Target':t,Cumulative:c,'Achievement %':p};}),
-    cols:[{key:'Activity',label:'Activity',type:'text'},{key:'Total Target',label:'Total Target',type:'num'},{key:'Cumulative',label:'Cumulative',type:'num'},{key:'Achievement %',label:'Achievement %',type:'num'}],
+    cols:[{key:'Activity',label:'Activity',type:'text'},{key:'Total Target',label:'Total Target',type:'num'},{key:'Cumulative',label:'Cumulative',type:'num'},{key:'Achievement %',label:'Achievement %',type:'pct'}],
   });
   for(const [arr,name,a,b] of [
     [d.caste,'By Social Order','Social Order','Count'],
@@ -4490,7 +4537,7 @@ async function exportReportsView(){
       'Y1 Q1':N(a.y1_q1),'Y1 Q2':N(a.y1_q2),'Y1 Q3':N(a.y1_q3),'Y1 Q4':N(a.y1_q4),'Y1 Ach':N(a.y1_ach),
       'Y2 Target':N(a.y2_target),'Y2 Ach':N(a.y2_ach),'Y3 Target':N(a.y3_target),'Y3 Ach':N(a.y3_ach),
       'Cumulative':N(a.cum_ach),'Achievement %': N(a.total_target)?Math.round(100*N(a.cum_ach)/N(a.total_target)):0 })),
-    cols:[{key:'Activity',label:'Activity',type:'text'},{key:'Unit',label:'Unit',type:'text'},{key:'Total Target',label:'Total Target',type:'num'},{key:'Y1 Q1',label:'Y1 Q1',type:'num'},{key:'Y1 Q2',label:'Y1 Q2',type:'num'},{key:'Y1 Q3',label:'Y1 Q3',type:'num'},{key:'Y1 Q4',label:'Y1 Q4',type:'num'},{key:'Y1 Ach',label:'Y1 Ach',type:'num'},{key:'Y2 Target',label:'Y2 Target',type:'num'},{key:'Y2 Ach',label:'Y2 Ach',type:'num'},{key:'Y3 Target',label:'Y3 Target',type:'num'},{key:'Y3 Ach',label:'Y3 Ach',type:'num'},{key:'Cumulative',label:'Cumulative',type:'num'},{key:'Achievement %',label:'Achievement %',type:'num'}] });
+    cols:[{key:'Activity',label:'Activity',type:'text'},{key:'Unit',label:'Unit',type:'text'},{key:'Total Target',label:'Total Target',type:'num'},{key:'Y1 Q1',label:'Y1 Q1',type:'num'},{key:'Y1 Q2',label:'Y1 Q2',type:'num'},{key:'Y1 Q3',label:'Y1 Q3',type:'num'},{key:'Y1 Q4',label:'Y1 Q4',type:'num'},{key:'Y1 Ach',label:'Y1 Ach',type:'num'},{key:'Y2 Target',label:'Y2 Target',type:'num'},{key:'Y2 Ach',label:'Y2 Ach',type:'num'},{key:'Y3 Target',label:'Y3 Target',type:'num'},{key:'Y3 Ach',label:'Y3 Ach',type:'num'},{key:'Cumulative',label:'Cumulative',type:'num'},{key:'Achievement %',label:'Achievement %',type:'pct'}] });
   // 3) Indicator progress
   if((r.indicator_progress||[]).length) sheets.push({name:'Indicator Progress', title:'Indicator progress', subtitle:nowIST(),
     rows: r.indicator_progress.map(p=>({Indicator:p.indicator_id, Period:p.reporting_period, Year:p.reporting_year, Quarter:p.quarter,
@@ -4764,7 +4811,7 @@ async function generateDonorReport(){
         {key:'SHG Members',label:'SHG Members',type:'num'},
         {key:'Total Target',label:'Total Target',type:'num'},
         {key:'Cumulative Ach.',label:'Cumulative Ach.',type:'num'},
-        {key:'Achievement %',label:'Achievement %',type:'num'},
+        {key:'Achievement %',label:'Achievement %',type:'pct'},
       ],
     });
   }
@@ -5068,7 +5115,7 @@ async function generateDonorReport(){
         {key:'District',label:'District',type:'text'},{key:'Block',label:'Block',type:'text'},
         {key:'GP',label:'Gram Panchayat',type:'text'},{key:'Village',label:'Village',type:'text'},
         {key:'Total HHs',label:'Total HHs',type:'num'},{key:'Covered HHs',label:'Covered HHs',type:'num'},
-        {key:'Coverage %',label:'Coverage %',type:'num'},
+        {key:'Coverage %',label:'Coverage %',type:'pct'},
         {key:'SC HHs',label:'SC HHs',type:'num'},{key:'ST HHs',label:'ST HHs',type:'num'},
         {key:'OBC HHs',label:'OBC HHs',type:'num'},{key:'General HHs',label:'General HHs',type:'num'},
         {key:'Contact Person',label:'Contact Person',type:'text'},
@@ -5100,7 +5147,7 @@ async function generateDonorReport(){
       {key:'Y2 Target',label:'Y2 Target',type:'num'},{key:'Y2 Ach',label:'Y2 Ach',type:'num'},
       {key:'Y3 Target',label:'Y3 Target',type:'num'},{key:'Y3 Ach',label:'Y3 Ach',type:'num'},
       {key:'Cumulative',label:'Cumulative',type:'num'},
-      {key:'Achievement %',label:'Achievement %',type:'num'},
+      {key:'Achievement %',label:'Achievement %',type:'pct'},
     ],
   });
 
@@ -5281,7 +5328,7 @@ async function generateDonorReport(){
     })),
     cols:[{key:'Donor',label:'Donor',type:'text'},{key:'Type',label:'Type',type:'text'},
           {key:'Approved (₹)',label:'Approved (₹)',type:'inr'},{key:'Mapped (₹)',label:'Mapped (₹)',type:'inr'},
-          {key:'Unmapped (₹)',label:'Unmapped (₹)',type:'inr'},{key:'Utilisation %',label:'Utilisation %',type:'num'}],
+          {key:'Unmapped (₹)',label:'Unmapped (₹)',type:'inr'},{key:'Utilisation %',label:'Utilisation %',type:'pct'}],
   });
 
   // 26.  GLOSSARY / NOTES
@@ -5455,8 +5502,13 @@ const XLS = (function(){
         const v = row[col.key];
         if(col.type==='inr'){ cell.t='n'; cell.z='₹#,##0'; }
         else if(col.type==='num'){ cell.t='n'; cell.z='#,##0.##'; }
+        else if(col.type==='pct'){ cell.t='n'; cell.z='#,##0.##"%"'; }
         else if(col.type==='date'){ cell.t='d'; cell.z='dd-mmm-yyyy'; }
         cell.s = _cellStyle(ri, col.type);
+        // Traffic-light grading on achievement/utilisation % — read performance at a glance
+        if(col.type==='pct'){ const p=Number(v);
+          if(isFinite(p)){ const fg=p>=80?'FFD1FAE5':p>=40?'FFFEF3C7':'FFFEE2E2', tx=p>=80?C.good:p>=40?C.warn:C.bad;
+            cell.s = Object.assign({}, cell.s, {font:{name:'Inter',sz:10.5,bold:true,color:{rgb:tx}}, fill:{patternType:'solid',fgColor:{rgb:fg}}}); } }
       });
     });
     // Totals row styling — bold, brand top-border
