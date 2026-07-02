@@ -598,9 +598,9 @@ const RES={
     filters:['programme_id','project_id',['status','Status',['Planned','Ongoing','Completed','On Hold']]],
     fields:[['objective_id','Objective ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['objective','Objective',1,'area'],['target_beneficiaries','Target Beneficiaries'],['status','Status','sel',['Planned','Ongoing','Completed','On Hold']],['remarks','Remarks']]},
   projects:{label:'Projects',sub:'Implementation projects linked to programmes',icon:'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
-    cols:[['project_name','Name'],['project_code','Code'],['programme_id','Thematic Area'],['project_status','Status','status']],
+    cols:[['project_name','Name'],['project_code','Code'],['programme_id','Thematic Area'],['_donor','Donor / Funding','maplink'],['project_status','Status','status']],
     filters:['programme_id',['project_status','Status',['Planned','Ongoing','Completed','On Hold']]],
-    fields:[['project_id','Project ID',1],['project_code','Project Code'],['programme_id','Thematic Area','ref','programmes'],['project_name','Project Name',1],['project_objective','Objective','area'],['project_status','Status','sel',SEL_STATUS],['project_geography_summary','Geography Summary'],['target_beneficiaries','Target Beneficiaries'],['implementation_partner','Implementation Partner'],['project_start_date','Start Date','date'],['project_end_date','End Date','date'],['remarks','Remarks']]},
+    fields:[['project_id','Project ID',1],['project_code','Project Code'],['programme_id','Thematic Area','ref','programmes'],['donor_id','Funded by — Donor (required: creates the donor↔project link)','ref','donors'],['project_name','Project Name',1],['project_objective','Objective','area'],['project_status','Status','sel',SEL_STATUS],['project_geography_summary','Geography Summary'],['target_beneficiaries','Target Beneficiaries'],['implementation_partner','Implementation Partner'],['project_start_date','Start Date','date'],['project_end_date','End Date','date'],['remarks','Remarks']]},
   donors:{label:'Donors',sub:'Funding agencies, CSR partners, foundations & government schemes',icon:'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
     view:'cards',
     cols:[['donor_name','Name'],['donor_type','Type'],['contact_person','Contact'],['total_approved_budget_inr','Budget','inr']],
@@ -831,7 +831,18 @@ function recalcBaselineTotal(){
 /* ════════ Searchable combobox (typeahead) for ref dropdowns ════════
    A hidden #ff-<key> holds the chosen id, so saveForm & import stay unchanged. */
 const __COMBO={};
-function projectListFor(pid){ let l=LOOKUPS.projects||[]; if(pid) l=l.filter(p=>!p.programme_id||p.programme_id===pid); return l; }
+/* Projects that are linked to a donor (donor_mappings) — the linkage that powers every
+   auto-fill and every donor report. Unmapped projects are a broken chain. */
+function mappedProjects(){ const m=LOOKUPS.project_donor||{}; return (LOOKUPS.projects||[]).filter(p=>m[p.id]); }
+function unmappedProjects(){ const m=LOOKUPS.project_donor||{}; return (LOOKUPS.projects||[]).filter(p=>!m[p.id]); }
+function projectListFor(pid){
+  let l=LOOKUPS.projects||[]; if(pid) l=l.filter(p=>!p.programme_id||p.programme_id===pid);
+  const m=LOOKUPS.project_donor||{};
+  // Donor Mapping form: show ALL projects, flagging the ones that still need a donor
+  if(__formKey==='mappings') return l.map(p=>m[p.id]?p:Object.assign({},p,{label:p.label+'  · ⚠ needs donor'}));
+  // Every data-entry form: ONLY donor-linked projects (unmapped = invisible until mapped)
+  return l.filter(p=>m[p.id]);
+}
 function comboHTML(key, options, value){
   __COMBO[key]={opts:options||[]};
   const cur=(options||[]).find(o=>String(o.id)===String(value));
@@ -1018,6 +1029,19 @@ function validatePayload(key, payload){
   }
   return null;
 }
+/* Keep donor_mappings in sync with the Project form's "Funded by" field:
+   no mapping yet → create one; donor changed → update the existing row. */
+async function upsertProjectDonorMapping(projectBizId, donorId, programmeId){
+  if(!projectBizId||!donorId) return;
+  try{
+    if(String((LOOKUPS.project_donor||{})[projectBizId]||'')===String(donorId)) return;   // already linked
+    const d=await apiGet('?resource=mappings&project_id='+encodeURIComponent(projectBizId)+'&limit=5');
+    const ex=(d.rows||[])[0];
+    if(ex) await apiPut('?resource=mappings&id='+ex.id, {donor_id:donorId, programme_id:programmeId||ex.programme_id||''});
+    else await apiPost('?resource=mappings', {donor_id:donorId, programme_id:programmeId||'', project_id:projectBizId,
+      donor_funded_component:'Core funding', remarks:'Auto-linked from the Project form'});
+  }catch(e){ toast('⚠ Project saved, but the donor link failed: '+e.message+' — add it in Donor Mapping','t-err'); }
+}
 async function checkDuplicate(key, payload){
   try{
     let parts=null;
@@ -1156,6 +1180,10 @@ function achvCell(row){
 function cellRender(row,col){
   const [k,l,type]=col;
   if(type==='achv') return achvCell(row);
+  // Donor↔Project linkage status — mapped shows the funding donor, unmapped is loudly flagged
+  if(type==='maplink'){ const did=(LOOKUPS.project_donor||{})[row.project_id];
+    return did ? `<span class="fchip">💠 ${esc(lblOf(LOOKUPS.donors,did))}</span>`
+               : `<span style="display:inline-block;background:var(--warn-soft);color:var(--warn);font-weight:700;font-size:11.5px;border-radius:7px;padding:3px 9px" title="Not linked to a donor — hidden from Data Entry until mapped">⚠ Unmapped</span>`; }
   // Foreign-key columns → show the human NAME the server resolved, not the cryptic ID
   if(k.endsWith('_id') && row[k+'__name']!=null){
     return `<span class="t-name">${esc(row[k+'__name']||'—')}</span>`;
@@ -1193,6 +1221,14 @@ async function renderResource(key){
     filterBar=fhtml;
   }
   const head=cfg.cols.map(c=>`<th>${esc(c[1])}</th>`).join('')+'<th>Actions</th>';
+  // Projects: donor-linkage health banner — unmapped projects break auto-fill & donor reports
+  let linkBanner='';
+  if(key==='projects'){
+    const all=LOOKUPS.projects||[], un=unmappedProjects();
+    linkBanner = un.length
+      ? `<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:11px;padding:11px 15px;margin-bottom:14px;font-size:13px;color:var(--t1)">⚠ <b>${un.length} of ${all.length} project${all.length>1?'s':''} not linked to a donor:</b> ${esc(un.slice(0,4).map(p=>p.label).join(', '))}${un.length>4?' + '+(un.length-4)+' more':''}. Unmapped projects are <b>hidden from Data Entry &amp; Workspaces</b> and their data can never reach donor reports. <a onclick="goPage('mappings')" style="color:var(--brand);cursor:pointer;text-decoration:underline;font-weight:600">Fix in Donor Mapping →</a></div>`
+      : (all.length?`<div style="background:var(--ok-soft);border:1px solid var(--ok);border-radius:11px;padding:10px 15px;margin-bottom:14px;font-size:13px;color:var(--t1)">✓ All ${all.length} project${all.length>1?'s':''} linked to a donor — the Donor → Thematic → Project chain is complete.</div>`:'');
+  }
   $('main').innerHTML=`
     <div class="page-head" data-accent style="--sec-accent:var(${SECTION_ACCENT[key]||'--brand'})"><div><div class="page-title">${esc(cfg.label)}</div><div class="page-sub">${esc(cfg.sub)}</div></div>
       <div class="page-actions">
@@ -1203,6 +1239,7 @@ async function renderResource(key){
         </div>
         ${canW?`<button class="btn btn-primary btn-sm" onclick="openForm('${key}')">+ New</button>`:''}
       </div></div>
+    ${linkBanner}
     ${filterBar}
     ${cfg.filters?`<div id="res-chips" class="fchips"></div>`:''}
     ${key==='geographies' ? `<div id="geo-summary" class="geo-summary"><div class="geo-stat"><div class="geo-stat-val">…</div><div class="geo-stat-lbl">Loading coverage…</div></div></div>` : ''}
@@ -1468,6 +1505,7 @@ function donorCard(row,i,canW,canD){
       <span class="bdg bdg-completed">${esc(row.donor_type||'—')}</span>
     </div>
     <div class="ent-body">${contact?('<strong>'+esc(contact)+'</strong>'):'<span style="color:var(--t4)">No contact</span>'}${comm?('<br>'+esc(comm)):''}</div>
+    ${((LOOKUPS.donor_projects||{})[row.donor_id]||[]).length?'':`<div style="background:var(--warn-soft);color:var(--warn);font-size:11.5px;font-weight:700;border-radius:8px;padding:6px 10px;margin-bottom:10px">⚠ Not funding any project yet — <a onclick="goPage('mappings')" style="color:var(--brand);cursor:pointer;text-decoration:underline">map a project</a> so its data can flow</div>`}
     <div class="ent-stats">
       <div class="ent-stat"><div class="ent-stat-val" style="font-size:15px">${fmtCr(row.total_approved_budget_inr)}</div><div class="ent-stat-lbl">Approved</div></div>
       <div class="ent-stat"><div class="ent-stat-val">${fmt(row._projects)}</div><div class="ent-stat-lbl">Projects</div></div>
@@ -1500,6 +1538,8 @@ async function openForm(key,id){
   const cfg=RES[key]; let row={};
   if((cfg.fields||[]).some(f=>f[0]==='beneficiary_id' && f[2]==='ref')) await ensureBeneficiaries();
   if(id){ try{const d=await apiGet('?resource='+key+'&id='+id); row=d.row||{};}catch(e){toast('⚠ '+e.message,'t-err');return;} }
+  // Project edit: pre-fill "Funded by" from the current donor↔project mapping
+  if(key==='projects' && id && !row.donor_id) row.donor_id=(LOOKUPS.project_donor||{})[row.project_id]||'';
   const idCol=AUTO_ID[key];
   const fields=cfg.fields.map(f=>{
     const [k,l,type,opts]=f; let v=row[k]==null?'':row[k]; const req=(f[2]===1);
@@ -1520,7 +1560,10 @@ async function openForm(key,id){
     else if(type==='sel')inp=`<select id="ff-${k}"><option value="">— Select —</option>${opts.map(o=>`<option ${o==v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
     else if(type==='dl')inp=`<input id="ff-${k}" list="dl-${k}" value="${esc(v)}"><datalist id="dl-${k}">${opts.map(o=>`<option>${esc(o)}</option>`).join('')}</datalist>`;
     else if(type==='ref'&&k==='programme_id')inp=comboHTML('programme_id',(LOOKUPS.programmes||[]),v)+inlineAddBtn('programmes','thematic area');
-    else if(type==='ref'&&k==='project_id')inp=comboHTML('project_id',projectListFor(row.programme_id||''),v)+inlineAddBtn('projects','project');
+    else if(type==='ref'&&k==='project_id'){ const _pl=projectListFor(row.programme_id||'');
+      const _hidden=(key==='mappings')?0:unmappedProjects().filter(p=>!row.programme_id||!p.programme_id||p.programme_id===row.programme_id).length;
+      inp=comboHTML('project_id',_pl,v)+inlineAddBtn('projects','project')
+        +(_hidden>0?`<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ ${_hidden} project${_hidden>1?'s':''} hidden — no donor linked yet. <a onclick="goPage('mappings')" style="color:var(--brand);cursor:pointer;text-decoration:underline">Map in Donor Mapping</a> to use ${_hidden>1?'them':'it'} here.</div>`:''); }
     else if(type==='ref'&&k==='donor_id')inp=comboHTML('donor_id',(LOOKUPS.donors||[]),v)+inlineAddBtn('donors','donor');
     else if(type==='ref'&&k==='geography_id')inp=comboHTML('geography_id',(LOOKUPS.geographies||[]),v)+(canWriteResource('geographies')?`<div style="margin-top:6px"><button type="button" class="btn btn-ghost btn-xs" onclick="gotoNewRecord('geographies','geography_id')">＋ New geography (not in list)</button></div>`:'');
     else if(type==='ref')inp=comboHTML(k,(LOOKUPS[opts]||[]),v);
@@ -1806,7 +1849,8 @@ function foSetupHTML(){
       <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
         <select class="r-inp" onchange="foDraftSet('district',this.value)"><option value="">— Select district —</option>${districts.map(o=>opt(o.id,d.district)).join('')}</select>${nb('geographies','New district')}</div>
       <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>
-        <select class="r-inp" onchange="foDraftSet('project_id',this.value)"><option value="">— Select project —</option>${(LOOKUPS.projects||[]).map(p=>`<option value="${esc(p.id)}" ${String(d.project_id)===String(p.id)?'selected':''}>${esc(p.label)}</option>`).join('')}</select>${nb('projects','New project')}</div>
+        <select class="r-inp" onchange="foDraftSet('project_id',this.value)"><option value="">— Select project —</option>${mappedProjects().map(p=>`<option value="${esc(p.id)}" ${String(d.project_id)===String(p.id)?'selected':''}>${esc(p.label)}</option>`).join('')}</select>
+        ${unmappedProjects().length?`<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ ${unmappedProjects().length} project${unmappedProjects().length>1?'s':''} hidden — no donor linked yet (Donor Mapping)</div>`:''}${nb('projects','New project')}</div>
       <div class="f"><label>Donor <span class="fo-auto">auto</span></label>
         <input class="r-inp" readonly value="${esc(der.donor_id?lblOf(LOOKUPS.donors,der.donor_id):'')}" placeholder="— shown after project —" style="background:var(--bg-soft)">${nb('donors','New donor')}</div>
       <div class="f"><label>Thematic Area <span class="fo-auto">auto</span></label>
@@ -2033,13 +2077,14 @@ async function hqDelete(id){ if(!confirm('Delete this HQ target row?')) return;
   try{ await apiDel('?resource=hq_targets&id='+id); toast('✓ Deleted'); loadHQList(); }catch(e){ toast('⚠ '+e.message,'t-err'); } }
 
 function renderHQSetupHTML(){
-  const projOpts=(LOOKUPS.projects||[]).map(p=>`<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
+  const projOpts=mappedProjects().map(p=>`<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
   return `<div class="card" style="background:linear-gradient(135deg,#fef9f3,#fff);border:1.5px solid #fde9cf">
     <div class="card-title" style="margin:0">🏢 HQ Setup — Plan &amp; Targets</div>
     <div class="card-sub" style="margin-top:2px">One donor can fund many districts. Pick the Project (Donor &amp; Thematic Area fill in automatically), then add each District with its planned targets. Each district is saved as its own target row.</div>
     <div class="fo-grid" style="margin-top:14px">
       <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>
         <select id="hq-project" onchange="hqOnProject()"><option value="">— Select project —</option>${projOpts}</select>
+        ${unmappedProjects().length?`<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ ${unmappedProjects().length} project${unmappedProjects().length>1?'s':''} hidden — link ${unmappedProjects().length>1?'them':'it'} to a donor in <a onclick="goPage('mappings')" style="color:var(--brand);cursor:pointer;text-decoration:underline">Donor Mapping</a> first</div>`:''}
         <div class="fo-newrow">${deNewBtn('projects','New project')}</div></div>
       <div class="f"><label>Donor <span class="fo-auto">auto</span></label><input id="hq-donor" readonly placeholder="— shown after project —" style="background:var(--bg-soft)">
         <div class="fo-newrow">${deNewBtn('donors','New donor')}</div></div>
@@ -2650,6 +2695,8 @@ async function saveForm(key,id){
   if(key==='users' && !id){ payload.username=(payload.email||payload.user_name||'user').split('@')[0].toLowerCase().replace(/[^a-z0-9]/g,''); payload.password_hash=''; }
   // Data-quality validation (age / phone / negative amounts)
   { const vErr=validatePayload(key,payload); if(vErr){ toast('⚠ '+vErr,'t-err'); return; } }
+  // Donor↔Project linkage is MANDATORY — without it the project is invisible to Data Entry & donor reports
+  if(key==='projects' && !String(payload.donor_id||'').trim()){ toast('⚠ Select the Donor funding this project — the donor↔project link powers Data Entry & every donor report','t-err'); return; }
   // Baseline income validation — the activity breakdown total must match the registration income
   if(key==='beneficiaries'){
     const blKeys=['bl_paddy_income','bl_millet_income','bl_vegetable_income','bl_mushroom_income','bl_goat_income','bl_poultry_income','bl_micro_enterprise_income'];
@@ -2688,11 +2735,13 @@ async function saveForm(key,id){
   try{
     if(id){
       await apiPut('?resource='+key+'&id='+id,payload); toast('✓ Saved'); __FORM_INITIAL=null;
+      if(key==='projects'){ try{ const pd=await apiGet('?resource=projects&id='+id); await upsertProjectDonorMapping((pd.row||{}).project_id, payload.donor_id, payload.programme_id); }catch(e){} }
       if(key==='beneficiaries') LOOKUPS._benLoaded=false;
       LOOKUPS._loaded=false; await ensureLookups(); goPage(__formReturn||key);
     } else {
       const r=await apiPost('?resource='+key,payload);
       toast('✓ Created'+(r&&r.business_id?' — ID '+r.business_id:'')); __FORM_INITIAL=null;
+      if(key==='projects') await upsertProjectDonorMapping(r&&r.business_id, payload.donor_id, payload.programme_id);
       if(key==='beneficiaries') LOOKUPS._benLoaded=false;
       LOOKUPS._loaded=false; await ensureLookups();
       // Created via a "＋ New …" redirect? Return to the form we came from and select the new record.
@@ -4361,7 +4410,7 @@ function periodLabel(code){return code==='M'?'Monthly':code==='Q'?'Quarterly':co
 async function renderMisStatus(){
   await ensureLookups();
   const staffOpts=(LOOKUPS.staff||[]).map(s=>`<option value="${esc(s.id)}">${esc(s.label)}</option>`).join('');
-  const projOpts=(LOOKUPS.projects||[]).map(p=>`<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
+  const projOpts=mappedProjects().map(p=>`<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
   const distOpts=rptGeoList('district').map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('');
   $('main').innerHTML=`
     <div class="page-head"><div><div class="page-title">MIS Status</div>
