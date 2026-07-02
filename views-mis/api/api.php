@@ -99,6 +99,18 @@ function is_admin(){
   $r=strtolower($u['role'] ?? '');
   return strpos($r,'admin')!==false || !empty($u['is_root']);
 }
+/* Users & Access is grantable via the permission matrix ('users' row):
+   v = see the user list · e = create/edit users & their permissions · d = delete users.
+   Root-protected accounts remain modifiable ONLY by root callers. */
+function can_manage_users($verb='e'){
+  if(is_admin()) return true;
+  $u=current_user(); if(!$u) return false;
+  $map=load_user_permissions($u['id']);
+  if(!isset($map['users'])) return false;
+  if($verb==='v') return $map['users']['v']===1;
+  if($verb==='d') return $map['users']['d']===1;
+  return $map['users']['e']===1;
+}
 
 /* validate the incoming session token + tab id against the users table.
    Refreshes session_expires_at on every successful call. */
@@ -388,7 +400,7 @@ if ($action==='heartbeat') {
 
 /* ════════════════ ADMIN: PASSWORD RESET ════════════════ */
 if ($action==='reset_password') {
-  require_admin();
+  if(!can_manage_users('e')) out(['error'=>'You do not have permission to manage users'],403);
   $b=body();
   $uid = (int)($b['user_id'] ?? 0);
   $newp = $b['new_password'] ?? '';
@@ -396,6 +408,8 @@ if ($action==='reset_password') {
   $st=db()->prepare("SELECT id,username,is_root FROM users WHERE id=?"); $st->execute([$uid]);
   $target=$st->fetch();
   if(!$target) out(['error'=>'User not found'],404);
+  $meU=current_user();
+  if(!empty($target['is_root']) && empty($meU['is_root'])) out(['error'=>'Only a root admin can reset a root-protected account'],403);
   $hash = password_hash($newp, PASSWORD_BCRYPT);
   $up = db()->prepare(
     "UPDATE users SET password_hash=?, password_changed_at=NOW(),
@@ -411,13 +425,13 @@ if ($action==='reset_password') {
 /* ════════════════ ADMIN: PERMISSION MATRIX ════════════════ */
 if ($action==='user_permissions') {
   if($method==='GET'){
-    require_admin();
+    if(!can_manage_users('v')) out(['error'=>'You do not have permission to view user permissions'],403);
     $uid = (int)($_GET['user_id'] ?? 0);
     if(!$uid) out(['error'=>'user_id is required'],400);
     out(['user_id'=>$uid,'permissions'=>load_user_permissions($uid)]);
   }
   if($method==='POST'){
-    require_admin();
+    if(!can_manage_users('e')) out(['error'=>'You do not have permission to change user permissions'],403);
     $b=body();
     $uid=(int)($b['user_id'] ?? 0);
     $perms=$b['permissions'] ?? [];
@@ -1019,6 +1033,7 @@ if (!can_view($resource)) out(['error'=>'You do not have access to '.$resource],
 
 if ($method==='GET') {
  try {
+  if($resource==='users' && !can_manage_users('v')) out(['error'=>'You do not have permission to view users'],403);
   $cols=table_columns($table);
   $where=[]; $params=[];
   foreach($_GET as $k=>$v){
@@ -1080,11 +1095,12 @@ if ($method==='GET') {
 }
 
 if ($method==='POST') {
-  // users: admin-only
+  // users: admins OR matrix-granted user managers
   if($resource==='users'){
-    require_admin();
+    if(!can_manage_users('e')) out(['error'=>'You do not have permission to create users'],403);
     $b=body(); $cols=table_columns($table);
     if(empty($b['username']) || empty($b['password'])) out(['error'=>'Username and password are required'],400);
+    if(!is_admin() && stripos($b['role']??'','admin')!==false) out(['error'=>'Only an admin can create admin accounts'],403);
     if(strlen($b['password'])<6) out(['error'=>'Password must be at least 6 characters'],400);
     $b['password_hash']=password_hash($b['password'],PASSWORD_BCRYPT);
     unset($b['password']);
@@ -1144,11 +1160,18 @@ if ($method==='POST') {
 if ($method==='PUT') {
   if(!$id) out(['error'=>'id required'],400);
   if($resource==='users'){
-    require_admin();
+    if(!can_manage_users('e')) out(['error'=>'You do not have permission to edit users'],403);
     $cols=table_columns($table);
     $st=db()->prepare("SELECT * FROM users WHERE id=?"); $st->execute([$id]); $existing=$st->fetch();
     if(!$existing) out(['error'=>'User not found'],404);
     $b=body();
+    // Root-protected accounts can only be touched by another root admin
+    if(!empty($existing['is_root']) && empty((current_user()??[])['is_root'])) out(['error'=>'Only a root admin can modify a root-protected account'],403);
+    // Matrix-granted managers handle non-admin accounts only (no promoting to Admin either)
+    if(!is_admin()){
+      if(stripos($existing['role']??'','admin')!==false) out(['error'=>'Only an admin can edit admin accounts'],403);
+      if(isset($b['role']) && stripos($b['role'],'admin')!==false) out(['error'=>'Only an admin can promote a user to admin'],403);
+    }
     // Root protection — only a ROOT admin may grant or revoke it (a plain admin could
     // previously slip is_root onto a non-root user), and the system always keeps at
     // least one root admin so nobody can lock everyone out.
@@ -1211,8 +1234,9 @@ if ($method==='PUT') {
 if ($method==='DELETE') {
   if(!$id) out(['error'=>'id required'],400);
   if($resource==='users'){
-    require_admin();
-    $st=db()->prepare("SELECT id,username,is_root FROM users WHERE id=?"); $st->execute([$id]); $target=$st->fetch();
+    if(!can_manage_users('d')) out(['error'=>'You do not have permission to delete users'],403);
+    $st=db()->prepare("SELECT id,username,role,is_root FROM users WHERE id=?"); $st->execute([$id]); $target=$st->fetch();
+    if($target && !is_admin() && stripos($target['role']??'','admin')!==false) out(['error'=>'Only an admin can delete admin accounts'],403);
     if(!$target) out(['error'=>'User not found'],404);
     if(!empty($target['is_root'])) out(['error'=>'The root admin cannot be deleted'],403);
     $me = current_user();

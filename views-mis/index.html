@@ -558,7 +558,7 @@ function can(perm){
   if(!CU) return false;
   const r=(CU.role||'').toLowerCase();
   if(r.includes('admin') || CU.is_root) return true;
-  if(perm==='users') return false;
+  if(perm==='users') return !!(CU.permissions && CU.permissions.users && CU.permissions.users.e===1);   // grantable via the matrix (Edit bit)
   if(perm==='view')  return true;
   if(perm==='write' || perm==='delete'){
     const sec = CP;
@@ -779,9 +779,8 @@ let CP='dash';
 function navAllowed(key){
   if(!CU) return false;
   if(CU.is_root || (CU.role||'').toLowerCase().includes('admin')) return true;
-  if(key==='users') return false;                                   // admins only, always
-  // Sensitive modules: hidden unless the admin explicitly ticks them in the matrix
-  if(key==='misstatus' || key==='audit') return !!(CU.permissions && CU.permissions[key] && CU.permissions[key].v===1);
+  // Sensitive modules (incl. Users & Access): hidden unless the admin explicitly ticks them
+  if(key==='users' || key==='misstatus' || key==='audit') return !!(CU.permissions && CU.permissions[key] && CU.permissions[key].v===1);
   if(key==='dataentry') return canFO() || canHQ();                  // two-tier: either grant opens the page
   const pk = key==='dash' ? 'dashboard' : key;                      // matrix stores 'dashboard'
   if(CU.permissions && CU.permissions[pk]) return CU.permissions[pk].v===1;
@@ -2213,6 +2212,7 @@ const PERMISSION_SECTIONS = [
   ['dataentry_hq','Data Entry — HQ Setup & Targets','page'],
   ['misstatus','MIS Status — every officer\'s workspaces (sensitive)','page'],
   ['audit','Audit Trail (sensitive)','page'],
+  ['users','Users & Access — manage logins & permissions (sensitive)','page'],
   ['programmes','Thematic Areas',null,'Master data — records this user can view / edit / delete'],
   ['objectives','Thematic Area Objectives'],
   ['projects','Projects'],['project_objectives','Project Objectives'],
@@ -2306,10 +2306,10 @@ async function openUserForm(id){
 /* One-click starting points for the permission matrix — apply, then fine-tune any box. */
 function permPreset(mode){
   const FIELD_EDIT=['beneficiaries','crops','activities','shgs','loans','progress','workspaces'];
-  const SENSITIVE=['misstatus','audit'];
+  const SENSITIVE=['misstatus','audit','users'];
   document.querySelectorAll('#perm-matrix input[type=checkbox]').forEach(cb=>{
     const sec=cb.dataset.sec, k=cb.dataset.k; let on=false;
-    if(mode==='hq') on=true;                                                              // everything (Users & Access stays admin-only regardless)
+    if(mode==='hq') on=(sec!=='users');                    // everything except Users & Access — tick that one deliberately
     else if(mode==='viewer') on=(k==='v' && !SENSITIVE.includes(sec) && sec!=='dataentry_fo' && sec!=='dataentry_hq');
     else if(mode==='field') on=(sec==='dataentry_fo'&&k==='v') || (FIELD_EDIT.includes(sec)&&(k==='v'||k==='e'));
     cb.checked=on;
