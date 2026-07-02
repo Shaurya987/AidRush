@@ -1089,9 +1089,15 @@ if ($method==='POST') {
     $b['password_hash']=password_hash($b['password'],PASSWORD_BCRYPT);
     unset($b['password']);
     $b['password_changed_at']=ist_now();
+    // Only a ROOT admin may create another root-protected account
+    $meU=current_user();
+    if(array_key_exists('is_root',$b)){
+      if(empty($meU['is_root'])) unset($b['is_root']);
+      else $b['is_root']=$b['is_root']?1:0;
+    }
     $set=[]; $ph=[]; $vals=[];
     foreach($b as $k=>$v){
-      if(in_array($k,$cols) && !in_array($k,['id','created_at','active_session_token','active_tab_id','session_expires_at','last_login','last_seen','failed_login_count','locked_until','is_root'])){
+      if(in_array($k,$cols) && !in_array($k,['id','created_at','active_session_token','active_tab_id','session_expires_at','last_login','last_seen','failed_login_count','locked_until'])){
         $set[]="`$k`"; $ph[]='?'; $vals[]=($v===''?null:$v);
       }
     }
@@ -1143,11 +1149,21 @@ if ($method==='PUT') {
     $st=db()->prepare("SELECT * FROM users WHERE id=?"); $st->execute([$id]); $existing=$st->fetch();
     if(!$existing) out(['error'=>'User not found'],404);
     $b=body();
-    // Root admin can't be demoted from admin or have is_root removed
+    // Root protection — only a ROOT admin may grant or revoke it (a plain admin could
+    // previously slip is_root onto a non-root user), and the system always keeps at
+    // least one root admin so nobody can lock everyone out.
+    $meU=current_user();
+    if(array_key_exists('is_root',$b)){
+      if(empty($meU['is_root'])) unset($b['is_root']);
+      else $b['is_root']=$b['is_root']?1:0;
+    }
     if(!empty($existing['is_root'])){
       if(isset($b['role']) && stripos($b['role'],'admin')===false) out(['error'=>'Root admin role cannot be changed'],403);
       if(isset($b['username']) && strtolower($b['username'])!==strtolower($existing['username'])) out(['error'=>'Root admin username cannot be changed'],403);
-      unset($b['is_root']);
+      if(array_key_exists('is_root',$b) && !$b['is_root']){
+        $rc=(int)db()->query("SELECT COUNT(*) c FROM users WHERE is_root=1")->fetch()['c'];
+        if($rc<=1) out(['error'=>'Cannot remove root protection from the last root admin'],403);
+      }
     }
     // Password change: optional — only via reset_password endpoint OR if "new_password" provided here
     if(!empty($b['password']) || !empty($b['new_password'])){
