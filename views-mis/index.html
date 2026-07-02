@@ -186,7 +186,9 @@ a{color:inherit;text-decoration:none}
 .page{display:none;animation:fadeIn .25s}
 .page.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.page-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:24px}
+/* position+z-index lift the page-head's stacking context above sticky table headers —
+   without it the entry animation (fill-mode:both) traps the Export ▾ menu UNDER the thead */
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:24px;position:relative;z-index:30}
 .page-title{font-family:'Plus Jakarta Sans';font-size:30px;font-weight:800;letter-spacing:-.6px;color:var(--t1);line-height:1.15}
 .page-sub{color:var(--t3);font-size:14.5px;margin-top:5px;max-width:680px}
 .page-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -582,6 +584,22 @@ function canWriteResource(res){
   return true; // verifier / data-entry default when no explicit matrix row
 }
 
+/* ── Two-tier Data Entry access — HQ planning and field entry are SEPARATE grants.
+   Field officers see only Field-Office Entry; HQ Setup & Targets needs its own tick.
+   Falls back to the legacy single "dataentry" row, then to the role default. ── */
+function canFO(){ if(!CU) return false; const r=(CU.role||'').toLowerCase();
+  if(r.includes('admin')||CU.is_root) return true;
+  const m=CU.permissions||{};
+  if(m['dataentry_fo']) return m['dataentry_fo'].v===1;
+  if(m['dataentry'])    return m['dataentry'].v===1;
+  return !r.includes('donor') && !r.includes('view'); }
+function canHQ(){ if(!CU) return false; const r=(CU.role||'').toLowerCase();
+  if(r.includes('admin')||CU.is_root) return true;
+  const m=CU.permissions||{};
+  if(m['dataentry_hq']) return m['dataentry_hq'].v===1;
+  if(m['dataentry'])    return m['dataentry'].v===1;
+  return !r.includes('donor') && !r.includes('view'); }
+
 /* ════════ RESOURCE CONFIG (DB snake_case keys) ════════ */
 const SEL_STATUS=['Planned','Ongoing','Completed','On Hold'];
 const RES={
@@ -761,8 +779,12 @@ let CP='dash';
 function navAllowed(key){
   if(!CU) return false;
   if(CU.is_root || (CU.role||'').toLowerCase().includes('admin')) return true;
-  if(key==='users' || key==='audit' || key==='misstatus') return false;  // admin-only sections
-  if(CU.permissions && CU.permissions[key]) return CU.permissions[key].v===1;
+  if(key==='users') return false;                                   // admins only, always
+  // Sensitive modules: hidden unless the admin explicitly ticks them in the matrix
+  if(key==='misstatus' || key==='audit') return !!(CU.permissions && CU.permissions[key] && CU.permissions[key].v===1);
+  if(key==='dataentry') return canFO() || canHQ();                  // two-tier: either grant opens the page
+  const pk = key==='dash' ? 'dashboard' : key;                      // matrix stores 'dashboard'
+  if(CU.permissions && CU.permissions[pk]) return CU.permissions[pk].v===1;
   return true; // legacy fall-through for non-matrix users
 }
 function buildNav(){
@@ -1956,7 +1978,7 @@ async function foFetchTarget(){
 async function foLoadTargets(){
   const box=$('fo-target-summary'); if(!box) return;
   const t=await foFetchTarget();
-  if(!t){ box.innerHTML=`<div style="font-size:12px;color:var(--t4)">No HQ targets set for this District &amp; Project yet — ${can('write')?'set them in the <a onclick="deTab(\'hq\')" style="color:var(--brand);cursor:pointer">HQ Setup</a> tab.':'ask your HQ to add them.'}</div>`; return; }
+  if(!t){ box.innerHTML=`<div style="font-size:12px;color:var(--t4)">No HQ targets set for this District &amp; Project yet — ${canHQ()?'set them in the <a onclick="deTab(\'hq\')" style="color:var(--brand);cursor:pointer">HQ Setup</a> tab.':'ask your HQ to add them.'}</div>`; return; }
   const cell=(lbl,v)=>`<span class="fo-tgt"><span>${esc(lbl)}</span><b>${v==null||v===''?'—':fmt(v)}</b></span>`;
   box.innerHTML=`<div style="font-size:11.5px;color:var(--t3);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">🎯 HQ Targets for this workspace</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2101,6 +2123,8 @@ function renderHQSetupHTML(){
 }
 /* ── Data Entry tab switcher (Field Office / HQ Setup) ── */
 function deTab(which){
+  if(which==='hq' && !canHQ()) which='fo';       // permission guard — no sneaking into the other tier
+  if(which==='fo' && !canFO()) which=canHQ()?'hq':which;
   __deTab=which;
   const fo=$('de-tab-fo'), hq=$('de-tab-hq');
   if(fo) fo.style.display = which==='hq'?'none':'';
@@ -2179,15 +2203,26 @@ function freqMonthPick(){
 }
 
 /* ────── ADMIN-ONLY USER FORM with permission matrix ────── */
+/* [key, label, kind, groupHeader] — kind 'page' rows are View-only (a page is either
+   visible or not; what the user can DO inside it is governed by the data rows below). */
 const PERMISSION_SECTIONS = [
-  ['dashboard','Dashboard'],['reports','Reports Centre'],['dataentry','Data Entry'],['audit','Audit Trail'],
-  ['programmes','Thematic Areas'],['objectives','Thematic Area Objectives'],
+  ['dashboard','Dashboard','page','Pages & modules — what this user can OPEN'],
+  ['reports','Reports & Analytics','page'],
+  ['dataentry_fo','Data Entry — Field-Office Entry','page'],
+  ['dataentry_hq','Data Entry — HQ Setup & Targets','page'],
+  ['misstatus','MIS Status — every officer\'s workspaces (sensitive)','page'],
+  ['audit','Audit Trail (sensitive)','page'],
+  ['programmes','Thematic Areas',null,'Master data — records this user can view / edit / delete'],
+  ['objectives','Thematic Area Objectives'],
   ['projects','Projects'],['project_objectives','Project Objectives'],
   ['donors','Donors'],['mappings','Donor Mappings'],
   ['geographies','Geography'],['villages','Village Demographics'],
-  ['beneficiaries','Beneficiaries'],['crops','Production / Outputs'],
+  ['beneficiaries','Beneficiaries',null,'Field data'],
+  ['crops','Production & Output Progress'],
   ['activities','Activities & Targets'],['shgs','SHGs'],['loans','SHG Loans'],
-  ['indicators','Indicators'],['progress','Indicator Progress'],
+  ['indicators','Indicators',null,'Monitoring & evaluation'],['progress','Indicator Progress'],
+  ['hq_targets','HQ Targets (plan rows)',null,'Planning & control'],
+  ['workspaces','Field Workspaces (records)'],
   ['charts','Custom Charts'],
 ];
 async function openUserForm(id){
@@ -2198,13 +2233,14 @@ async function openUserForm(id){
     try{ const p=await apiGet('?action=user_permissions&user_id='+id); perms=p.permissions||{}; }catch(e){}
   }
   const isRoot = row.is_root==1 || row.is_root===true;
-  const permsRows = PERMISSION_SECTIONS.map(([sec,label])=>{
+  const permsRows = PERMISSION_SECTIONS.map(([sec,label,kind,group])=>{
     const cur = perms[sec] || (isRoot ? {v:1,e:1,d:1} : {v:0,e:0,d:0});
-    return `<tr>
+    const cb=k=>`<td style="text-align:center"><input type="checkbox" data-sec="${sec}" data-k="${k}" ${cur[k]?'checked':''} ${isRoot?'disabled':''}></td>`;
+    const dash=`<td style="text-align:center;color:var(--t4)" title="Not applicable — pages are visible or not; actions are controlled by the data rows">—</td>`;
+    return (group?`<tr><td colspan="4" style="padding:10px 10px 4px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);background:var(--bg-soft)">${esc(group)}</td></tr>`:'')
+      +`<tr>
       <td style="padding:7px 10px;font-size:13px">${esc(label)}</td>
-      <td style="text-align:center"><input type="checkbox" data-sec="${sec}" data-k="v" ${cur.v?'checked':''} ${isRoot?'disabled':''}></td>
-      <td style="text-align:center"><input type="checkbox" data-sec="${sec}" data-k="e" ${cur.e?'checked':''} ${isRoot?'disabled':''}></td>
-      <td style="text-align:center"><input type="checkbox" data-sec="${sec}" data-k="d" ${cur.d?'checked':''} ${isRoot?'disabled':''}></td>
+      ${cb('v')}${kind==='page'?dash+dash:cb('e')+cb('d')}
     </tr>`;
   }).join('');
   const f = (k,l,type,opts,v,req)=>{
@@ -2235,7 +2271,13 @@ async function openUserForm(id){
        ${f('password','Password','password',null,'')}
      </div>
      <div style="margin-top:18px"><div class="card-title" style="margin-bottom:8px">Permission Matrix</div>
-       <div style="font-size:12.5px;color:var(--t3);margin-bottom:10px">Tick exactly what this user can see and do. <strong>View</strong> = read-only access · <strong>Edit</strong> = add &amp; update · <strong>Delete</strong> = remove records. The root admin always has full access.</div>
+       <div style="font-size:12.5px;color:var(--t3);margin-bottom:10px">Tick exactly what this user can see and do. <strong>View</strong> = read-only access · <strong>Edit</strong> = add &amp; update · <strong>Delete</strong> = remove records. The root admin always has full access; only admins ever see Users &amp; Access.</div>
+       ${isRoot?'':`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px">
+         <button type="button" class="btn btn-ghost btn-xs" onclick="permPreset('field')" title="Field-Office Entry + field data entry — no HQ, no admin pages">👷 Field officer</button>
+         <button type="button" class="btn btn-ghost btn-xs" onclick="permPreset('hq')" title="Everything except Users & Access">🏢 HQ staff</button>
+         <button type="button" class="btn btn-ghost btn-xs" onclick="permPreset('viewer')" title="View everything, change nothing">👁 Viewer</button>
+         <button type="button" class="btn btn-ghost btn-xs" onclick="permPreset('none')">✕ Clear all</button>
+       </div>`}
        <div style="border:1px solid var(--border);border-radius:10px;max-height:360px;overflow:auto">
        <table style="width:100%;border-collapse:collapse;font-size:13px">
          <thead><tr style="background:var(--bg-soft);position:sticky;top:0">
@@ -2253,6 +2295,19 @@ async function openUserForm(id){
        <button class="btn btn-primary" onclick="saveUser(${id||0})">${id?'Update User':'Create User'}</button>
        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
      </div>`);
+}
+/* One-click starting points for the permission matrix — apply, then fine-tune any box. */
+function permPreset(mode){
+  const FIELD_EDIT=['beneficiaries','crops','activities','shgs','loans','progress','workspaces'];
+  const SENSITIVE=['misstatus','audit'];
+  document.querySelectorAll('#perm-matrix input[type=checkbox]').forEach(cb=>{
+    const sec=cb.dataset.sec, k=cb.dataset.k; let on=false;
+    if(mode==='hq') on=true;                                                              // everything (Users & Access stays admin-only regardless)
+    else if(mode==='viewer') on=(k==='v' && !SENSITIVE.includes(sec) && sec!=='dataentry_fo' && sec!=='dataentry_hq');
+    else if(mode==='field') on=(sec==='dataentry_fo'&&k==='v') || (FIELD_EDIT.includes(sec)&&(k==='v'||k==='e'));
+    cb.checked=on;
+  });
+  toast('Preset applied — fine-tune any box, then Save');
 }
 function collectPerms(){
   const map={};
@@ -4328,11 +4383,11 @@ function renderDataEntry(){
     </div>
 
     <div class="de-tabs">
-      ${can('write')?`<button class="de-tab active" data-t="hq" type="button" onclick="deTab('hq')">🏢 HQ Setup &amp; Targets</button>`:''}
-      <button class="de-tab ${can('write')?'':'active'}" data-t="fo" type="button" onclick="deTab('fo')">📍 Field-Office Entry</button>
+      ${canHQ()?`<button class="de-tab active" data-t="hq" type="button" onclick="deTab('hq')">🏢 HQ Setup &amp; Targets</button>`:''}
+      ${canFO()?`<button class="de-tab ${canHQ()?'':'active'}" data-t="fo" type="button" onclick="deTab('fo')">📍 Field-Office Entry</button>`:''}
     </div>
 
-    <div id="de-tab-fo" style="display:${can('write')?'none':''}">
+    <div id="de-tab-fo" style="display:${canHQ()?'none':(canFO()?'':'none')}">
       <div id="fo-card">${foCardHTML()}</div>
       <div id="de-fo-hint" style="font-size:12.5px;color:var(--t3);background:var(--bg-soft);border-radius:10px;padding:10px 14px;margin:14px 0;display:${foActive()?'none':''}">💡 <b>Set your workspace above once</b> and every form below auto-fills Donor, Thematic Area, Project &amp; place — you only type the record's own details. (You can still open any form without a workspace; it just won't be pre-filled.)</div>
 
@@ -4359,16 +4414,16 @@ function renderDataEntry(){
       <div class="de-imp-grid">${importCards}</div>
     </div>
 
-    <div id="de-tab-hq" style="display:${can('write')?'':'none'}">${can('write')?renderHQSetupHTML():'<div class="empty-state"><div class="empty-title">HQ Setup is available to HQ staff</div><div class="empty-sub">You have data-entry access — use the Field-Office Entry tab.</div></div>'}</div>`;
+    <div id="de-tab-hq" style="display:${canHQ()?'':'none'}">${canHQ()?renderHQSetupHTML():'<div class="empty-state"><div class="empty-title">HQ Setup is available to HQ staff</div><div class="empty-sub">You have field-entry access — use the Field-Office Entry tab.</div></div>'}</div>`;
   loadEntryCounts();
   syncEntryLock();
   // Restore the tab when returning from a "+ New …" form; otherwise HQ Setup is the default landing tab.
-  if(__rz && __rz.tab==='hq' && can('write')){
+  if(__rz && __rz.tab==='hq' && canHQ()){
     if(Array.isArray(__rz.hqRows) && __rz.hqRows.length) HQ_ROWS=__rz.hqRows;
     deTab('hq');
     if(__rz.hqProject){ const hp=$('hq-project'); if(hp){ hp.value=__rz.hqProject; hqOnProject(); } }
-  } else if(__rz && __rz.tab==='fo'){ deTab('fo'); }
-  else { deTab(can('write')?'hq':'fo'); }
+  } else if(__rz && __rz.tab==='fo' && canFO()){ deTab('fo'); }
+  else { deTab(canHQ()?'hq':'fo'); }
   foLoadAssignments();   // populates "My assignments" + the quick-start picker, then re-renders
   // pull my workspaces from the server (assigned ones appear here automatically)
   foSyncWorkspaces().then(()=>{ if(CP==='dataentry'&&FO_MODE==='list') foRerender(); });
@@ -4417,7 +4472,7 @@ async function renderMisStatus(){
       <div class="page-sub">Every field officer's workspaces, live — see who is working where, and assign new workspaces. Assigned ones appear in the officer's Field-Office Entry automatically.</div></div>
       <div class="page-actions"><button class="btn btn-ghost btn-sm" onclick="loadMisStatus()">⟳ Refresh</button></div></div>
     <div class="kpi-grid kg-4" id="mis-stats" style="margin-bottom:16px"></div>
-    <div class="card" style="background:linear-gradient(135deg,#f7fafe,#fff);border:1.5px solid var(--brand-soft)">
+    ${canWriteResource('workspaces')?`<div class="card" style="background:linear-gradient(135deg,#f7fafe,#fff);border:1.5px solid var(--brand-soft)">
       <div class="card-title" style="margin:0">📌 Assign a workspace</div>
       <div class="card-sub" style="margin-top:2px">Pick the officer, the Project and the District — Donor &amp; Thematic Area come from the Project automatically. Village is optional (the officer can pick it when they start).</div>
       <div class="fo-grid" style="margin-top:14px">
@@ -4429,7 +4484,7 @@ async function renderMisStatus(){
         <div class="f"><label>Donor · Thematic <span class="fo-auto">auto</span></label><input id="mis-auto" readonly placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
       </div>
       <div class="form-actions" style="margin-top:12px"><button class="btn btn-primary" onclick="misAssign()">📌 Assign workspace</button></div>
-    </div>
+    </div>`:''}
     <div class="card" style="margin-top:14px">
       <div class="card-title" style="margin:0">👥 Workspaces by officer</div>
       <div class="card-sub" style="margin-top:2px">The green dot marks the workspace each officer is working in right now.</div>
