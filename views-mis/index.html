@@ -4077,7 +4077,7 @@ async function _smartLoad(file){
       mapped.push(result.payload); issues.push(result);
       if(result.valid) valid++; else errs++;
     }
-    plans.push({sheet:name, resource:route.key, rows:raw.length, valid, errs, payload:mapped, issues, mapping, confidence:route.confidence});
+    plans.push({sheet:name, resource:route.key, rows:raw.length, valid, errs, payload:mapped, issues, mapping, raw, confidence:route.confidence});
   }
   SMART_STATE.plans=plans;
   _smartStep2Render();
@@ -4143,17 +4143,22 @@ function smartOverrideRoute(i, key){
       mapped.push(res.payload); issues.push(res);
       if(res.valid) valid++; else errs++;
     }
-    SMART_STATE.plans[i]={...SMART_STATE.plans[i], rows:raw.length, valid, errs, payload:mapped, issues, mapping, confidence:'manual'};
+    SMART_STATE.plans[i]={...SMART_STATE.plans[i], rows:raw.length, valid, errs, payload:mapped, issues, mapping, raw, confidence:'manual'};
   }
   _smartStep2Render();
 }
 async function smartRun(){
   let okTotal=0, errTotal=0;
   const messages=[];
+  SMART_STATE.failures=[];   // every rejected row, with its reason — downloadable as a fix-and-reimport Excel
   for(const p of SMART_STATE.plans){
     if(!p.resource) continue;
-    const validPayloads=p.issues.filter(x=>x.valid).map(x=>x.payload);
-    if(!validPayloads.length){ messages.push(`<span style="color:var(--warn)">⚠ ${esc(p.sheet)}: no valid rows</span>`); continue; }
+    const validIdx=[], validPayloads=[];
+    p.issues.forEach((x,i)=>{
+      if(x.valid){ validIdx.push(i); validPayloads.push(x.payload); }
+      else SMART_STATE.failures.push({sheet:p.sheet, reason:(x.issues||[]).filter(e=>e.level==='err').map(e=>e.msg).join('; ')||'Invalid row', row:(p.raw&&p.raw[i])||x.payload||{}});
+    });
+    if(!validPayloads.length){ messages.push(`<span style="color:var(--warn)">⚠ ${esc(p.sheet)}: no valid rows</span>`); errTotal+=p.issues.length; continue; }
     $('modal-body').innerHTML=`<div class="modal-head"><div class="modal-title">⏳ Importing…</div></div>
       <div style="padding:36px 24px;text-align:center">
         <div class="imp-spinner">⏳</div>
@@ -4162,27 +4167,48 @@ async function smartRun(){
     try{
       const r=await apiPost('?action=bulk_create',{resource:p.resource, rows:validPayloads});
       okTotal += r.created; errTotal += (r.errors||[]).length;
+      (r.errors||[]).forEach(e=>{ const oi=validIdx[(+e.row||1)-1];
+        SMART_STATE.failures.push({sheet:p.sheet, reason:e.error||'Rejected by server', row:(p.raw&&p.raw[oi])||validPayloads[(+e.row||1)-1]||{}}); });
       messages.push(`<b>${esc(p.sheet)}</b> → ${RES[p.resource].label}: <span style="color:var(--ok)">${r.created} created</span>${(r.errors||[]).length?` · <span style="color:var(--warn)">${r.errors.length} skipped</span>`:''}`);
     }catch(e){
       messages.push(`<span style="color:var(--bad)">⚠ ${esc(p.sheet)}: ${esc(e.message)}</span>`);
     }
   }
+  errTotal = Math.max(errTotal, SMART_STATE.failures.length);
   $('modal-body').innerHTML=`<div class="modal-head"><div class="modal-title">✅ Smart Import Complete</div><div class="modal-close" onclick="closeModal()">×</div></div>
     <div style="padding:20px">
       <div class="imp-done">
         <div class="imp-done-emoji">✅</div>
         <div class="imp-done-num">${okTotal}</div>
         <div class="imp-done-lbl">rows imported across ${SMART_STATE.plans.filter(p=>p.resource).length} sheets</div>
-        ${errTotal?`<div class="imp-done-warn">⚠ ${errTotal} row${errTotal===1?'':'s'} skipped (per-row reason in audit log)</div>`:''}
+        ${errTotal?`<div class="imp-done-warn">⚠ ${errTotal} row${errTotal===1?'':'s'} skipped — download, fix &amp; re-import below</div>`:''}
       </div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.85;background:var(--bg-soft);border-radius:7px;padding:10px 13px;margin-top:14px">${messages.join('<br>')}</div>
       <div class="form-actions" style="margin-top:18px">
+        ${(SMART_STATE.failures||[]).length?`<button class="btn btn-ghost btn-sm" onclick="smartDownloadErrors()">⬇ Download failed rows (Excel)</button>`:''}
         <button class="btn btn-ghost" onclick="openSmartImport()">Import another</button>
         <span style="flex:1"></span>
         <button class="btn btn-primary" onclick="closeModal()">Done</button>
       </div>
     </div>`;
   toast('✓ Smart import complete · '+okTotal+' rows');
+}
+/* Every rejected row (pre-validation + server) → a styled Excel, grouped by source sheet,
+   with the reason in column A. Fix the reason, delete column A, re-import the same file. */
+function smartDownloadErrors(){
+  const fails=(SMART_STATE&&SMART_STATE.failures)||[]; if(!fails.length) return;
+  if(typeof XLSX==='undefined'){toast('Excel engine still loading…','t-warn');return;}
+  const bySheet={}; fails.forEach(f=>{ (bySheet[f.sheet||'Sheet']=bySheet[f.sheet||'Sheet']||[]).push(f); });
+  const sheets=Object.entries(bySheet).map(([name,list])=>{
+    const keys=[...new Set(list.flatMap(f=>Object.keys(f.row||{})))];
+    return { name:String(name).slice(0,24), title:'Failed rows — '+name,
+      subtitle:list.length+' rows · fix the "⚠ Why it failed" issues, delete that column, and re-import',
+      rows:list.map(f=>Object.assign({'⚠ Why it failed':f.reason}, f.row)),
+      cols:[{key:'⚠ Why it failed',label:'⚠ Why it failed',type:'text'}].concat(keys.map(k=>({key:k,label:k,type:'text'}))) };
+  });
+  XLS.workbook({ title:'VIEWS India MIS — Failed import rows', filters:[['Generated',nowIST()],['How to use','Fix each row, delete the reason column, re-import via Smart Import']],
+    sheets, filename:'VIEWS_India_MIS_failed_rows_'+todayIST()+'.xlsx' });
+  toast('✓ Failed rows downloaded — fix & re-import');
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -4381,10 +4407,12 @@ async function misAssign(){
     loadMisStatus();
   }catch(e){ toast('⚠ '+e.message+' — have you run sql/upgrade9.sql?','t-err'); }
 }
+let __MIS_ROWS=[];
 async function loadMisStatus(){
   let rows=[];
   try{ const d=await apiGet('?resource=workspaces&limit=2000'); rows=d.rows||[]; }
   catch(e){ const el=$('mis-list'); if(el) el.innerHTML='<div class="empty-state"><div class="empty-title">Workspaces table not found</div><div class="empty-sub">Run <b>sql/upgrade9.sql</b> once in phpMyAdmin, then click Refresh.</div></div>'; return; }
+  __MIS_ROWS=rows;
   const staff=LOOKUPS.staff||[];
   const st=$('mis-stats'); if(st) st.innerHTML=
     kpiCard('Field staff',fmt(staff.length),'user accounts','--brand','--brand-soft','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z')+
@@ -4402,6 +4430,7 @@ async function loadMisStatus(){
       ${String(r.assigned_by||'').trim()?`<span class="fchip" title="Assigned by HQ">📌 by ${esc(r.assigned_by)}</span>`:''}
       <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
         <span style="font-size:11px;color:var(--t4)">${esc(String(r.created_at||'').slice(0,10))}</span>
+        ${can('write')?`<button class="btn btn-ghost btn-xs" title="Rename workspace" onclick="misRenameWs(${r.id})">✎</button>`:''}
         ${can('delete')?`<button class="btn btn-ghost btn-xs" title="Remove workspace" onclick="misDeleteWs(${r.id})">🗑</button>`:''}
       </span></div>`; };
   const blocks=[], seen=new Set();
@@ -4421,6 +4450,15 @@ async function loadMisStatus(){
 }
 async function misDeleteWs(id){ if(!confirm("Remove this workspace? (The officer's saved records are not affected.)")) return;
   try{ await apiDel('?resource=workspaces&id='+id); toast('✓ Removed'); loadMisStatus(); }catch(e){ toast('⚠ '+e.message,'t-err'); } }
+async function misRenameWs(id){
+  const r=__MIS_ROWS.find(x=>+x.id===+id); if(!r) return;
+  const name=prompt('New workspace name:', r.name||''); if(name==null) return;
+  if(!name.trim()){ toast('⚠ Name cannot be empty','t-err'); return; }
+  try{ await apiPut('?resource=workspaces&id='+id,{name:name.trim()}); toast('✓ Renamed — the officer sees the new name on their next visit'); loadMisStatus(); }
+  catch(e){ toast('⚠ '+e.message,'t-err'); }
+}
+/* Live board — refresh MIS Status every 30s while it's open (silent, list + stats only) */
+setInterval(()=>{ if(CP==='misstatus' && CU) loadMisStatus(); }, 30000);
 
 async function renderReports(){
   $('main').innerHTML=`
