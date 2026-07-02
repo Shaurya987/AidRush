@@ -410,6 +410,9 @@ body.silent .page-head,body.silent .kpi,body.silent .chart-card,body.silent .car
 .ws-badge{font-size:9.5px;font-weight:800;color:var(--ok);background:var(--ok-soft);border-radius:5px;padding:1px 6px;letter-spacing:.4px;text-transform:uppercase}
 .ws-mini{border:none;border-left:1px solid var(--border);background:transparent;cursor:pointer;padding:0 10px;color:var(--t4);font-size:12px}
 .ws-mini:hover{background:var(--bg-soft);color:var(--t1)}
+/* Injected form toolbars (SHG-loan finder, data-entry frequency) — style their bare selects */
+#loan-shg-filter select,#entry-freq-wrap select{padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;background:#fff;color:var(--t1);font-family:inherit;outline:none;min-width:170px;max-width:300px;transition:all .15s}
+#loan-shg-filter select:focus,#entry-freq-wrap select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
 /* Inline "+ New" links under workspace / HQ selects */
 .fo-newrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .fo-newbtn{border:1px dashed var(--border-2,var(--border));background:transparent;color:var(--brand);font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:7px;cursor:pointer;font-family:inherit;transition:all .15s}
@@ -619,7 +622,7 @@ const RES={
     cols:[['beneficiary_id','ID'],['beneficiary_farmer_name','Name'],['gender','Gender','gender'],['caste','Social Order','caste'],['religion','Religion'],['village','Village'],['block','Block'],['primary_income_source','Income Source'],['current_income_per_annum_inr','Annual Income','inr']],
     filters:['programme_id','project_id','donor_id','caste','gender'],
     fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['__bl_hdr','Baseline livelihood income — at registration','group'],['bl_paddy_area','Baseline · Paddy — Area (acre)','num'],['bl_paddy_income','Baseline · Paddy — Income (₹)','blinc'],['bl_millet_area','Baseline · Millet — Area (acre)','num'],['bl_millet_income','Baseline · Millet — Income (₹)','blinc'],['bl_vegetable_area','Baseline · Vegetable — Area (acre)','num'],['bl_vegetable_income','Baseline · Vegetable — Income (₹)','blinc'],['bl_mushroom_income','Baseline · Mushroom Cultivation — Income (₹)','blinc'],['bl_goat_income','Baseline · Goat Rearing — Income (₹)','blinc'],['bl_poultry_income','Baseline · Backyard Poultry — Income (₹)','blinc'],['bl_micro_enterprise_income','Baseline · Micro Enterprise — Income (₹)','blinc'],['__bl_total','Total Baseline Income (auto)','bltotal'],['total_land_acre','Total Land (acres)','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
-  crops:{label:'Production / Outputs',sub:'Any intervention output — crops, alternative livelihoods, health, road safety, anything',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
+  crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — crops, alternative livelihoods, health, road safety, anything',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
     cols:[['beneficiary_id','Beneficiary'],['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['production_kg','Output Qty','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr']],
     filters:['programme_id','project_id','donor_id',['project_year','Year',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']]],
     fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity','num'],['rate_inr_per_kg','Rate (₹)','num'],['income_inr','Income (₹)','num'],['self_consumption_kg','Self Consumption','num'],['net_profit_inr','Net Profit (₹)','num'],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
@@ -658,7 +661,7 @@ const SECTIONS=[
   ['Field Data',[['beneficiaries'],['crops'],['activities']]],
   ['SHG & Finance',[['shgs'],['loans']]],
   ['Monitoring and Evaluation (MNE)',[['indicators'],['progress']]],
-  ['Admin',[['users'],['audit','Audit Trail','M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11']]],
+  ['Admin',[['misstatus','MIS Status','M2 3h20v14H2zM8 21h8M12 17v4'],['users'],['audit','Audit Trail','M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11']]],
 ];
 
 /* resource → its business-ID column (auto-generated by the server, never typed by users) */
@@ -758,7 +761,7 @@ let CP='dash';
 function navAllowed(key){
   if(!CU) return false;
   if(CU.is_root || (CU.role||'').toLowerCase().includes('admin')) return true;
-  if(key==='users' || key==='audit') return false;  // admin-only sections
+  if(key==='users' || key==='audit' || key==='misstatus') return false;  // admin-only sections
   if(CU.permissions && CU.permissions[key]) return CU.permissions[key].v===1;
   return true; // legacy fall-through for non-matrix users
 }
@@ -788,6 +791,7 @@ function goPage(key){
   if(key==='dash')return renderDashboard();
   if(key==='reports')return renderReports();
   if(key==='dataentry')return renderDataEntry();
+  if(key==='misstatus')return renderMisStatus();
   if(key==='audit')return renderAudit();
   renderResource(key);
 }
@@ -1540,7 +1544,12 @@ async function openForm(key,id){
     const gid= String(row.programme_id||'').replace(/'/g,"\\'");
     extraBtn = `<button class="btn btn-ghost btn-sm" type="button" onclick="closeModal();openProgrammeObjectives('${gid}','${gn}')">🎯 Manage Objectives</button>`;
   }
-  const titleTxt=(id?'Edit ':'New ')+cfg.label.replace(/s$/,'');
+  /* Per-form display titles — fixes the naive strip-the-s bug ("Indicator Progres",
+     "Beneficiarie") and renames field entry to "progress" language (targets come from HQ). */
+  const FORM_TITLES={ crops:'Progress of Production & Output', progress:'Indicator Progress', beneficiaries:'Beneficiary', activities:'Activity & Target' };
+  const noNew=['crops','progress'];   // these read as headings, not "New …"
+  const base=FORM_TITLES[key]||cfg.label.replace(/s$/,'');
+  const titleTxt = noNew.includes(key) ? (id?('Edit — '+base):base) : ((id?'Edit ':'New ')+base);
   const hasCtx = cfg.fields.some(f=>['programme_id','project_id','donor_id','geography_id','registration_date'].includes(f[0]));
   __formReturn = (CP && CP!=='__form') ? CP : (__formReturn||'dataentry');
   __formKey=key; __formId=id||0;
@@ -1572,6 +1581,7 @@ async function openForm(key,id){
   if(!id&&(key==='progress'||key==='activities')) injectEntryFreq(key);
   if(key==='activities') wireActivityTotals();
   if(!id&&key==='loans') injectLoanShgFilter();
+  if(key==='loans') ['programme_id','project_id','donor_id'].forEach(foHideField);   // silently filled from the picked SHG — never shown
   if(!id&&key==='geographies') geoPrefillSticky();
   formMarkClean();   // baseline for the unsaved-changes guard (after all auto-fills)
   setTimeout(()=>{ const el=document.querySelector('#entry-form input:not([readonly]):not([disabled]):not([type=hidden]), #entry-form select:not([disabled])'); if(el) el.focus(); },50);
@@ -1689,6 +1699,34 @@ function foGeoIn(flt){ return (LOOKUPS.geographies||[]).filter(g=>
   (!flt.block || String(g.block||'')===flt.block) &&
   (!flt.gram_panchayat || String(g.gram_panchayat||'')===flt.gram_panchayat)); }
 function foDistinct(list,field){ const s=new Set(); (list||[]).forEach(g=>{ const v=String(g[field]||'').trim(); if(v) s.add(v); }); return [...s].sort((a,b)=>a.localeCompare(b,'en',{numeric:true,sensitivity:'base'})); }
+
+/* ── Workspace ⇄ server sync — workspaces live in the DB (upgrade9) so admins see
+   everyone's in MIS Status, HQ can assign them, and officers get theirs on any device.
+   localStorage stays as the offline cache; every server call fails soft. ── */
+function wsPayload(w){ const der=foDerive(w.project_id||'');
+  return { username:(CU&&CU.username)||'', name:w.name||'', programme_id:der.programme_id||w.programme_id||'', donor_id:der.donor_id||w.donor_id||'',
+    project_id:w.project_id||'', district:w.district||'', block:w.block||'', gram_panchayat:w.gram_panchayat||'',
+    geography_id:w.geography_id||'', village:w.village||'', is_active:String(getActiveWsId())===String(w.id)?1:0 }; }
+async function foSyncWorkspaces(){
+  if(!CU||!CU.username) return;
+  try{
+    // 1) one-time migration: push browser-only workspaces up (marked srv as soon as saved)
+    const locals=getWorkspaces();
+    for(const w of locals){ if(!w.srv){ const r=await apiPost('?resource=workspaces', wsPayload(w)); w.srv=(r&&r.id)||''; saveWorkspaces(locals); } }
+    // 2) pull mine — the server is the source of truth
+    const d=await apiGet('?resource=workspaces&username='+encodeURIComponent(CU.username)+'&limit=500');
+    const rows=d.rows||[];
+    const wss=rows.map(r=>({ id:'s'+r.id, srv:r.id, name:r.name||'', project_id:r.project_id||'', programme_id:r.programme_id||'', donor_id:r.donor_id||'',
+      district:r.district||'', block:r.block||'', gram_panchayat:r.gram_panchayat||'', geography_id:r.geography_id||'', village:r.village||'', assigned_by:r.assigned_by||'' }));
+    wss.forEach(w=>{ if(!w.name) w.name=foAutoName(w); });
+    saveWorkspaces(wss);
+    const act=getActiveWsId();
+    if(act && !wss.some(w=>String(w.id)===String(act))) setActiveWsId('');
+    if(!getActiveWsId()){ const sa=rows.find(r=>+r.is_active===1); if(sa) setActiveWsId('s'+sa.id); }
+  }catch(e){ /* offline or table missing (run sql/upgrade9.sql) — local keeps working */ }
+}
+function foPushActive(){ const act=getActiveWsId();
+  getWorkspaces().forEach(w=>{ if(w.srv) apiPut('?resource=workspaces&id='+w.srv,{is_active:String(w.id)===String(act)?1:0}).catch(()=>{}); }); }
 
 /* ── Field-Office workspaces panel (renders into #fo-card) ── */
 let FO_DRAFT=null, FO_MODE='list', FO_EDIT_ID='', __HQ_ASSIGN=[], __deTab='fo', __foSuppressOnce=false;
@@ -1815,7 +1853,7 @@ function foEditWorkspace(id){ const w=getWorkspaces().find(x=>String(x.id)===Str
   FO_DRAFT={district:w.district||'',project_id:w.project_id||'',block:w.block||'',gram_panchayat:w.gram_panchayat||'',geography_id:w.geography_id||'',name:w.name||''};
   FO_EDIT_ID=id; FO_MODE='edit'; foRerender(); foLoadAssignments(); }
 function foCancelSetup(){ FO_MODE='list'; FO_EDIT_ID=''; foRerender(); }
-function foSaveWorkspace(){
+async function foSaveWorkspace(){
   const d=FO_DRAFT||{}; const nm=$('fo-ws-name'); if(nm) d.name=nm.value;
   if(!(d.district&&d.project_id&&d.geography_id)){ toast('⚠ Select District, Project & Village first','t-err'); return; }
   const der=foDerive(d.project_id);
@@ -1823,16 +1861,30 @@ function foSaveWorkspace(){
   const ctx={ project_id:d.project_id, programme_id:der.programme_id, donor_id:der.donor_id, geography_id:d.geography_id,
     district:(g.district||d.district||''), block:(g.block||d.block||''), gram_panchayat:(g.gram_panchayat||d.gram_panchayat||''), village:(g.village||'') };
   ctx.name = (d.name&&d.name.trim()) ? d.name.trim() : foAutoName(ctx);
-  const wss=getWorkspaces();
-  if(FO_EDIT_ID){ const i=wss.findIndex(w=>String(w.id)===String(FO_EDIT_ID)); if(i>=0){ ctx.id=FO_EDIT_ID; wss[i]=ctx; } else { ctx.id='ws'+Date.now(); wss.push(ctx); } }
-  else { ctx.id='ws'+Date.now(); wss.push(ctx); }
-  saveWorkspaces(wss); setActiveWsId(ctx.id);
-  FO_MODE='list'; FO_EDIT_ID=''; foRerender();
+  try{
+    // save to the server first — that's what MIS Status (admins) sees
+    const prev=FO_EDIT_ID ? getWorkspaces().find(w=>String(w.id)===String(FO_EDIT_ID)) : null;
+    let srvId='';
+    if(prev&&prev.srv){ await apiPut('?resource=workspaces&id='+prev.srv, wsPayload(Object.assign({id:prev.id},ctx))); srvId=prev.srv; }
+    else { const r=await apiPost('?resource=workspaces', wsPayload(Object.assign({id:''},ctx))); srvId=(r&&r.id)||''; }
+    await foSyncWorkspaces();
+    const found=getWorkspaces().find(w=>String(w.srv)===String(srvId)) || getWorkspaces().find(w=>w.name===ctx.name&&String(w.geography_id)===String(ctx.geography_id));
+    if(found) setActiveWsId(found.id);
+  }catch(e){
+    // offline / table missing — keep working locally exactly as before
+    const wss=getWorkspaces();
+    if(FO_EDIT_ID){ const i=wss.findIndex(w=>String(w.id)===String(FO_EDIT_ID)); if(i>=0){ ctx.id=FO_EDIT_ID; wss[i]=ctx; } else { ctx.id='ws'+Date.now(); wss.push(ctx); } }
+    else { ctx.id='ws'+Date.now(); wss.push(ctx); }
+    saveWorkspaces(wss); setActiveWsId(ctx.id);
+  }
+  FO_MODE='list'; FO_EDIT_ID=''; foRerender(); foPushActive();
   toast('📍 Workspace "'+ctx.name+'" active — forms will inherit it');
 }
-function foActivateWs(id){ setActiveWsId(id); FO_MODE='list'; foRerender(); const w=getActiveWs(); toast('📍 Switched to '+(w?w.name:'workspace')); }
-function foDeactivate(){ setActiveWsId(''); foRerender(); toast('Workspace paused — forms open empty'); }
+function foActivateWs(id){ setActiveWsId(id); FO_MODE='list'; foRerender(); foPushActive(); const w=getActiveWs(); toast('📍 Switched to '+(w?w.name:'workspace')); }
+function foDeactivate(){ setActiveWsId(''); foRerender(); foPushActive(); toast('Workspace paused — forms open empty'); }
 function foDeleteWs(id){ if(!confirm('Remove this workspace? (Your saved records are not affected.)')) return;
+  const gone=getWorkspaces().find(w=>String(w.id)===String(id));
+  if(gone&&gone.srv) apiDel('?resource=workspaces&id='+gone.srv).catch(()=>{});
   const wss=getWorkspaces().filter(w=>String(w.id)!==String(id)); saveWorkspaces(wss);
   if(String(getActiveWsId())===String(id)) setActiveWsId(''); foRerender(); }
 /* Open a real master form to add a missing District/Project/Donor/etc., then return
@@ -3946,7 +3998,7 @@ const SHEET_ROUTE = {
   'geography':'geographies','geographies':'geographies',
   'villages':'villages','village demographics':'villages','village':'villages',
   'beneficiaries':'beneficiaries','beneficiary':'beneficiaries','farmer':'beneficiaries','farmers':'beneficiaries',
-  'production':'crops','outputs':'crops','crops':'crops','crop':'crops','production / outputs':'crops','production outputs':'crops',
+  'production':'crops','outputs':'crops','crops':'crops','crop':'crops','production / outputs':'crops','production outputs':'crops','production & output progress':'crops','production and output progress':'crops',
   'activities':'activities','activity':'activities','activities & targets':'activities','activities and targets':'activities','targets':'activities',
   'shgs':'shgs','shg':'shgs','self-help groups':'shgs','self help groups':'shgs','selfhelpgroups':'shgs',
   'shg members':'shg_members','shg member':'shg_members','members':'shg_members',
@@ -4139,7 +4191,7 @@ async function smartRun(){
 const ENTRY_GROUPS = [
   ['⭐ Everyday — Field Data', [
     ['beneficiaries','+ New Beneficiary','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z','--ok'],
-    ['crops','+ New Output / Production','M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5','--ok'],
+    ['crops','Progress of Production & Output','M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5','--ok'],
     ['activities','+ New Activity','M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z','--warn'],
   ]],
   ['SHG &amp; Finance', [
@@ -4147,8 +4199,9 @@ const ENTRY_GROUPS = [
     ['loans','+ New SHG Loan','M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6','--pink'],
   ]],
   ['Monitoring and Evaluation (MNE)', [
-    ['indicators','+ New Indicator','M22 12h-4l-3 9L9 3l-3 9H2','--accent'],
-    ['progress','+ New Indicator Progress','M18 20V10M12 20V4M6 20v-6','--accent'],
+    // NOTE: "+ New Indicator" is intentionally NOT on the field-office page — indicators are
+    // defined by HQ (HQ Setup or the MNE nav section). Field officers only report progress.
+    ['progress','Indicator Progress','M18 20V10M12 20V4M6 20v-6','--accent'],
   ]],
   // NOTE: Master-data setup (Programme / Objective / Project / Donor / Mapping / Geography / Village)
   // is intentionally NOT shown on the Data Entry page. Those are added INLINE from within the
@@ -4242,6 +4295,8 @@ function renderDataEntry(){
   } else if(__rz && __rz.tab==='fo'){ deTab('fo'); }
   else { deTab(can('write')?'hq':'fo'); }
   foLoadAssignments();   // populates "My assignments" + the quick-start picker, then re-renders
+  // pull my workspaces from the server (assigned ones appear here automatically)
+  foSyncWorkspaces().then(()=>{ if(CP==='dataentry'&&FO_MODE==='list') foRerender(); });
 }
 /* Live record counts on each Data Entry card. */
 async function loadEntryCounts(){
@@ -4276,6 +4331,97 @@ function todayIST(){
 function periodLabel(code){return code==='M'?'Monthly':code==='Q'?'Quarterly':code==='C'?'Custom range':'Annually';}
 
 /* ════════ REPORTS & ANALYTICS (original) + REPORTS CENTRE (new) ════════ */
+/* ════════ MIS STATUS — the admin ecosystem: every officer's workspaces, live ════════ */
+async function renderMisStatus(){
+  await ensureLookups();
+  const staffOpts=(LOOKUPS.staff||[]).map(s=>`<option value="${esc(s.id)}">${esc(s.label)}</option>`).join('');
+  const projOpts=(LOOKUPS.projects||[]).map(p=>`<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
+  const distOpts=rptGeoList('district').map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('');
+  $('main').innerHTML=`
+    <div class="page-head"><div><div class="page-title">MIS Status</div>
+      <div class="page-sub">Every field officer's workspaces, live — see who is working where, and assign new workspaces. Assigned ones appear in the officer's Field-Office Entry automatically.</div></div>
+      <div class="page-actions"><button class="btn btn-ghost btn-sm" onclick="loadMisStatus()">⟳ Refresh</button></div></div>
+    <div class="kpi-grid kg-4" id="mis-stats" style="margin-bottom:16px"></div>
+    <div class="card" style="background:linear-gradient(135deg,#f7fafe,#fff);border:1.5px solid var(--brand-soft)">
+      <div class="card-title" style="margin:0">📌 Assign a workspace</div>
+      <div class="card-sub" style="margin-top:2px">Pick the officer, the Project and the District — Donor &amp; Thematic Area come from the Project automatically. Village is optional (the officer can pick it when they start).</div>
+      <div class="fo-grid" style="margin-top:14px">
+        <div class="f"><label>Officer <span style="color:var(--bad)">*</span></label><select id="mis-user"><option value="">— Select officer —</option>${staffOpts}</select></div>
+        <div class="f"><label>Project <span style="color:var(--bad)">*</span></label><select id="mis-project" onchange="misOnProject()"><option value="">— Select project —</option>${projOpts}</select></div>
+        <div class="f"><label>District <span style="color:var(--bad)">*</span></label><select id="mis-district" onchange="misOnDistrict()"><option value="">— Select district —</option>${distOpts}</select></div>
+        <div class="f"><label>Village / Ward <span class="fo-auto">optional</span></label><select id="mis-village"><option value="">— Officer picks later —</option></select></div>
+        <div class="f"><label>Workspace name <span class="fo-auto">optional</span></label><input id="mis-name" placeholder="Auto if left blank"></div>
+        <div class="f"><label>Donor · Thematic <span class="fo-auto">auto</span></label><input id="mis-auto" readonly placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
+      </div>
+      <div class="form-actions" style="margin-top:12px"><button class="btn btn-primary" onclick="misAssign()">📌 Assign workspace</button></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="card-title" style="margin:0">👥 Workspaces by officer</div>
+      <div class="card-sub" style="margin-top:2px">The green dot marks the workspace each officer is working in right now.</div>
+      <div id="mis-list" style="margin-top:12px"><div style="color:var(--t4);font-size:13px">Loading…</div></div>
+    </div>`;
+  loadMisStatus();
+}
+function misOnProject(){ const pid=($('mis-project')||{}).value||''; const der=foDerive(pid);
+  const e=$('mis-auto'); if(e) e.value=pid?([lblOf(LOOKUPS.donors,der.donor_id),lblOf(LOOKUPS.programmes,der.programme_id)].filter(x=>x&&x!=='—').join(' · ')):''; }
+function misOnDistrict(){ const di=($('mis-district')||{}).value||'';
+  const vs=(LOOKUPS.geographies||[]).filter(g=>!di||String(g.district||'')===di);
+  const e=$('mis-village'); if(e) e.innerHTML='<option value="">— Officer picks later —</option>'+vs.map(g=>`<option value="${esc(g.id)}">${esc(g.label)}</option>`).join(''); }
+async function misAssign(){
+  const u=($('mis-user')||{}).value, pid=($('mis-project')||{}).value, di=($('mis-district')||{}).value;
+  if(!u||!pid||!di){ toast('⚠ Officer, Project & District are required','t-err'); return; }
+  const gid=($('mis-village')||{}).value||''; const g=(LOOKUPS.geographies||[]).find(x=>String(x.id)===String(gid))||{};
+  const der=foDerive(pid);
+  const name=(($('mis-name')||{}).value||'').trim() || [lblOf(LOOKUPS.projects,pid), g.village||'', di].filter(x=>x&&x!=='—').join(' · ');
+  try{
+    await apiPost('?resource=workspaces',{ username:u, name, project_id:pid, programme_id:der.programme_id||'', donor_id:der.donor_id||'',
+      district:di, block:g.block||'', gram_panchayat:g.gram_panchayat||'', geography_id:gid, village:g.village||'', is_active:0, assigned_by:(CU&&CU.username)||'' });
+    toast('✓ Workspace assigned to '+lblOf(LOOKUPS.staff,u));
+    const n=$('mis-name'); if(n) n.value='';
+    loadMisStatus();
+  }catch(e){ toast('⚠ '+e.message+' — have you run sql/upgrade9.sql?','t-err'); }
+}
+async function loadMisStatus(){
+  let rows=[];
+  try{ const d=await apiGet('?resource=workspaces&limit=2000'); rows=d.rows||[]; }
+  catch(e){ const el=$('mis-list'); if(el) el.innerHTML='<div class="empty-state"><div class="empty-title">Workspaces table not found</div><div class="empty-sub">Run <b>sql/upgrade9.sql</b> once in phpMyAdmin, then click Refresh.</div></div>'; return; }
+  const staff=LOOKUPS.staff||[];
+  const st=$('mis-stats'); if(st) st.innerHTML=
+    kpiCard('Field staff',fmt(staff.length),'user accounts','--brand','--brand-soft','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z')+
+    kpiCard('Workspaces',fmt(rows.length),'across all officers','--accent','--accent-soft','M2 3h20v14H2zM8 21h8M12 17v4')+
+    kpiCard('Active now',fmt(rows.filter(r=>+r.is_active===1).length),'officers mid-work','--ok','--ok-soft','M22 12h-4l-3 9L9 3l-3 9H2')+
+    kpiCard('Assigned by HQ',fmt(rows.filter(r=>String(r.assigned_by||'').trim()).length),'vs self-created','--violet','--violet-soft','M9 11l3 3L22 4');
+  const byUser={}; rows.forEach(r=>{ const k=r.username||'—'; (byUser[k]=byUser[k]||[]).push(r); });
+  const wsRow=r=>{ const on=+r.is_active===1;
+    return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid ${on?'var(--ok)':'var(--border)'};border-radius:10px;padding:9px 13px;margin:7px 0 0 37px;${on?'background:var(--ok-soft);':''}">
+      <span style="width:8px;height:8px;border-radius:50%;background:${on?'var(--ok)':'var(--t4)'};flex-shrink:0"></span>
+      <b style="font-size:13px">${esc(r.name||r.workspace_id||'Workspace')}</b>
+      ${on?'<span class="ws-badge">active</span>':''}
+      <span style="font-size:12px;color:var(--t3)">${esc(lblOf(LOOKUPS.projects,r.project_id))}</span>
+      <span style="font-size:12px;color:var(--t4)">${esc([r.village,r.block,r.district].filter(Boolean).join(' · ')||'—')}</span>
+      ${String(r.assigned_by||'').trim()?`<span class="fchip" title="Assigned by HQ">📌 by ${esc(r.assigned_by)}</span>`:''}
+      <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--t4)">${esc(String(r.created_at||'').slice(0,10))}</span>
+        ${can('delete')?`<button class="btn btn-ghost btn-xs" title="Remove workspace" onclick="misDeleteWs(${r.id})">🗑</button>`:''}
+      </span></div>`; };
+  const blocks=[], seen=new Set();
+  for(const s of staff){ const list=byUser[s.id]||[]; seen.add(s.id);
+    blocks.push(`<div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <span style="width:28px;height:28px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">${esc((s.label||'?')[0].toUpperCase())}</span>
+        <b style="font-size:13.5px">${esc(s.label)}</b>
+        <span style="font-size:12px;color:var(--t4)">${list.length?list.length+' workspace'+(list.length>1?'s':''):''}</span>
+        ${list.some(r=>+r.is_active===1)?'<span class="ws-badge">working now</span>':''}
+      </div>
+      ${list.length?list.map(wsRow).join(''):'<div style="font-size:12.5px;color:var(--t4);margin:6px 0 0 37px">No workspace yet — assign one above.</div>'}
+    </div>`); }
+  for(const u in byUser){ if(seen.has(u)) continue;
+    blocks.push(`<div style="margin-bottom:16px"><b style="font-size:13.5px">${esc(u)}</b> <span style="font-size:11px;color:var(--t4)">(no longer in Users)</span>${byUser[u].map(wsRow).join('')}</div>`); }
+  const el=$('mis-list'); if(el) el.innerHTML=blocks.join('')||'<div style="color:var(--t4);font-size:13px">No staff yet.</div>';
+}
+async function misDeleteWs(id){ if(!confirm("Remove this workspace? (The officer's saved records are not affected.)")) return;
+  try{ await apiDel('?resource=workspaces&id='+id); toast('✓ Removed'); loadMisStatus(); }catch(e){ toast('⚠ '+e.message,'t-err'); } }
+
 async function renderReports(){
   $('main').innerHTML=`
     <div class="page-head"><div><div class="page-title">Reports &amp; Analytics</div>
