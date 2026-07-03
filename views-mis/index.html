@@ -1153,8 +1153,8 @@ async function saveInlineGeography(){
 /* Generic inline "＋ New" for Thematic Area / Project / Donor — a stacked mini-modal (like geography)
    so master data can be created from inside the everyday forms without losing your work. */
 const INLINE_ADD = {
-  programmes:{combo:'programme_id', title:'New Programme', fields:[
-    {k:'programme_name',l:'Programme name',req:true},
+  programmes:{combo:'programme_id', title:'New Thematic Area', fields:[
+    {k:'programme_name',l:'Thematic area name',req:true},
     {k:'thematic_area',l:'Thematic area'},
     {k:'programme_status',l:'Status',sel:SEL_STATUS,def:'Ongoing'},
   ]},
@@ -3141,8 +3141,8 @@ async function exportDashboardView(){
     const rows=[];
     for(const p of d.programmesList){
       const obs=(p.objectives||[]);
-      if(!obs.length) rows.push({Programme:p.programme_name,'#':'—','Objective':'(no objectives yet)','Status':''});
-      obs.forEach((o,i)=>rows.push({Programme:p.programme_name,'#':i+1,'Objective':o.objective,'Status':o.status||''}));
+      if(!obs.length) rows.push({'Thematic Area':p.programme_name,'#':'—','Objective':'(no objectives yet)','Status':''});
+      obs.forEach((o,i)=>rows.push({'Thematic Area':p.programme_name,'#':i+1,'Objective':o.objective,'Status':o.status||''}));
     }
     sheets.push({name:'Thematic Areas & Objectives', title:'Thematic Areas & their Objectives', subtitle:nowIST(),
       rows, cols:[{key:'Thematic Area',label:'Thematic Area',type:'text'},{key:'#',label:'#',type:'text'},{key:'Objective',label:'Objective',type:'text'},{key:'Status',label:'Status',type:'text'}]});
@@ -5977,7 +5977,7 @@ function toggleExportMenu(ev, key){
   let html = '';
   html += `<div class="x-grp">Excel — formatted, donor-ready</div>`;
   html += `<a onclick="exportListView('${key}')">⬇ Current view${esc(flbl)}</a>`;
-  if(has('programme_id')) html += `<a onclick="exportListSplit('${key}','programme_id','Thematic Area')">📊 Split by Programme</a>`;
+  if(has('programme_id')) html += `<a onclick="exportListSplit('${key}','programme_id','Thematic Area')">📊 Split by Thematic Area</a>`;
   if(has('project_id'))   html += `<a onclick="exportListSplit('${key}','project_id','Project')">📊 Split by Project</a>`;
   if(has('donor_id'))     html += `<a onclick="exportListSplit('${key}','donor_id','Donor')">📊 Split by Donor</a>`;
   html += `<div class="x-sep"></div>`;
