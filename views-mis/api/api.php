@@ -42,8 +42,11 @@ if($__origin){
     header_remove('Access-Control-Allow-Credentials');
   }
 }
-/* JSON responses must never be sniffed/rendered as HTML by the browser */
-header('X-Content-Type-Options: nosniff');
+/* Security headers — served from PHP so no .htaccess is needed on the host */
+header('X-Content-Type-Options: nosniff');          // JSON must never be sniffed as HTML
+header('X-Frame-Options: DENY');                    // the API has no business inside an iframe
+header('Referrer-Policy: no-referrer');             // never leak API URLs to other sites
+ini_set('display_errors','0');                      // PHP warnings go to the log, never to visitors
 
 /* User-facing error text must never leak SQL / schema internals. The full
    message goes to the server error log; the user gets a safe, useful hint. */
