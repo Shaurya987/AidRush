@@ -1,0 +1,28 @@
+# ════════════════════════════════════════════════════════════════
+# VIEWS India MIS — server hardening (Apache / cPanel)
+# Upload this file together with index.html. It changes NO behaviour;
+# it only closes doors that should never have been open.
+# ════════════════════════════════════════════════════════════════
+
+# 1) Never list directory contents
+Options -Indexes
+
+# 2) Never serve database scripts, helpers or editor leftovers over the web.
+#    (Without this, anyone could download /sql/upgrade*.sql and read the schema.)
+<FilesMatch "\.(sql|py|sh|bak|old|orig|swp|env|ini|log)$">
+  Require all denied
+</FilesMatch>
+
+# 3) Security headers on every response
+<IfModule mod_headers.c>
+  # Browsers must not second-guess content types (blocks MIME-sniffing attacks)
+  Header always set X-Content-Type-Options "nosniff"
+  # The app may not be embedded in another site's iframe (blocks clickjacking)
+  Header always set X-Frame-Options "SAMEORIGIN"
+  # Don't leak internal URLs to other sites
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # This app never needs camera / microphone / location
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  # OPTIONAL — uncomment once you are sure the site is HTTPS-only:
+  # Header always set Strict-Transport-Security "max-age=31536000"
+</IfModule>

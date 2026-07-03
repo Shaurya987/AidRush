@@ -28,6 +28,35 @@
    ───────────────────────────────────────────────────────────── */
 require __DIR__.'/config.php';
 
+/* ════════════════ SECURITY HARDENING (no functional change) ════════════════
+   config.php reflects ANY Origin for local development convenience. In
+   production that would let a malicious website call this API with the
+   visitor's cookies. Enforce here, AFTER config: only the site's own host
+   (and localhost, for development) may keep the CORS grant. */
+$__origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if($__origin){
+  $__ohost = strtolower(parse_url($__origin, PHP_URL_HOST) ?: '');
+  $__host  = strtolower(explode(':', $_SERVER['HTTP_HOST'] ?? '')[0]);
+  if($__ohost !== $__host && !in_array($__ohost, ['localhost','127.0.0.1'], true)){
+    header_remove('Access-Control-Allow-Origin');
+    header_remove('Access-Control-Allow-Credentials');
+  }
+}
+/* JSON responses must never be sniffed/rendered as HTML by the browser */
+header('X-Content-Type-Options: nosniff');
+
+/* User-facing error text must never leak SQL / schema internals. The full
+   message goes to the server error log; the user gets a safe, useful hint. */
+function safe_err($e, $fallback='Something went wrong — please try again.'){
+  $m = $e instanceof Exception ? $e->getMessage() : (string)$e;
+  error_log('[VIEWS-MIS] '.$m);
+  if(stripos($m,"doesn't exist")!==false || stripos($m,'Unknown column')!==false)
+    return 'A required table or column is missing — run the /sql upgrade files once in phpMyAdmin.';
+  if(stripos($m,'Duplicate entry')!==false) return 'Duplicate value — a record with this key already exists.';
+  if(stripos($m,'cannot be null')!==false || stripos($m,'Incorrect')!==false) return 'A value was missing or in the wrong format.';
+  return $fallback;
+}
+
 /* resource → real table (whitelist) */
 $RES = [
   'programmes'=>'programmes','projects'=>'projects','donors'=>'donors',
@@ -335,7 +364,7 @@ if ($action==='login') {
        WHERE id=?");
     $up->execute([$token,$tabId,$expAt, client_ip(), $u['id']]);
   }catch(Exception $e){
-    out(['error'=>'Login failed — please run sql/upgrade2.sql','detail'=>$e->getMessage()],500);
+    out(['error'=>'Login failed — please run sql/upgrade2.sql','detail'=>safe_err($e,'Server error during login.')],500);
   }
 
   $_SESSION['user'] = [
@@ -454,7 +483,7 @@ if ($action==='user_permissions') {
       audit('permissions','users',$uid,"Updated permission matrix for ".($tn['username'] ?? "#$uid"),null,$perms);
       out(['ok'=>true]);
     }catch(Exception $e){
-      db()->rollBack(); out(['error'=>'Could not save permissions','detail'=>$e->getMessage()],500);
+      db()->rollBack(); out(['error'=>'Could not save permissions','detail'=>safe_err($e)],500);
     }
   }
 }
@@ -505,7 +534,7 @@ if ($action==='bulk_create') {
         $created++;
         $createdIds[] = $genId ?: db()->lastInsertId();
       }catch(Exception $e){
-        $errors[]=['row'=>$idx+1,'error'=>$e->getMessage()];
+        $errors[]=['row'=>$idx+1,'error'=>safe_err($e,'Row rejected by the database.')];
       }
     }
     db()->commit();
@@ -517,7 +546,7 @@ if ($action==='bulk_create') {
     out(['ok'=>true,'created'=>$created,'errors'=>$errors,'ids'=>$createdIds]);
   }catch(Exception $e){
     db()->rollBack();
-    out(['error'=>'Bulk import failed','detail'=>$e->getMessage()],500);
+    out(['error'=>'Bulk import failed','detail'=>safe_err($e)],500);
   }
 }
 
@@ -1090,7 +1119,7 @@ if ($method==='GET') {
   out(['rows'=>$rows,'total'=>$total,'limit'=>$limit,'offset'=>$offset]);
  } catch (Throwable $e) {
   // Never let a query error surface to the browser as a bare 500 / "failed to fetch".
-  out(['error'=>'Could not load '.$resource.' right now. '.$e->getMessage()], 500);
+  out(['error'=>'Could not load '.$resource.' right now. '.safe_err($e,'')], 500);
  }
 }
 
@@ -1150,7 +1179,7 @@ if ($method==='POST') {
   if(!$set){ $releaseLock(); out(['error'=>'No valid fields'],400); }
   $sql="INSERT INTO `$table` (".implode(',',$set).") VALUES (".implode(',',$ph).")";
   try{ $st=db()->prepare($sql); $st->execute($vals); }
-  catch(Exception $e){ $releaseLock(); out(['error'=>'Save failed','detail'=>$e->getMessage()],500); }
+  catch(Exception $e){ $releaseLock(); out(['error'=>'Save failed','detail'=>safe_err($e)],500); }
   $newid=db()->lastInsertId();
   $releaseLock();
   audit('create',$resource,$genId?:$newid,"Added $resource ".($genId?:('#'.$newid)),null,$b);

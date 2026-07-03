@@ -1,0 +1,2 @@
+# The /sql folder is for phpMyAdmin imports only — never web-accessible.
+Require all denied
