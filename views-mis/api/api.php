@@ -524,6 +524,8 @@ if ($action==='bulk_create') {
       // stamp the importer's username on bulk-imported rows too
       $mu=current_user();
       if($mu && in_array('created_by',$bcols)) $row['created_by']=$mu['username'];
+      // imported beneficiaries with a blank registration date get today (IST)
+      if($bres==='beneficiaries' && empty($row['registration_date'])) $row['registration_date']=date('Y-m-d');
       $set=[]; $ph=[]; $vals=[];
       foreach($row as $k=>$v){
         if(in_array($k,$bcols) && !in_array($k,['id','created_at','updated_at','active_session_token','active_tab_id','session_expires_at','last_login','last_seen','failed_login_count','locked_until'])){
@@ -1161,6 +1163,8 @@ if ($method==='POST') {
   // Multi-user accountability — stamp who entered the record (column exists after upgrade8)
   $me=current_user();
   if($me && in_array('created_by',$cols)) $b['created_by']=$me['username'];
+  // Blank registration date = today (IST) — a blank would hide the person from date-filtered reports
+  if($resource==='beneficiaries' && empty($b['registration_date'])) $b['registration_date']=date('Y-m-d');
   $genId=null; $lockName=null;
   // Serialise business-ID generation across simultaneous saves (many users at once):
   // a per-resource MySQL named lock guarantees no two concurrent creates get the same ID.
