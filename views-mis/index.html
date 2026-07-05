@@ -943,7 +943,8 @@ function applyCarryOver(key, carry){
 let __ADD_ANOTHER=null;
 function showAddAnotherPrompt(key, businessId, carry){
   __ADD_ANOTHER={key, carry};
-  const label = (RES[key] && RES[key].label) ? RES[key].label.replace(/s$/,'') : key;
+  const NICE={beneficiaries:'Beneficiary', crops:'Production record'};   // proper singulars (not "Beneficiarie")
+  const label = NICE[key] || ((RES[key] && RES[key].label) ? RES[key].label.replace(/s$/,'') : key);
   const lbl=(arr,id)=>{ const o=(arr||[]).find(x=>String(x.id)===String(id)); return o?o.label:id; };
   const bits=[];
   if(carry.programme_id) bits.push('Thematic Area: '+lbl(LOOKUPS.programmes,carry.programme_id));
@@ -1098,6 +1099,9 @@ async function checkDuplicate(key, payload){
     let parts=null;
     if(key==='beneficiaries'){ if(!payload.beneficiary_farmer_name) return null; parts={beneficiary_farmer_name:payload.beneficiary_farmer_name, father_or_spouse_name:payload.father_or_spouse_name, village:payload.village}; }
     else if(key==='crops'){ if(!payload.beneficiary_id) return null; parts={beneficiary_id:payload.beneficiary_id, crop:payload.crop, project_year:payload.project_year, season:payload.season}; }
+    else if(key==='geographies'){ if(!String(payload.village_or_ward||'').trim() && !String(payload.district||'').trim()) return null;
+      // case-insensitive by DB collation — catches "GaJapati" vs "Gajapati" style near-duplicates
+      parts={state:payload.state, district:payload.district, block:payload.block, gram_panchayat:payload.gram_panchayat, village_or_ward:payload.village_or_ward}; }
     else return null;
     let qs='?resource='+key+'&limit=5';
     for(const [k,v] of Object.entries(parts)){ if(v!=null && String(v).trim()!=='') qs+='&'+k+'='+encodeURIComponent(v); }
@@ -1279,6 +1283,13 @@ async function renderResource(key){
     linkBanner = un.length
       ? `<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:11px;padding:11px 15px;margin-bottom:14px;font-size:13px;color:var(--t1)">⚠ <b>${un.length} of ${all.length} project${all.length>1?'s':''} not linked to a donor:</b> ${esc(un.slice(0,4).map(p=>p.label).join(', '))}${un.length>4?' + '+(un.length-4)+' more':''}. Unmapped projects are <b>hidden from Data Entry &amp; Workspaces</b> and their data can never reach donor reports. <a onclick="goPage('mappings')" style="color:var(--brand);cursor:pointer;text-decoration:underline;font-weight:600">Fix in Donor Mapping →</a></div>`
       : (all.length?`<div style="background:var(--ok-soft);border:1px solid var(--ok);border-radius:11px;padding:10px 15px;margin-bottom:14px;font-size:13px;color:var(--t1)">✓ All ${all.length} project${all.length>1?'s':''} linked to a donor — the Donor → Thematic → Project chain is complete.</div>`:'');
+  }
+  // Donors: duplicate-ID health check — two donors sharing one ID mix their reports & auto-fills
+  if(key==='donors'){
+    const seen={}, dup={};
+    (LOOKUPS.donors||[]).forEach(x=>{ const id=String(x.id||''); if(!id) return; if(seen[id]){ (dup[id]=dup[id]||[seen[id]]).push(x.label); } else seen[id]=x.label; });
+    const dupIds=Object.keys(dup);
+    if(dupIds.length) linkBanner=`<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:11px;padding:11px 15px;margin-bottom:14px;font-size:13px;color:var(--t1)">⚠ <b>Duplicate donor ID${dupIds.length>1?'s':''}:</b> ${dupIds.map(id=>`<b>${esc(id)}</b> is shared by ${esc(dup[id].join(' and '))}`).join('; ')}. Their reports and auto-fills get mixed together. Fix: keep one, move its details across, delete the duplicate entry, and re-create it fresh (a unique ID is generated automatically) — then re-point its Donor Mappings.</div>`;
   }
   $('main').innerHTML=`
     <div class="page-head" data-accent style="--sec-accent:var(${SECTION_ACCENT[key]||'--brand'})"><div><div class="page-title">${esc(cfg.label)}</div><div class="page-sub">${esc(cfg.sub)}</div></div>
@@ -3190,9 +3201,14 @@ async function loadDash(){
   if(onl){ const n=d.online==null?null:+d.online;
     onl.textContent = n==null ? '👥 —' : ('👥 '+n+' online'); }
   const k=d.kpi, overall=k.tgt?Math.round(k.ach/k.tgt*100):0;
-  const incBefore=+k.baseline_income||0, incNow=+k.crop_income||0, incEnh=incNow-incBefore;
+  /* Income change is MATCHED-PAIRS: only beneficiaries whose current (production) income
+     is logged are compared against THEIR OWN baseline. Comparing everyone's baseline to a
+     handful of production records showed a bogus "−99.99%" while entry was still ramping up. */
+  const mp=d.income_pairs||{n:0,baseline:0,current:0}; const mpN=+mp.n||0;
+  const incBefore=mpN?+mp.baseline||0:0, incNow=mpN?+mp.current||0:0, incEnh=incNow-incBefore;
   const incPct=incBefore>0?(100*incEnh/incBefore):(incNow>0?100:0);
-  const incMeta=(incEnh>=0?'▲ ':'▼ ')+fmtCr(Math.abs(incEnh))+' ('+(incEnh>=0?'+':'−')+Math.abs(incPct).toFixed(2)+'%)';
+  const incMeta = mpN ? ((incEnh>=0?'▲ ':'▼ ')+fmtCr(Math.abs(incEnh))+' · '+mpN+' matched beneficiar'+(mpN>1?'ies':'y'))
+                      : 'no production income logged yet';
   const adn=(k.active_donors==null?k.donors:k.active_donors);
   $('dash-kpi').innerHTML=
     kpiCard('Thematic Areas',fmt(k.programmes),'Active','--brand','--brand-soft','M3 3h18v18H3zM3 9h18M9 21V9')+
@@ -3204,7 +3220,9 @@ async function loadDash(){
     kpiCard('Beneficiaries',fmt(k.beneficiaries),'Registered','--ok','--ok-soft','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2')+
     kpiCard('SHGs',fmt(k.shgs),fmtCr(k.loan_total)+' loans','--pink','--pink-soft','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z')+
     kpiCard('Activities',fmt(k.activities),overall+'% achieved','--warn','--warn-soft','M22 12h-4l-3 9L9 3l-3 9H2')+
-    kpiCard('Avg. Income Change',(incPct>=0?'+':'−')+Math.abs(incPct).toFixed(2)+'%',(incEnh>=0?'▲ ':'▼ ')+fmtCr(Math.abs(incEnh))+' (now vs baseline)',incPct>=0?'--ok':'--bad',incPct>=0?'--ok-soft':'--bad-soft',incPct>=0?'M12 19V5M5 12l7-7 7 7':'M12 5v14M5 12l7 7 7-7');
+    (mpN
+      ? kpiCard('Avg. Income Change',(incPct>=0?'+':'−')+Math.abs(incPct).toFixed(2)+'%',incMeta,incPct>=0?'--ok':'--bad',incPct>=0?'--ok-soft':'--bad-soft',incPct>=0?'M12 19V5M5 12l7-7 7 7':'M12 5v14M5 12l7 7 7-7')
+      : kpiCard('Avg. Income Change','—',incMeta,'--brand','--brand-soft','M18 20V10M12 20V4M6 20v-6'));
   // Income — Before vs After, by livelihood activity
   const ic=d.income_compare||{baseline:{},current:{}}; const _ib=ic.baseline||{}, _icur=ic.current||{};
   const incActs=[['paddy','Paddy'],['millet','Millet'],['vegetable','Vegetable'],['mushroom','Mushroom'],['goat','Goat'],['poultry','Poultry'],['micro','Micro Ent.']];
@@ -3215,7 +3233,9 @@ async function loadDash(){
   groupedChart('ch-income-ba',__incomeBaData.labels,__incomeBaData.series,__incomeBaType);
   document.querySelectorAll('.iba-seg').forEach(b=>b.classList.toggle('active', b.dataset.t===__incomeBaType));
   const ibs=$('income-ba-summary');
-  if(ibs) ibs.innerHTML=`Before: <b style="color:var(--t1)">${fmtCr(incBefore)}</b> &rarr; Now: <b style="color:var(--ok)">${fmtCr(incNow)}</b><br>Enhanced: <b style="color:${incEnh>=0?'var(--ok)':'var(--bad)'}">${incEnh>=0?'+':'−'}${fmtCr(Math.abs(incEnh))}</b> (${incEnh>=0?'+':'−'}${Math.abs(incPct).toFixed(2)}%)`;
+  if(ibs) ibs.innerHTML = mpN
+    ? `Before: <b style="color:var(--t1)">${fmtCr(incBefore)}</b> &rarr; Now: <b style="color:var(--ok)">${fmtCr(incNow)}</b><br>Enhanced: <b style="color:${incEnh>=0?'var(--ok)':'var(--bad)'}">${incEnh>=0?'+':'−'}${fmtCr(Math.abs(incEnh))}</b> (${incEnh>=0?'+':'−'}${Math.abs(incPct).toFixed(2)}%)<br><span style="color:var(--t4);font-weight:400">based on ${mpN} of ${fmt((d.readiness||{}).ben_total||k.beneficiaries)} beneficiaries with production data</span>`
+    : `<span style="color:var(--t4);font-weight:400">No production income logged yet — enter Production &amp; Output records and the Before-vs-After comparison appears here.</span>`;
   // Income over time (Baseline → each project year)
   const iby=d.income_by_year||[];
   lineChart('ch-income-trend', ['Baseline'].concat(iby.map(x=>x.year)), [incBefore].concat(iby.map(x=>+x.income||0)));
@@ -4607,7 +4627,7 @@ setInterval(()=>{ if(CP==='misstatus' && CU) loadMisStatus(); }, 30000);
 async function renderReports(){
   $('main').innerHTML=`
     <div class="page-head"><div><div class="page-title">Reports &amp; Analytics</div>
-      <div class="page-sub">Donor-wise · Thematic Area-wise summaries from live data — plus one-click donor reports.</div></div>
+      <div class="page-sub">Donor · Thematic Area · Project · District · Block · Village · SHG — every report from live data, with one-click Excel downloads.</div></div>
       <div class="page-actions">
         <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print / PDF</button>
       </div></div>

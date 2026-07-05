@@ -800,6 +800,29 @@ if ($action==='dashboard') {
   foreach($acts as $a){ $curByAct[$a] = (float)$cur[$a]; }
   $income_compare = ['baseline'=>$blByAct, 'current'=>$curByAct];
 
+  // ── Matched-pairs income — compare ONLY beneficiaries whose current (production)
+  //    income is actually logged. Comparing everyone's baseline against a handful of
+  //    production records made the headline read "−99.99%" while entry was ramping up.
+  $income_pairs=['n'=>0,'baseline'=>0.0,'current'=>0.0];
+  try{
+    $wCp0 = $wC ? ($wC.' AND ') : ' WHERE ';
+    $stPB=$pdo->prepare("SELECT beneficiary_id bid, COALESCE(SUM(income_inr),0) cur FROM crops".$wCp0." beneficiary_id IS NOT NULL AND TRIM(beneficiary_id)<>'' GROUP BY beneficiary_id");
+    $stPB->execute($vC);
+    $curBy=[]; foreach($stPB->fetchAll() as $r){ $curBy[$r['bid']]=(float)$r['cur']; }
+    if($curBy){
+      $ids=array_keys($curBy); $ph=implode(',',array_fill(0,count($ids),'?'));
+      $blPer = $hasBL ? "CASE WHEN $blExpr>0 THEN $blExpr ELSE COALESCE(current_income_per_annum_inr,0) END" : "COALESCE(current_income_per_annum_inr,0)";
+      $wBp = $wB ? ($wB." AND beneficiary_id IN ($ph)") : (" WHERE beneficiary_id IN ($ph)");
+      $stBP=$pdo->prepare("SELECT beneficiary_id bid, $blPer bl FROM beneficiaries$wBp");
+      $stBP->execute(array_merge($vB,$ids));
+      foreach($stBP->fetchAll() as $r){
+        $income_pairs['n']++;
+        $income_pairs['baseline'] += (float)$r['bl'];
+        $income_pairs['current']  += $curBy[$r['bid']] ?? 0;
+      }
+    }
+  }catch(Exception $e){}
+
   // ── Income over time — current income per project year (trend), filter-aware ──
   $income_by_year=[];
   try{
@@ -842,6 +865,7 @@ if ($action==='dashboard') {
     'kpi'=>$kpi,
     'online'=>$online,
     'income_compare'=>$income_compare,
+    'income_pairs'=>$income_pairs,
     'income_by_year'=>$income_by_year,
     'readiness'=>$readiness,
     'byProject'=>$byProject,
