@@ -5076,6 +5076,16 @@ async function exportReportsView(){
       rows: arr.map(x=>({[colA]:x.k, Count:N(x.c)})),
       cols:[{key:colA,label:colA,type:'text'},{key:'Count',label:'Count',type:'num'}]});
   }
+  // 4b) Geographies covered — via the project↔geography link (project & donor dimensions)
+  {
+    let geoRowsR=[];
+    if(fv && type==='project') geoRowsR=(LOOKUPS.geographies||[]).filter(g=>String(g.project_id||'')===String(fv));
+    else if(fv && type==='donor'){ const fund=new Set((((LOOKUPS.donor_projects||{})[fv])||[]).map(x=>String(x.project_id)));
+      geoRowsR=(LOOKUPS.geographies||[]).filter(g=>g.project_id&&fund.has(String(g.project_id))); }
+    if(geoRowsR.length) sheets.push({name:'Geographies', title:'Geographies covered', subtitle:geoRowsR.length+' places · '+nowIST(),
+      rows:geoRowsR.map(g=>({Project:lblOf(LOOKUPS.projects,g.project_id),District:g.district||'',Block:g.block||'','Gram Panchayat':g.gram_panchayat||'','Village / Ward':g.village||''})),
+      cols:[{key:'Project',label:'Project',type:'text'},{key:'District',label:'District',type:'text'},{key:'Block',label:'Block',type:'text'},{key:'Gram Panchayat',label:'Gram Panchayat',type:'text'},{key:'Village / Ward',label:'Village / Ward',type:'text'}]});
+  }
   // 5) Outputs / production by intervention
   if((r.crops||[]).length) sheets.push({name:'Outputs', title:'Outputs / production by intervention', subtitle:nowIST(),
     rows: r.crops.map(c=>({'Crop / Intervention':c.k, Records:N(c.c), 'Output Qty':N(c.qty), 'Income (₹)':N(c.inc), 'Net Profit (₹)':N(c.profit)})),

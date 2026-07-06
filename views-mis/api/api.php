@@ -692,6 +692,12 @@ if ($action==='dashboard') {
     $wG = $gw ? (' WHERE '.implode(' AND ',$gw)) : '';
     $dq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(district),'')) c FROM geographies$wG"); $dq->execute($vG); $kpi['districts']=(int)$dq->fetch()['c'];
     $bq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(block),'')) c FROM geographies$wG"); $bq->execute($vG); $kpi['blocks']=(int)$bq->fetch()['c'];
+    if($gw){
+      // A chain filter is active → Villages follows the same geography set as
+      // Districts & Blocks (unfiltered keeps the Village Demographics count).
+      $vq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(village_or_ward),'')) c FROM geographies$wG"); $vq->execute($vG);
+      $kpi['villages']=(int)$vq->fetch()['c'];
+    }
   }catch(Exception $e){ $kpi['districts']=0; $kpi['blocks']=0; }
   // Active Donors = donors that currently fund at least one project (have a mapping) — filter-aware
   try{ [$wM2,$vM2]=$whereFor('donor_mappings');
