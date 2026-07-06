@@ -889,6 +889,21 @@ function projectListFor(pid){
   // Every data-entry form: ONLY donor-linked projects (unmapped = invisible until mapped)
   return l.filter(p=>m[p.id]);
 }
+/* FILTER pickers: narrow a Project list by thematic area AND/OR funding donor — the same
+   donor→project chain (donor_mappings) the reports follow, so pickers always match reality.
+   (Filters are for VIEWING data, so unmapped projects stay listed until a donor is chosen.) */
+function projectOptionsFor(progId, donorId){
+  let list=LOOKUPS.projects||[];
+  if(progId) list=list.filter(p=>!p.programme_id||p.programme_id===progId);
+  if(donorId){ const fund=new Set((((LOOKUPS.donor_projects||{})[donorId])||[]).map(x=>String(x.project_id))); list=list.filter(p=>fund.has(String(p.id))); }
+  return list;
+}
+function rebuildProjectSelect(sel, list, allLabel){
+  if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">${esc(allLabel)}</option>`+list.map(o=>`<option value="${esc(o.id)}" ${String(o.id)===String(cur)?'selected':''}>${esc(o.label)}</option>`).join('');
+  if(cur && !list.some(o=>String(o.id)===String(cur))) sel.value='';
+}
 function comboHTML(key, options, value){
   __COMBO[key]={opts:options||[]};
   const cur=(options||[]).find(o=>String(o.id)===String(value));
@@ -1431,7 +1446,12 @@ async function openBeneficiaryIncome(bid, name){
 function _sel(field,onch,allLabel,opts){
   return `<select id="flt-${field}" ${onch}><option value="">${esc(allLabel)}</option>${opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join('')}</select>`;
 }
-function applyFilter(key){ PAGE.offset=0; reloadResource(key); if(key==='crops'||key==='beneficiaries') renderIncomeBanner(key); }
+function applyFilter(key){
+  // Thematic / Donor choices narrow the Project filter to matching projects (same chain as reports)
+  const fp=$('flt-project_id');
+  if(fp) rebuildProjectSelect(fp, projectOptionsFor((($('flt-programme_id')||{}).value)||'', (($('flt-donor_id')||{}).value)||''), 'All Projects');
+  PAGE.offset=0; reloadResource(key); if(key==='crops'||key==='beneficiaries') renderIncomeBanner(key);
+}
 /* Section active-filter chips — show what's filtered, one-click clear. */
 function renderResChips(key){
   const box=$('res-chips'); if(!box) return;
@@ -2241,6 +2261,9 @@ function injectLoanShgFilter(){
 function loanShgFilter(which){
   if(which==='proj'){ const pj=($('lsf-proj')||{}).value||''; const prj=(LOOKUPS.projects||[]).find(p=>String(p.id)===String(pj));
     if(prj&&prj.programme_id){ const pe=$('lsf-prog'); if(pe) pe.value=prj.programme_id; } }
+  if(which==='prog'){ const pe=$('lsf-proj'); if(pe){ const cur=pe.value, list=projectOptionsFor(($('lsf-prog')||{}).value||'','');
+    pe.innerHTML='<option value="">Any project</option>'+list.map(o=>`<option value="${esc(o.id)}" ${String(o.id)===String(cur)?'selected':''}>${esc(o.label)}</option>`).join('');
+    if(cur && !list.some(o=>String(o.id)===String(cur))) pe.value=''; } }
   const pg=($('lsf-prog')||{}).value||'', pj=($('lsf-proj')||{}).value||'';
   if(!__COMBO['shg_id']) return;
   __COMBO['shg_id'].opts=(LOOKUPS.shgs||[]).filter(s=>(!pg||String(s.programme_id||'')===pg)&&(!pj||String(s.project_id||'')===pj));
@@ -2992,7 +3015,7 @@ async function renderDashboard(){
     <div class="filter-bar"><label>Filter:</label>
       <select id="d-prg" onchange="onDashProgChange()"><option value="">All Thematic Areas</option>${(LOOKUPS.programmes||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
       <select id="d-prj" onchange="loadDash()"><option value="">All Projects</option>${(LOOKUPS.projects||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
-      <select id="d-don" onchange="loadDash()"><option value="">All Donors</option>${(LOOKUPS.donors||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
+      <select id="d-don" onchange="onDashDonorChange()"><option value="">All Donors</option>${(LOOKUPS.donors||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
       <button class="btn btn-ghost btn-sm" onclick="clearDash()">Clear</button>
       <span id="dash-chips" style="display:inline-flex;gap:8px;flex-wrap:wrap"></span></div>
     <div class="kpi-grid kg-5" id="dash-kpi"></div>
@@ -3034,10 +3057,12 @@ async function renderDashboard(){
 function clearDash(){['d-prg','d-prj','d-don'].forEach(i=>{const e=$(i);if(e)e.value='';});onDashProgChange();}
 /* Dashboard filters — Project list narrows to the chosen Programme, + active-filter chips. */
 function onDashProgChange(){
-  const pe=$('d-prg'), je=$('d-prj');
-  if(je){ const pid=pe?pe.value:'', cur=je.value, list=projectListFor(pid);
-    je.innerHTML='<option value="">All Projects</option>'+list.map(o=>`<option value="${esc(o.id)}" ${String(o.id)===String(cur)?'selected':''}>${esc(o.label)}</option>`).join('');
-    if(cur && !list.some(o=>String(o.id)===String(cur))) je.value=''; }
+  rebuildProjectSelect($('d-prj'), projectOptionsFor((($('d-prg')||{}).value)||'', (($('d-don')||{}).value)||''), 'All Projects');
+  loadDash();
+}
+function onDashDonorChange(){
+  // picking a donor narrows the Projects list to the ones that donor funds
+  rebuildProjectSelect($('d-prj'), projectOptionsFor((($('d-prg')||{}).value)||'', (($('d-don')||{}).value)||''), 'All Projects');
   loadDash();
 }
 function clearDashFilter(which){ const m={prg:'d-prg',prj:'d-prj',don:'d-don'}; const e=$(m[which]); if(e)e.value=''; if(which==='prg') onDashProgChange(); else loadDash(); }
@@ -4701,9 +4726,7 @@ async function renderReports(){
             <option value="Y">📅 Annually</option>
             <option value="C">📅 Custom range…</option>
           </select></div>
-        <div><label class="r-lbl">Thematic Area</label>
-          <select id="rc-prog" class="r-inp" onchange="rcOnProgChange()"><option value="">All thematic areas</option>${(LOOKUPS.programmes||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select></div>
-        <div><label class="r-lbl">Project</label>
+        <div><label class="r-lbl">Project <span class="fo-auto">only this donor's</span></label>
           <select id="rc-proj" class="r-inp"><option value="">All projects</option>${(LOOKUPS.projects||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select></div>
         <div class="rc-custom" style="display:none"><label class="r-lbl">📅 From date</label><input type="date" id="rc-from" class="r-inp"></div>
         <div class="rc-custom" style="display:none"><label class="r-lbl">📅 To date</label><input type="date" id="rc-to" class="r-inp"></div>
@@ -4730,21 +4753,26 @@ async function renderReports(){
       </ul>
     </div>`;
   loadReport();
-  rcOnProgChange();
+  rcOnDonorChange();
   rcOnDurationChange();
 }
-function rcOnProgChange(){
-  const p=$('rc-prog'),j=$('rc-proj'); if(!p||!j) return;
-  let list = LOOKUPS.projects||[];
-  if(p.value) list = list.filter(x=>!x.programme_id || x.programme_id===p.value);
-  j.innerHTML = '<option value="">All projects</option>' + list.map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('');
-}
 /* When the donor changes: (1) auto-set the period to the donor's reporting_frequency,
-   (2) show all the projects this donor is funding (donor_mappings). */
+   (2) the Project dropdown offers ONLY the projects this donor funds (donor_mappings) —
+   one donor can fund many; "All donors" restores the full list. */
 const FREQ_MAP = {'Monthly':'M','Quarterly':'Q','Half-yearly':'Q','Annual':'Y','Yearly':'Y'};
 function rcOnDonorChange(){
   const did = $('rc-donor').value;
-  const pill = $('rc-freq-pill'), info = $('rc-donor-projects');
+  const pill = $('rc-freq-pill'), info = $('rc-donor-projects'), j = $('rc-proj');
+  const list = did ? ((LOOKUPS.donor_projects||{})[did] || []) : [];
+  if(j){
+    if(did){
+      j.innerHTML = `<option value="">All ${list.length} funded project${list.length===1?'':'s'}</option>`
+        + list.map(p=>`<option value="${esc(p.project_id)}">${esc(p.project_name||p.project_id)}</option>`).join('');
+    } else {
+      j.innerHTML = '<option value="">All projects</option>'
+        + (LOOKUPS.projects||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('');
+    }
+  }
   if(!did){ if(pill) pill.style.display='none'; if(info) info.style.display='none'; return; }
   const donor = (LOOKUPS.donors||[]).find(x=>x.id===did);
   if(donor && donor.reporting_frequency && FREQ_MAP[donor.reporting_frequency]){
@@ -4753,13 +4781,15 @@ function rcOnDonorChange(){
     if(pill){ pill.textContent = '✓ Donor preference: '+donor.reporting_frequency+' → '+periodLabel(code); pill.style.display='inline-flex'; }
   } else if(pill){ pill.style.display='none'; }
   rcOnDurationChange();
-  const list = (LOOKUPS.donor_projects||{})[did] || [];
   if(info){
     if(list.length){
       info.style.display='block';
       info.innerHTML = `🔗 <b>${list.length}</b> project${list.length===1?'':'s'} funded by this donor — the report will contain one sheet per project: ` +
         list.map(p=>`<span class="pill" style="background:var(--brand-soft);color:var(--brand);margin:2px 4px 2px 0">${esc(p.project_name||p.project_id)}</span>`).join('');
-    } else { info.style.display='none'; }
+    } else {
+      info.style.display='block';
+      info.innerHTML = `⚠ This donor is not mapped to any project yet — map one in <a onclick="goPage('mappings')" style="color:var(--brand);cursor:pointer;text-decoration:underline">Donor Mappings</a>, otherwise the report will be empty.`;
+    }
   }
 }
 function rcPreset(p){ const e=$('rc-period'); if(e){e.value=p;} rcOnDurationChange(); toast('Duration set to '+periodLabel(p)); }
@@ -4960,7 +4990,7 @@ async function exportReportsView(){
    ════════════════════════════════════════════════════════════════ */
 async function generateDonorReport(){
   if(typeof XLSX==='undefined'){toast('Excel engine still loading…','t-warn');return;}
-  const period=$('rc-period').value, donor=$('rc-donor').value, prog=$('rc-prog').value, proj=$('rc-proj').value;
+  const period=$('rc-period').value, donor=$('rc-donor').value, prog='', proj=$('rc-proj').value;   // thematic filter removed — the donor's own mappings scope the report
   const repFrom=($('rc-from')||{}).value||'', repTo=($('rc-to')||{}).value||'';
   toast('Gathering data — this builds a comprehensive donor report…');
 
