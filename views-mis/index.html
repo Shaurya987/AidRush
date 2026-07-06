@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>VIEWS India MIS — Livelihoods Programme</title>
+<link rel="icon" type="image/png" href="viewsindialogo.png">
+<link rel="apple-touch-icon" href="viewsindialogo.png">
 <script>/* Clickjacking guard — the app refuses to run inside another site's iframe
    (does the job of the X-Frame-Options header, with no .htaccess needed). */
 if(window.top!==window.self){ try{ window.top.location=window.location; }catch(e){ document.documentElement.innerHTML=''; } }</script>
@@ -743,7 +745,9 @@ async function startApp(){
   $('u-role').textContent=(CU.role||'') + (CU.is_root?' · ROOT':'');
   buildNav();
   await ensureLookups();
-  goPage('dash');
+  // Land on the section in the URL hash when valid (deep-linking), else the Dashboard
+  const h=(location.hash||'').replace(/^#/,'');
+  goPage(h && navAllowed(h) && (['dash','reports','dataentry','misstatus','audit'].includes(h)||RES[h]) ? h : 'dash');
   startLivePolling();   // silent live refresh every 25s
 }
 
@@ -811,10 +815,14 @@ function buildNav(){
 function setActiveNav(key){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.getAttribute('data-page')===key));
 }
+let __NAV_FROM_HASH=false;
 function goPage(key){
   if(formDirty() && !confirm('You have unsaved changes on this form — leave and discard them?')) return;
   __FORM_INITIAL=null;
   CP=key; setActiveNav(key); __PENDING=[];
+  // Keep the URL hash in sync so the browser Back button navigates sections
+  // (and a section link can be bookmarked / shared) instead of leaving the site.
+  try{ if(!__NAV_FROM_HASH && location.hash!=='#'+key) location.hash='#'+key; }catch(e){}
   if(key==='dash')return renderDashboard();
   if(key==='reports')return renderReports();
   if(key==='dataentry')return renderDataEntry();
@@ -822,6 +830,17 @@ function goPage(key){
   if(key==='audit')return renderAudit();
   renderResource(key);
 }
+/* Browser Back / Forward → section navigation (instead of leaving the site). */
+window.addEventListener('hashchange', ()=>{
+  if(!CU) return;
+  const key=(location.hash||'').replace(/^#/,'');
+  if(!key || key===CP) return;
+  const known=['dash','reports','dataentry','misstatus','audit'].includes(key) || (typeof RES!=='undefined' && RES[key]);
+  if(!known || !navAllowed(key)){ try{ history.replaceState(null,'','#'+(CP==='__form'?'dataentry':CP)); }catch(e){} return; }
+  __NAV_FROM_HASH=true; goPage(key); __NAV_FROM_HASH=false;
+  // goPage refused (unsaved form kept open) — put the hash back without re-firing this handler
+  if(CP!==key){ try{ history.replaceState(null,'','#'+(CP==='__form'?'dataentry':CP)); }catch(e){} }
+});
 
 /* ════════ MODAL ════════ */
 function showModal(title,html){
@@ -1825,13 +1844,18 @@ async function foSyncWorkspaces(){
       district:r.district||'', block:r.block||'', gram_panchayat:r.gram_panchayat||'', geography_id:r.geography_id||'', village:r.village||'', assigned_by:r.assigned_by||'' }));
     wss.forEach(w=>{ if(!w.name) w.name=foAutoName(w); });
     saveWorkspaces(wss);
+    __WS_PUSHED={}; rows.forEach(r=>{ __WS_PUSHED['s'+r.id]=(+r.is_active===1)?1:0; });   // seed so only real changes get written
     const act=getActiveWsId();
     if(act && !wss.some(w=>String(w.id)===String(act))) setActiveWsId('');
     if(!getActiveWsId()){ const sa=rows.find(r=>+r.is_active===1); if(sa) setActiveWsId('s'+sa.id); }
   }catch(e){ /* offline or table missing (run sql/upgrade9.sql) — local keeps working */ }
 }
-function foPushActive(){ const act=getActiveWsId();
-  getWorkspaces().forEach(w=>{ if(w.srv) apiPut('?resource=workspaces&id='+w.srv,{is_active:String(w.id)===String(act)?1:0}).catch(()=>{}); }); }
+let __WS_PUSHED={};   // workspace id → last is_active value the server has (only CHANGED rows are written — no audit-log spam on every switch)
+function foPushActive(){ const act=String(getActiveWsId());
+  getWorkspaces().forEach(w=>{ if(!w.srv) return; const val=String(w.id)===act?1:0;
+    if(__WS_PUSHED[w.id]===val) return;
+    __WS_PUSHED[w.id]=val;
+    apiPut('?resource=workspaces&id='+w.srv,{is_active:val}).catch(()=>{}); }); }
 
 /* ── Field-Office workspaces panel (renders into #fo-card) ── */
 let FO_DRAFT=null, FO_MODE='list', FO_EDIT_ID='', __HQ_ASSIGN=[], __deTab='fo', __foSuppressOnce=false;

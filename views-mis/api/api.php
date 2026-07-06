@@ -143,6 +143,14 @@ function can_manage_users($verb='e'){
   if($verb==='d') return $map['users']['d']===1;
   return $map['users']['e']===1;
 }
+/* Sensitive pages (audit, misstatus): admin, or an explicit View tick in the matrix.
+   The nav hides them client-side; this enforces the same rule on the API itself. */
+function can_view_section($section){
+  if(is_admin()) return true;
+  $u=current_user(); if(!$u) return false;
+  $map=load_user_permissions($u['id']);
+  return isset($map[$section]) && $map[$section]['v']===1;
+}
 
 /* validate the incoming session token + tab id against the users table.
    Refreshes session_expires_at on every successful call. */
@@ -597,6 +605,7 @@ if ($action==='counts') {
 /* ════════════════ AUDIT TRAIL ════════════════ */
 if ($action==='audit') {
   require_session();
+  if(!can_view_section('audit')) out(['error'=>'You do not have permission to view the audit trail'],403);
   $q='%'.($_GET['q']??'').'%';
   $limit = min((int)($_GET['limit'] ?? 1000), 5000);
   try{
@@ -1092,6 +1101,12 @@ if (!can_view($resource)) out(['error'=>'You do not have access to '.$resource],
 if ($method==='GET') {
  try {
   if($resource==='users' && !can_manage_users('v')) out(['error'=>'You do not have permission to view users'],403);
+  // Officers may read their OWN workspaces; the all-officers view needs the MIS Status grant
+  if($resource==='workspaces'){
+    $wu=current_user();
+    $own = $wu && isset($_GET['username']) && strcasecmp((string)$_GET['username'], (string)$wu['username'])===0;
+    if(!$own && !can_view_section('misstatus')) out(['error'=>'You do not have permission to view all workspaces'],403);
+  }
   $cols=table_columns($table);
   $where=[]; $params=[];
   foreach($_GET as $k=>$v){
