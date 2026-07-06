@@ -678,12 +678,18 @@ if ($action==='dashboard') {
     'crop_income'=>$sum('crops','income_inr'),
   ];
   // Distinct Districts & Blocks from the Geography master (filter-aware).
-  // A Donor filter reaches geographies through the chain: donor → funded projects → their places.
-  try{ [$wG,$vG]=$whereFor('geographies');
-    if(!empty($p['donor_id']) && in_array('project_id',table_columns('geographies'))){
-      $wG .= ($wG?' AND ':' WHERE ')."project_id IN (SELECT project_id FROM donor_mappings WHERE donor_id=?)";
-      $vG[] = $p['donor_id'];
+  // Built explicitly (NOT via whereFor): a chosen Project WINS over the auto-selected
+  // Thematic Area — a place's own programme column may be empty/stale, and requiring
+  // BOTH made project-assigned geographies vanish from the counts.
+  // A Donor filter reaches geographies through the chain: donor → funded projects → places.
+  try{
+    $gCols=table_columns('geographies'); $gw=[]; $vG=[];
+    if(!empty($p['project_id']) && in_array('project_id',$gCols)){ $gw[]="`project_id`=?"; $vG[]=$p['project_id']; }
+    elseif(!empty($p['programme_id']) && in_array('programme_id',$gCols)){ $gw[]="`programme_id`=?"; $vG[]=$p['programme_id']; }
+    if(!empty($p['donor_id']) && in_array('project_id',$gCols)){
+      $gw[]="`project_id` IN (SELECT project_id FROM donor_mappings WHERE donor_id=?)"; $vG[]=$p['donor_id'];
     }
+    $wG = $gw ? (' WHERE '.implode(' AND ',$gw)) : '';
     $dq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(district),'')) c FROM geographies$wG"); $dq->execute($vG); $kpi['districts']=(int)$dq->fetch()['c'];
     $bq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(block),'')) c FROM geographies$wG"); $bq->execute($vG); $kpi['blocks']=(int)$bq->fetch()['c'];
   }catch(Exception $e){ $kpi['districts']=0; $kpi['blocks']=0; }

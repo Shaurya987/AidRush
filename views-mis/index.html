@@ -973,6 +973,9 @@ function comboPick(key,id,label){
 function autofillDonorFromProject(pid){
   const did=(LOOKUPS.project_donor||{})[pid];
   if(did && $('ff-donor_id')) comboSet('donor_id',did);
+  // the project pins its thematic area too — fill it wherever the form has one
+  const prj=(LOOKUPS.projects||[]).find(x=>String(x.id)===String(pid));
+  if(prj && prj.programme_id && $('ff-programme_id')) comboSet('programme_id',prj.programme_id);
 }
 /* Indicator Progress: show ONLY indicators linked to the chosen project (real backend linkage). */
 function filterIndicatorsByProject(pid){
@@ -2558,7 +2561,8 @@ async function pgeoAssign(){
   try{
     const d=await apiGet('?resource=geographies&geography_id='+encodeURIComponent(gid)+'&limit=1');
     const row=(d.rows||[])[0]; if(!row){ toast('Geography not found','t-err'); return; }
-    await apiPut('?resource=geographies&id='+row.id, {project_id:PGEO_CTX.project_id});
+    const der=foDerive(PGEO_CTX.project_id);   // store the project's thematic too — keeps every filter consistent
+    await apiPut('?resource=geographies&id='+row.id, {project_id:PGEO_CTX.project_id, programme_id:der.programme_id||''});
     const g=(LOOKUPS.geographies||[]).find(x=>String(x.id)===String(gid)); if(g) g.project_id=PGEO_CTX.project_id;
     toast('✓ Assigned to '+PGEO_CTX.project_name);
     const pk=$('pgeo-pick'); if(pk) pk.innerHTML=pgeoPickOptions();
@@ -2960,6 +2964,10 @@ async function saveForm(key,id){
   if(key==='users' && !id){ payload.username=(payload.email||payload.user_name||'user').split('@')[0].toLowerCase().replace(/[^a-z0-9]/g,''); payload.password_hash=''; }
   // Blank registration date = today (a blank would silently hide the person from date-filtered reports)
   if(key==='beneficiaries' && !String(payload.registration_date||'').trim()) payload.registration_date=todayIST();
+  // Geography with a project but no thematic: derive it (the project pins its theme)
+  if(key==='geographies' && payload.project_id && !String(payload.programme_id||'').trim()){
+    payload.programme_id=foDerive(payload.project_id).programme_id||'';
+  }
   // Data-quality validation (age / phone / negative amounts / dates)
   { const vErr=validatePayload(key,payload); if(vErr){ toast('⚠ '+vErr,'t-err'); return; } }
   // Donor↔Project linkage is MANDATORY — without it the project is invisible to Data Entry & donor reports
