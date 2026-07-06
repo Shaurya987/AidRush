@@ -513,6 +513,10 @@ if ($action==='bulk_create') {
   $bcols  = table_columns($btable);
   $idCol  = isset($ID_GEN[$bres]) ? $ID_GEN[$bres][0] : null;
   $created=0; $errors=[]; $createdIds=[];
+  // Same per-resource named lock as single saves — two simultaneous bulk imports
+  // (or an import racing a manual save) can never generate colliding business IDs.
+  $bulkLock='vmis_id_'.$bres;
+  try{ db()->prepare("SELECT GET_LOCK(?,10)")->execute([$bulkLock]); }catch(Exception $e){ $bulkLock=null; }
   db()->beginTransaction();
   try{
     foreach($brows as $idx=>$row){
@@ -556,9 +560,11 @@ if ($action==='bulk_create') {
       null,
       ['created'=>$created,'errors'=>count($errors)]
     );
+    if($bulkLock){ try{ db()->prepare("SELECT RELEASE_LOCK(?)")->execute([$bulkLock]); }catch(Exception $e){} }
     out(['ok'=>true,'created'=>$created,'errors'=>$errors,'ids'=>$createdIds]);
   }catch(Exception $e){
     db()->rollBack();
+    if($bulkLock){ try{ db()->prepare("SELECT RELEASE_LOCK(?)")->execute([$bulkLock]); }catch(Exception $e2){} }
     out(['error'=>'Bulk import failed','detail'=>safe_err($e)],500);
   }
 }
@@ -576,7 +582,7 @@ if ($action==='options') {
     'donor_projects'=>$q("SELECT m.donor_id, m.project_id, p.project_name, p.programme_id FROM donor_mappings m LEFT JOIN projects p ON p.project_id=m.project_id WHERE m.donor_id IS NOT NULL AND m.project_id IS NOT NULL GROUP BY m.donor_id, m.project_id"),
     'indicators'=>$q("SELECT indicator_id id, indicator_name name, programme_id, project_id FROM indicators WHERE indicator_id IS NOT NULL ORDER BY indicator_name"),
     'shgs'=>$q("SELECT shg_id id, shg_name name, programme_id, project_id, donor_id FROM shgs WHERE shg_id IS NOT NULL ORDER BY shg_name"),
-    'geographies'=>$q("SELECT geography_id id, CONCAT_WS(' · ', NULLIF(village_or_ward,''), NULLIF(gram_panchayat,''), NULLIF(block,''), NULLIF(district,'')) name, district, block, gram_panchayat, village_or_ward village FROM geographies WHERE geography_id IS NOT NULL AND geography_id<>'' ORDER BY district, block, gram_panchayat, village_or_ward"),
+    'geographies'=>$q("SELECT geography_id id, CONCAT_WS(' · ', NULLIF(village_or_ward,''), NULLIF(gram_panchayat,''), NULLIF(block,''), NULLIF(district,'')) name, district, block, gram_panchayat, village_or_ward village".(in_array('project_id',table_columns('geographies'))?", project_id":"")." FROM geographies WHERE geography_id IS NOT NULL AND geography_id<>'' ORDER BY district, block, gram_panchayat, village_or_ward"),
     /* staff — for assigning HQ work units to field officers (username is the stable key) */
     'staff'=>$q("SELECT username id, COALESCE(NULLIF(user_name,''),username) name, role FROM users WHERE username IS NOT NULL AND username<>'' ORDER BY name"),
   ]);
@@ -671,8 +677,13 @@ if ($action==='dashboard') {
     'tgt'=>$sum('activities','total_target'),
     'crop_income'=>$sum('crops','income_inr'),
   ];
-  // Distinct Districts & Blocks from the Geography master (filter-aware)
+  // Distinct Districts & Blocks from the Geography master (filter-aware).
+  // A Donor filter reaches geographies through the chain: donor → funded projects → their places.
   try{ [$wG,$vG]=$whereFor('geographies');
+    if(!empty($p['donor_id']) && in_array('project_id',table_columns('geographies'))){
+      $wG .= ($wG?' AND ':' WHERE ')."project_id IN (SELECT project_id FROM donor_mappings WHERE donor_id=?)";
+      $vG[] = $p['donor_id'];
+    }
     $dq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(district),'')) c FROM geographies$wG"); $dq->execute($vG); $kpi['districts']=(int)$dq->fetch()['c'];
     $bq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(block),'')) c FROM geographies$wG"); $bq->execute($vG); $kpi['blocks']=(int)$bq->fetch()['c'];
   }catch(Exception $e){ $kpi['districts']=0; $kpi['blocks']=0; }

@@ -623,9 +623,9 @@ const RES={
     filters:['programme_id','project_id',['status','Status',['Planned','Ongoing','Completed','On Hold']]],
     fields:[['objective_id','Objective ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['objective','Objective',1,'area'],['target_beneficiaries','Target Beneficiaries'],['status','Status','sel',['Planned','Ongoing','Completed','On Hold']],['remarks','Remarks']]},
   projects:{label:'Projects',sub:'Implementation projects linked to programmes',icon:'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
-    cols:[['project_name','Name'],['project_code','Code'],['programme_id','Thematic Area'],['_donor','Donor / Funding','maplink'],['project_status','Status','status']],
+    cols:[['project_name','Name'],['programme_id','Thematic Area'],['_donor','Donor / Funding','maplink'],['project_status','Status','status']],
     filters:['programme_id',['project_status','Status',['Planned','Ongoing','Completed','On Hold']]],
-    fields:[['project_id','Project ID',1],['project_code','Project Code'],['programme_id','Thematic Area','ref','programmes'],['donor_id','Funded by — Donor (required: creates the donor↔project link)','ref','donors'],['project_name','Project Name',1],['project_objective','Objective','area'],['project_status','Status','sel',SEL_STATUS],['project_geography_summary','Geography Summary'],['target_beneficiaries','Target Beneficiaries'],['implementation_partner','Implementation Partner'],['project_start_date','Start Date','date'],['project_end_date','End Date','date'],['remarks','Remarks']]},
+    fields:[['project_id','Project ID',1],['programme_id','Thematic Area','ref','programmes'],['donor_id','Funded by — Donor (required: creates the donor↔project link)','ref','donors'],['approved_amount_inr','Approved Amount from Donor (₹)','num'],['project_name','Project Name',1],['project_objective','Objective','area'],['project_status','Status','sel',SEL_STATUS],['project_geography_summary','Geography Summary'],['target_beneficiaries','Target Beneficiaries'],['implementation_partner','Implementation Partner'],['project_start_date','Start Date','date'],['project_end_date','End Date','date'],['remarks','Remarks']]},
   donors:{label:'Donors',sub:'Funding agencies, CSR partners, foundations & government schemes',icon:'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
     view:'cards',
     cols:[['donor_name','Name'],['donor_type','Type'],['contact_person','Contact'],['total_approved_budget_inr','Budget','inr']],
@@ -636,7 +636,7 @@ const RES={
     filters:['donor_id','project_id','programme_id'],
     fields:[['mapping_id','Mapping ID',1],['donor_id','Donor','ref','donors'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_funded_component','Funded Component'],['funded_activity','Funded Activity'],['budget_head','Budget Head'],['approved_amount_inr','Approved Amount (₹)','num'],['donor_specific_indicator','Donor Indicator'],['reporting_requirement','Reporting Requirement'],['remarks','Remarks']]},
   geographies:{label:'Geography',sub:'Country → State → District → Block → GP → Village hierarchy',icon:'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
-    cols:[['state','State'],['district','District'],['block','Block'],['gram_panchayat','GP'],['village_or_ward','Village/Ward'],['programme_id','Thematic Area'],['responsible_staff','Staff']],
+    cols:[['state','State'],['district','District'],['block','Block'],['gram_panchayat','GP'],['village_or_ward','Village/Ward'],['project_id','Project'],['responsible_staff','Staff']],
     filters:['programme_id','project_id'],
     fields:[['geography_id','Geography ID',1],['country','Country'],['state','State'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village_or_ward','Village / Ward',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['responsible_staff','Responsible Staff'],['remarks','Remarks']]},
   villages:{label:'Village Demographics',sub:'Total HHs, project coverage & social-order breakdown',icon:'M3 21h18M5 21V9l7-6 7 6v12M9 21v-7h6v7',
@@ -646,7 +646,7 @@ const RES={
   beneficiaries:{label:'Beneficiaries',sub:'Farmer & household beneficiaries — full demographic & economic profile',icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',badge:true,
     cols:[['beneficiary_id','ID'],['beneficiary_farmer_name','Name'],['gender','Gender','gender'],['caste','Social Order','caste'],['religion','Religion'],['village','Village'],['block','Block'],['primary_income_source','Income Source'],['current_income_per_annum_inr','Annual Income','inr']],
     filters:['programme_id','project_id','donor_id','caste','gender'],
-    fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['__bl_hdr','Baseline livelihood income — at registration','group'],['bl_paddy_area','Baseline · Paddy — Area (acre)','num'],['bl_paddy_income','Baseline · Paddy — Income (₹)','blinc'],['bl_millet_area','Baseline · Millet — Area (acre)','num'],['bl_millet_income','Baseline · Millet — Income (₹)','blinc'],['bl_vegetable_area','Baseline · Vegetable — Area (acre)','num'],['bl_vegetable_income','Baseline · Vegetable — Income (₹)','blinc'],['bl_mushroom_income','Baseline · Mushroom Cultivation — Income (₹)','blinc'],['bl_goat_income','Baseline · Goat Rearing — Income (₹)','blinc'],['bl_poultry_income','Baseline · Backyard Poultry — Income (₹)','blinc'],['bl_micro_enterprise_income','Baseline · Micro Enterprise — Income (₹)','blinc'],['__bl_total','Total Baseline Income (auto)','bltotal'],['total_land_acre','Total Land (acres)','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
+    fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['__bl_hdr','Baseline livelihood income — at registration','group'],['bl_paddy_area','Baseline · Paddy — Area (acre)','num'],['bl_paddy_income','Baseline · Paddy — Income (₹)','blinc'],['bl_millet_area','Baseline · Millet — Area (acre)','num'],['bl_millet_income','Baseline · Millet — Income (₹)','blinc'],['bl_vegetable_area','Baseline · Vegetable — Area (acre)','num'],['bl_vegetable_income','Baseline · Vegetable — Income (₹)','blinc'],['bl_mushroom_income','Baseline · Mushroom Cultivation — Income (₹)','blinc'],['bl_goat_income','Baseline · Goat Rearing — Income (₹)','blinc'],['bl_poultry_income','Baseline · Backyard Poultry — Income (₹)','blinc'],['bl_micro_enterprise_income','Baseline · Micro Enterprise — Income (₹)','blinc'],['__bl_total','Total Baseline Income (auto)','bltotal'],['total_land_acre','Total Land (acres)','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
   crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — crops, alternative livelihoods, health, road safety, anything',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
     cols:[['beneficiary_id','Beneficiary'],['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['production_kg','Output Qty','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr']],
     filters:['programme_id','project_id','donor_id',['project_year','Year',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']]],
@@ -761,7 +761,7 @@ async function ensureLookups(){
     LOOKUPS.donors=(d.donors||[]).map(x=>({id:x.id,label:x.name,reporting_frequency:x.reporting_frequency,donor_type:x.donor_type,budget:x.total_approved_budget_inr}));
     LOOKUPS.indicators=(d.indicators||[]).map(x=>({id:x.id,label:x.name,programme_id:x.programme_id,project_id:x.project_id}));
     LOOKUPS.shgs=(d.shgs||[]).map(x=>({id:x.id,label:x.name,programme_id:x.programme_id,project_id:x.project_id,donor_id:x.donor_id}));
-    LOOKUPS.geographies=(d.geographies||[]).map(x=>({id:x.id,label:x.name||x.id,district:x.district,block:x.block,gram_panchayat:x.gram_panchayat,village:x.village})).sort((a,b)=>String(a.label).localeCompare(String(b.label),'en',{numeric:true,sensitivity:'base'}));
+    LOOKUPS.geographies=(d.geographies||[]).map(x=>({id:x.id,label:x.name||x.id,district:x.district,block:x.block,gram_panchayat:x.gram_panchayat,village:x.village,project_id:x.project_id||''})).sort((a,b)=>String(a.label).localeCompare(String(b.label),'en',{numeric:true,sensitivity:'base'}));
     LOOKUPS.staff=(d.staff||[]).map(x=>({id:x.id,label:(x.name||x.id)+(x.role?(' · '+x.role):'')}));
     // NOTE: beneficiaries (~2,700) are loaded lazily by ensureBeneficiaries() — only the Production
     // form needs them — so options stays small & fast for login / dashboard / every save.
@@ -903,6 +903,38 @@ function rebuildProjectSelect(sel, list, allLabel){
   const cur=sel.value;
   sel.innerHTML=`<option value="">${esc(allLabel)}</option>`+list.map(o=>`<option value="${esc(o.id)}" ${String(o.id)===String(cur)?'selected':''}>${esc(o.label)}</option>`).join('');
   if(cur && !list.some(o=>String(o.id)===String(cur))) sel.value='';
+}
+/* Donors relevant to a thematic area / project — via the donor→project chain. */
+function donorOptionsFor(progId, projId){
+  const pd=LOOKUPS.project_donor||{};
+  if(projId){ const d=pd[projId]; return (LOOKUPS.donors||[]).filter(x=>String(x.id)===String(d)); }
+  if(progId){ const s=new Set();
+    (LOOKUPS.projects||[]).forEach(p=>{ if((!p.programme_id||String(p.programme_id)===String(progId)) && pd[p.id]) s.add(String(pd[p.id])); });
+    return (LOOKUPS.donors||[]).filter(x=>s.has(String(x.id))); }
+  return LOOKUPS.donors||[];
+}
+/* THE smart filter brain — used by the dashboard AND every section filter bar.
+   Pick a Project  → its Thematic Area and its Donor select themselves.
+   Pick a Thematic → the Project and Donor lists shrink to that theme.
+   Pick a Donor    → the Project list shrinks to what that donor funds. */
+function smartFilterSync(progEl, projEl, donEl){
+  const proj=projEl?projEl.value:'';
+  if(proj){
+    const p=(LOOKUPS.projects||[]).find(x=>String(x.id)===String(proj));
+    if(p && p.programme_id && progEl) progEl.value=p.programme_id;
+    const d=(LOOKUPS.project_donor||{})[proj]; if(d && donEl) donEl.value=d;
+  }
+  const prog=progEl?progEl.value:'', don=donEl?donEl.value:'';
+  if(projEl) rebuildProjectSelect(projEl, projectOptionsFor(prog,don), 'All Projects');
+  if(donEl)  rebuildProjectSelect(donEl, donorOptionsFor(prog, projEl?projEl.value:''), 'All Donors');
+}
+/* One-line warning under filter bars when the donor↔project chain has gaps. */
+function unmappedFilterNote(){
+  const up=unmappedProjects().length;
+  const ud=(LOOKUPS.donors||[]).filter(d=>!(((LOOKUPS.donor_projects||{})[d.id])||[]).length).length;
+  if(!up && !ud) return '';
+  const bits=[]; if(up) bits.push('<b>'+up+' project'+(up>1?'s':'')+'</b>'); if(ud) bits.push('<b>'+ud+' donor'+(ud>1?'s':'')+'</b>');
+  return `<div style="font-size:12px;color:var(--warn);margin:6px 2px 0">⚠ ${bits.join(' and ')} not linked in Donor Mapping — they won't appear when filtering by the other side. <a onclick="goPage('mappings')" style="color:var(--brand);cursor:pointer;text-decoration:underline;font-weight:600">Map now →</a></div>`;
 }
 function comboHTML(key, options, value){
   __COMBO[key]={opts:options||[]};
@@ -1117,15 +1149,19 @@ function validatePayload(key, payload){
 }
 /* Keep donor_mappings in sync with the Project form's "Funded by" field:
    no mapping yet → create one; donor changed → update the existing row. */
-async function upsertProjectDonorMapping(projectBizId, donorId, programmeId){
+async function upsertProjectDonorMapping(projectBizId, donorId, programmeId, approvedAmt){
   if(!projectBizId||!donorId) return;
   try{
-    if(String((LOOKUPS.project_donor||{})[projectBizId]||'')===String(donorId)) return;   // already linked
+    const amt=(approvedAmt!=null && String(approvedAmt).trim()!=='') ? approvedAmt : null;
+    const sameDonor=String((LOOKUPS.project_donor||{})[projectBizId]||'')===String(donorId);
+    if(sameDonor && amt==null) return;   // already linked, nothing new to store
     const d=await apiGet('?resource=mappings&project_id='+encodeURIComponent(projectBizId)+'&limit=5');
     const ex=(d.rows||[])[0];
-    if(ex) await apiPut('?resource=mappings&id='+ex.id, {donor_id:donorId, programme_id:programmeId||ex.programme_id||''});
-    else await apiPost('?resource=mappings', {donor_id:donorId, programme_id:programmeId||'', project_id:projectBizId,
-      donor_funded_component:'Core funding', remarks:'Auto-linked from the Project form'});
+    const body={donor_id:donorId, programme_id:programmeId||(ex&&ex.programme_id)||''};
+    if(amt!=null) body.approved_amount_inr=amt;
+    if(ex) await apiPut('?resource=mappings&id='+ex.id, body);
+    else await apiPost('?resource=mappings', Object.assign({project_id:projectBizId,
+      donor_funded_component:'Core funding', remarks:'Auto-linked from the Project form'}, body));
   }catch(e){ toast('⚠ Project saved, but the donor link failed: '+e.message+' — add it in Donor Mapping','t-err'); }
 }
 async function checkDuplicate(key, payload){
@@ -1307,6 +1343,8 @@ async function renderResource(key){
     let fhtml='<div class="filter-bar"><label>Filter</label>';
     for(const f of cfg.filters) fhtml+=filterSelect(key,f);
     fhtml+=`<button class="btn btn-ghost btn-sm" onclick="clearFilters('${key}')">✕ Clear</button></div>`;
+    const fset=(cfg.filters||[]).map(f=>Array.isArray(f)?f[0]:f);
+    if(fset.includes('project_id')||fset.includes('donor_id')) fhtml+=unmappedFilterNote();
     filterBar=fhtml;
   }
   const head=cfg.cols.map(c=>`<th>${esc(c[1])}</th>`).join('')+'<th>Actions</th>';
@@ -1447,9 +1485,8 @@ function _sel(field,onch,allLabel,opts){
   return `<select id="flt-${field}" ${onch}><option value="">${esc(allLabel)}</option>${opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join('')}</select>`;
 }
 function applyFilter(key){
-  // Thematic / Donor choices narrow the Project filter to matching projects (same chain as reports)
-  const fp=$('flt-project_id');
-  if(fp) rebuildProjectSelect(fp, projectOptionsFor((($('flt-programme_id')||{}).value)||'', (($('flt-donor_id')||{}).value)||''), 'All Projects');
+  // Smart sync: Project ⇒ auto-selects its Thematic & Donor; Thematic/Donor ⇒ narrow the other lists
+  smartFilterSync($('flt-programme_id'), $('flt-project_id'), $('flt-donor_id'));
   PAGE.offset=0; reloadResource(key); if(key==='crops'||key==='beneficiaries') renderIncomeBanner(key);
 }
 /* Section active-filter chips — show what's filtered, one-click clear. */
@@ -1463,7 +1500,11 @@ function renderResChips(key){
   const sv=$('res-search'); if(sv&&sv.value) out.push(['Search', sv.value, '__q']);
   box.innerHTML=out.map(c=>`<span class="fchip">${esc(c[0])}: <b>${esc(c[1])}</b> <span class="fchip-x" onclick="clearResFilter('${key}','${c[2]}')">✕</span></span>`).join('');
 }
-function clearResFilter(key,fn){ if(fn==='__q'){ const s=$('res-search'); if(s)s.value=''; } else { const e=$('flt-'+fn); if(e)e.value=''; } PAGE.offset=0; reloadResource(key); if(key==='crops'||key==='beneficiaries') renderIncomeBanner(key); }
+function clearResFilter(key,fn){ if(fn==='__q'){ const s=$('res-search'); if(s)s.value=''; } else { const e=$('flt-'+fn); if(e)e.value=''; }
+  // a chosen Project pins its Thematic & Donor — clearing either releases the Project too
+  if(fn==='programme_id'||fn==='donor_id'){ const je=$('flt-project_id'); if(je&&je.value) je.value=''; }
+  smartFilterSync($('flt-programme_id'), $('flt-project_id'), $('flt-donor_id'));
+  PAGE.offset=0; reloadResource(key); if(key==='crops'||key==='beneficiaries') renderIncomeBanner(key); }
 function filterSelect(key,f){
   const onch=`onchange="applyFilter('${key}')"`;
   if(f==='programme_id') return _sel('programme_id',onch,'All Thematic Areas',(LOOKUPS.programmes||[]).map(o=>[o.id,o.label]));
@@ -1478,7 +1519,7 @@ function filterSelect(key,f){
 let _dbt=null;
 const PAGE={key:null,offset:0,size:100,total:0};
 function debouncedReload(key){clearTimeout(_dbt);_dbt=setTimeout(()=>{PAGE.offset=0;reloadResource(key);},300);}
-function clearFilters(key){(RES[key].filters||[]).forEach(f=>{const e=$('flt-'+fName(f));if(e)e.value='';});const s=$('res-search');if(s)s.value='';PAGE.offset=0;reloadResource(key);if(key==='crops'||key==='beneficiaries') renderIncomeBanner(key);}
+function clearFilters(key){(RES[key].filters||[]).forEach(f=>{const e=$('flt-'+fName(f));if(e)e.value='';});const s=$('res-search');if(s)s.value='';smartFilterSync($('flt-programme_id'),$('flt-project_id'),$('flt-donor_id'));PAGE.offset=0;reloadResource(key);if(key==='crops'||key==='beneficiaries') renderIncomeBanner(key);}
 function pageGo(delta){ PAGE.offset=Math.max(0,PAGE.offset+delta*PAGE.size); reloadResource(PAGE.key); }
 /* Indicator Progress — when "All Quarters" is selected, combine each indicator's
    quarterly rows (grouped per reporting year) into ONE row: per-period target &
@@ -1540,8 +1581,10 @@ async function reloadResource(key){
         const pn = String(row.project_name||'').replace(/'/g,"\\'");
         const pid = String(row.project_id||'').replace(/'/g,"\\'");
         const objCount = row._objectives==null?'…':row._objectives;
+        const geoCount=(LOOKUPS.geographies||[]).filter(g=>String(g.project_id||'')===String(row.project_id||'')).length;
         acts = `<td style="white-space:nowrap">
           <button class="btn btn-ghost btn-xs" onclick="openProjectObjectives('${pid}','${pn}','${row.programme_id||''}')" title="Manage objectives — every project can have multiple">🎯 Objectives · <b>${objCount}</b></button>
+          <button class="btn btn-ghost btn-xs" onclick="openProjectGeos('${pid}','${pn}')" title="Manage this project's geographies — assign existing places or add new ones">🌍 Geographies · <b>${geoCount}</b></button>
           ${canW?`<button class="btn btn-warn btn-xs" onclick="openForm('${key}',${row.id})">✎</button> `:''}
           ${canD?`<button class="btn btn-danger btn-xs" onclick="delRow('${key}',${row.id})">✕</button>`:(!canW?'<span style="color:var(--t4);font-size:11px">view</span>':'')}
         </td>`;
@@ -1639,8 +1682,14 @@ async function openForm(key,id){
   const cfg=RES[key]; let row={};
   if((cfg.fields||[]).some(f=>f[0]==='beneficiary_id' && f[2]==='ref')) await ensureBeneficiaries();
   if(id){ try{const d=await apiGet('?resource='+key+'&id='+id); row=d.row||{};}catch(e){toast('⚠ '+e.message,'t-err');return;} }
-  // Project edit: pre-fill "Funded by" from the current donor↔project mapping
-  if(key==='projects' && id && !row.donor_id) row.donor_id=(LOOKUPS.project_donor||{})[row.project_id]||'';
+  // Project edit: pre-fill "Funded by" + approved amount from the current donor↔project mapping
+  if(key==='projects' && id){
+    if(!row.donor_id) row.donor_id=(LOOKUPS.project_donor||{})[row.project_id]||'';
+    try{ const md=await apiGet('?resource=mappings&project_id='+encodeURIComponent(row.project_id||'')+'&limit=1');
+      const ex=(md.rows||[])[0];
+      if(ex && (row.approved_amount_inr==null||row.approved_amount_inr==='')) row.approved_amount_inr=ex.approved_amount_inr;
+    }catch(e){}
+  }
   const idCol=AUTO_ID[key];
   const fields=cfg.fields.map(f=>{
     const [k,l,type,opts]=f; let v=row[k]==null?'':row[k]; const req=(f[2]===1);
@@ -2466,6 +2515,71 @@ async function doResetPassword(userId){
    ════════════════════════════════════════════════════════════════ */
 let POBJ_CACHE = null;   // last loaded list for the open modal
 let POBJ_CTX = null;     // {project_id, project_name, programme_id}
+/* ── 🌍 Project ↔ Geography manager — one project, many places. The dashboard's
+   district/block counts, the Geography section and donor reports all follow this link. ── */
+let PGEO_CTX=null;
+async function openProjectGeos(projectId, projectName){
+  PGEO_CTX={project_id:projectId, project_name:projectName};
+  showModal('🌍 Geographies — '+projectName,
+    `<div style="font-size:13px;color:var(--t3);margin-bottom:14px">
+       Every place this project works in. Assign existing geographies below, or add a brand-new one —
+       once linked, project-filtered dashboards count these districts &amp; blocks automatically.
+     </div>
+     <div id="pgeo-list" style="margin-bottom:14px"><div class="empty">Loading…</div></div>
+     ${canWriteResource('geographies')?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--bg-soft);border-radius:10px;padding:11px 13px">
+       <select id="pgeo-pick" style="flex:1;min-width:240px;padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;background:#fff">${pgeoPickOptions()}</select>
+       <button class="btn btn-primary btn-sm" onclick="pgeoAssign()">＋ Assign to this project</button>
+       <button class="btn btn-ghost btn-sm" onclick="pgeoNewGeo()">＋ New geography</button>
+     </div>`:''}
+     <div class="form-actions" style="margin-top:14px"><span style="flex:1"></span><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>`);
+  pgeoRenderList();
+}
+function pgeoPickOptions(){
+  const free=(LOOKUPS.geographies||[]).filter(g=>!g.project_id);
+  const other=(LOOKUPS.geographies||[]).filter(g=>g.project_id && String(g.project_id)!==String(PGEO_CTX.project_id));
+  return '<option value="">— Pick a geography to assign —</option>'
+    + free.map(g=>`<option value="${esc(g.id)}">${esc(g.label)}</option>`).join('')
+    + (other.length?('<optgroup label="On another project (assigning moves it here)">'+other.map(g=>`<option value="${esc(g.id)}">${esc(g.label)}</option>`).join('')+'</optgroup>'):'');
+}
+async function pgeoRenderList(){
+  const box=$('pgeo-list'); if(!box||!PGEO_CTX) return;
+  let rows=[];
+  try{ const d=await apiGet('?resource=geographies&project_id='+encodeURIComponent(PGEO_CTX.project_id)+'&limit=500'); rows=d.rows||[]; }catch(e){}
+  box.innerHTML = rows.length
+    ? rows.map(r=>`<div style="display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:9px;padding:8px 12px;margin-bottom:6px">
+        <span style="flex:1;font-size:13px">📍 ${esc([r.village_or_ward,r.gram_panchayat,r.block,r.district].filter(Boolean).join(' · ')||r.geography_id)}</span>
+        <span class="mono" style="font-size:11px;color:var(--t4)">${esc(r.geography_id||'')}</span>
+        ${canWriteResource('geographies')?`<button class="btn btn-ghost btn-xs" title="Unassign from this project (the place itself is kept)" onclick="pgeoUnassign(${r.id})">✕ Unassign</button>`:''}
+      </div>`).join('')
+    : '<div class="empty-state" style="padding:16px"><div class="empty-sub">No geographies assigned yet — pick one below, or add a new one.</div></div>';
+}
+async function pgeoAssign(){
+  const gid=($('pgeo-pick')||{}).value; if(!gid){ toast('Pick a geography first','t-warn'); return; }
+  try{
+    const d=await apiGet('?resource=geographies&geography_id='+encodeURIComponent(gid)+'&limit=1');
+    const row=(d.rows||[])[0]; if(!row){ toast('Geography not found','t-err'); return; }
+    await apiPut('?resource=geographies&id='+row.id, {project_id:PGEO_CTX.project_id});
+    const g=(LOOKUPS.geographies||[]).find(x=>String(x.id)===String(gid)); if(g) g.project_id=PGEO_CTX.project_id;
+    toast('✓ Assigned to '+PGEO_CTX.project_name);
+    const pk=$('pgeo-pick'); if(pk) pk.innerHTML=pgeoPickOptions();
+    pgeoRenderList();
+  }catch(e){ toast('⚠ '+e.message,'t-err'); }
+}
+async function pgeoUnassign(rowId){
+  try{
+    await apiPut('?resource=geographies&id='+rowId, {project_id:''});
+    LOOKUPS._loaded=false; await ensureLookups();
+    toast('✓ Unassigned — the place itself is kept in Geography');
+    const pk=$('pgeo-pick'); if(pk) pk.innerHTML=pgeoPickOptions();
+    pgeoRenderList();
+  }catch(e){ toast('⚠ '+e.message,'t-err'); }
+}
+async function pgeoNewGeo(){
+  const pid=PGEO_CTX?PGEO_CTX.project_id:'';
+  closeModal();
+  await openForm('geographies');
+  if(pid && __COMBO['project_id']) comboSet('project_id', pid);   // pre-link the new place to this project
+}
 async function openProjectObjectives(projectId, projectName, programmeId){
   POBJ_CTX = {project_id:projectId, project_name:projectName, programme_id:programmeId||''};
   showModal('🎯 Objectives — ' + projectName,
@@ -2888,13 +3002,13 @@ async function saveForm(key,id){
   try{
     if(id){
       await apiPut('?resource='+key+'&id='+id,payload); toast('✓ Saved'); __FORM_INITIAL=null;
-      if(key==='projects'){ try{ const pd=await apiGet('?resource=projects&id='+id); await upsertProjectDonorMapping((pd.row||{}).project_id, payload.donor_id, payload.programme_id); }catch(e){} }
+      if(key==='projects'){ try{ const pd=await apiGet('?resource=projects&id='+id); await upsertProjectDonorMapping((pd.row||{}).project_id, payload.donor_id, payload.programme_id, payload.approved_amount_inr); }catch(e){} }
       if(key==='beneficiaries') LOOKUPS._benLoaded=false;
       LOOKUPS._loaded=false; await ensureLookups(); goPage(__formReturn||key);
     } else {
       const r=await apiPost('?resource='+key,payload);
       toast('✓ Created'+(r&&r.business_id?' — ID '+r.business_id:'')); __FORM_INITIAL=null;
-      if(key==='projects') await upsertProjectDonorMapping(r&&r.business_id, payload.donor_id, payload.programme_id);
+      if(key==='projects') await upsertProjectDonorMapping(r&&r.business_id, payload.donor_id, payload.programme_id, payload.approved_amount_inr);
       if(key==='beneficiaries') LOOKUPS._benLoaded=false;
       LOOKUPS._loaded=false; await ensureLookups();
       // Created via a "＋ New …" redirect? Return to the form we came from and select the new record.
@@ -3013,11 +3127,12 @@ async function renderDashboard(){
         <button class="btn btn-ghost btn-sm" onclick="printDashboard()" title="Print the dashboard — or save it as a PDF — exactly as filtered, with a branded report header">🖨 Print</button>
         </div></div>
     <div class="filter-bar"><label>Filter:</label>
-      <select id="d-prg" onchange="onDashProgChange()"><option value="">All Thematic Areas</option>${(LOOKUPS.programmes||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
-      <select id="d-prj" onchange="loadDash()"><option value="">All Projects</option>${(LOOKUPS.projects||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
-      <select id="d-don" onchange="onDashDonorChange()"><option value="">All Donors</option>${(LOOKUPS.donors||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
+      <select id="d-prg" onchange="onDashFilterChange()"><option value="">All Thematic Areas</option>${(LOOKUPS.programmes||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
+      <select id="d-prj" onchange="onDashFilterChange()"><option value="">All Projects</option>${(LOOKUPS.projects||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
+      <select id="d-don" onchange="onDashFilterChange()"><option value="">All Donors</option>${(LOOKUPS.donors||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
       <button class="btn btn-ghost btn-sm" onclick="clearDash()">Clear</button>
       <span id="dash-chips" style="display:inline-flex;gap:8px;flex-wrap:wrap"></span></div>
+    ${unmappedFilterNote()}
     <div class="kpi-grid kg-5" id="dash-kpi"></div>
     <div class="chart-grid-2">
       <div class="chart-card" style="grid-column:1/-1"><div class="chart-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap"><div><div class="chart-title">💹 Household Income — Before vs After</div><div class="chart-sub">Baseline at registration vs current income (cumulative — summed from Production / Output) · by livelihood activity</div></div><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end"><div class="seg" role="group" aria-label="Chart type"><button type="button" class="iba-seg active" data-t="bar" onclick="setIncomeBaType('bar')">▮▮ Bar</button><button type="button" class="iba-seg" data-t="line" onclick="setIncomeBaType('line')">📈 Line</button></div><div id="income-ba-summary" style="text-align:right;font-size:12.5px;color:var(--t3);min-width:160px"></div></div></div><div class="chart-wrap"><canvas id="ch-income-ba"></canvas></div></div>
@@ -3054,18 +3169,16 @@ async function renderDashboard(){
     <div class="chart-grid-2" id="custom-charts"></div>`;
   loadDash(); loadCharts();
 }
-function clearDash(){['d-prg','d-prj','d-don'].forEach(i=>{const e=$(i);if(e)e.value='';});onDashProgChange();}
+function clearDash(){['d-prg','d-prj','d-don'].forEach(i=>{const e=$(i);if(e)e.value='';});onDashFilterChange();}
 /* Dashboard filters — Project list narrows to the chosen Programme, + active-filter chips. */
-function onDashProgChange(){
-  rebuildProjectSelect($('d-prj'), projectOptionsFor((($('d-prg')||{}).value)||'', (($('d-don')||{}).value)||''), 'All Projects');
+function onDashFilterChange(){
+  smartFilterSync($('d-prg'), $('d-prj'), $('d-don'));
   loadDash();
 }
-function onDashDonorChange(){
-  // picking a donor narrows the Projects list to the ones that donor funds
-  rebuildProjectSelect($('d-prj'), projectOptionsFor((($('d-prg')||{}).value)||'', (($('d-don')||{}).value)||''), 'All Projects');
-  loadDash();
-}
-function clearDashFilter(which){ const m={prg:'d-prg',prj:'d-prj',don:'d-don'}; const e=$(m[which]); if(e)e.value=''; if(which==='prg') onDashProgChange(); else loadDash(); }
+function clearDashFilter(which){ const m={prg:'d-prg',prj:'d-prj',don:'d-don'}; const e=$(m[which]); if(e)e.value='';
+  // a chosen Project pins its Thematic & Donor — clearing either of those must release the Project too
+  if(which!=='prj'){ const je=$('d-prj'); if(je&&je.value) je.value=''; }
+  onDashFilterChange(); }
 function renderDashChips(){
   const box=$('dash-chips'); if(!box) return;
   const lbl=(arr,id)=>{ const o=(arr||[]).find(x=>String(x.id)===String(id)); return o?o.label:id; };
@@ -5163,6 +5276,18 @@ async function generateDonorReport(){
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 2b. GEOGRAPHIES COVERED — every place the donor's projects work in
+  //     (the project↔geography link; also drives district/block KPIs)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  {
+    const geoRows=(LOOKUPS.geographies||[]).filter(g=>g.project_id && (donorPrjIds.size? donorPrjIds.has(g.project_id) : (!donor)));
+    if(geoRows.length) sheets.push({
+      name:'Geographies Covered', title:'Geographies covered'+(donorName?(' — funded by '+donorName):''), subtitle:geoRows.length+' places · '+nowIST(),
+      rows:geoRows.map(g=>({Project:lblOf(LOOKUPS.projects,g.project_id),District:g.district||'',Block:g.block||'','Gram Panchayat':g.gram_panchayat||'','Village / Ward':g.village||''})),
+      cols:[{key:'Project',label:'Project',type:'text'},{key:'District',label:'District',type:'text'},{key:'Block',label:'Block',type:'text'},{key:'Gram Panchayat',label:'Gram Panchayat',type:'text'},{key:'Village / Ward',label:'Village / Ward',type:'text'}],
+    });
+  }
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 3.  DONOR → PROJECTS overview + 4. per-project sheets
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if(donorProjects.length){
@@ -5926,8 +6051,10 @@ const XLS = (function(){
     }
     // Column widths
     ws['!cols'] = cols.map(c => ({wch: _autoCol(rows,c)}));
-    // Row heights — taller title + header
-    ws['!rows'] = [{hpt:30},{hpt:18},{hpt:18},{hpt:6},{hpt:26}];
+    // Row heights — taller title + header; the filters line grows so long filter
+    // strings wrap instead of clipping behind the row below
+    const fLen=(filters||'').length;
+    ws['!rows'] = [{hpt:30},{hpt:18},{hpt: fLen>220?64 : fLen>110?42 : 18},{hpt:6},{hpt:26}];
     return ws;
   }
 
