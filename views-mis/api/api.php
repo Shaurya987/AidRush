@@ -609,6 +609,18 @@ if ($action==='counts') {
 }
 
 /* ════════════════ AUDIT TRAIL ════════════════ */
+/* ════════════════ MIS STATUS — live officer presence ════════════════ */
+if ($action==='staff_status') {
+  require_session();
+  if(!can_view_section('misstatus')) out(['error'=>'You do not have permission to view officer status'],403);
+  try{
+    $rows=db()->query("SELECT username, COALESCE(NULLIF(user_name,''),username) name, role, last_seen, last_login,
+        (active_session_token IS NOT NULL AND session_expires_at IS NOT NULL AND session_expires_at>NOW()) online
+      FROM users WHERE username IS NOT NULL AND username<>'' ORDER BY name")->fetchAll();
+    out(['rows'=>$rows]);
+  }catch(Exception $e){ out(['rows'=>[]]); }
+}
+
 if ($action==='audit') {
   require_session();
   if(!can_view_section('audit')) out(['error'=>'You do not have permission to view the audit trail'],403);
@@ -699,6 +711,27 @@ if ($action==='dashboard') {
       $kpi['villages']=(int)$vq->fetch()['c'];
     }
   }catch(Exception $e){ $kpi['districts']=0; $kpi['blocks']=0; }
+  // ── Thematic Areas & Projects KPIs must follow the Donor / Project filters through
+  //    the mapping chain — their own tables have no donor_id column, so $whereFor
+  //    skipped the donor and the cards kept showing ALL projects/themes.
+  try{
+    if(!empty($p['project_id'])){
+      $st=$pdo->prepare("SELECT COUNT(*) c, COUNT(DISTINCT NULLIF(TRIM(programme_id),'')) pg FROM projects WHERE project_id=?");
+      $st->execute([$p['project_id']]); $r=$st->fetch();
+      $kpi['projects']=(int)$r['c']; $kpi['programmes']=(int)$r['pg'];
+    } elseif(!empty($p['donor_id'])){
+      $joinProg=!empty($p['programme_id']);
+      $vals=$joinProg? [$p['donor_id'],$p['programme_id']] : [$p['donor_id']];
+      $sqlPj="SELECT COUNT(DISTINCT m.project_id) c FROM donor_mappings m"
+            .($joinProg?" JOIN projects pr ON pr.project_id=m.project_id":"")
+            ." WHERE m.donor_id=? AND m.project_id IS NOT NULL AND m.project_id<>''"
+            .($joinProg?" AND pr.programme_id=?":"");
+      $st=$pdo->prepare($sqlPj); $st->execute($vals); $kpi['projects']=(int)$st->fetch()['c'];
+      $sqlPg="SELECT COUNT(DISTINCT NULLIF(TRIM(pr.programme_id),'')) c FROM donor_mappings m JOIN projects pr ON pr.project_id=m.project_id WHERE m.donor_id=?"
+            .($joinProg?" AND pr.programme_id=?":"");
+      $st=$pdo->prepare($sqlPg); $st->execute($vals); $kpi['programmes']=(int)$st->fetch()['c'];
+    }
+  }catch(Exception $e){}
   // Active Donors = donors that currently fund at least one project (have a mapping) — filter-aware
   try{ [$wM2,$vM2]=$whereFor('donor_mappings');
     $sqlAd = $wM2 ? "SELECT COUNT(DISTINCT donor_id) c FROM donor_mappings$wM2 AND donor_id IS NOT NULL AND TRIM(donor_id)<>''"
@@ -1347,6 +1380,21 @@ if ($method==='DELETE') {
   if(!can_delete($resource)) out(['error'=>'You do not have permission to delete records'],403);
   $st=db()->prepare("SELECT * FROM `$table` WHERE id=?"); $st->execute([$id]); $before=$st->fetch();
   $st=db()->prepare("DELETE FROM `$table` WHERE id=?"); $st->execute([$id]);
+  // ── Chain hygiene — nothing may keep pointing at a deleted donor/project ──
+  if($resource==='donors' && !empty($before['donor_id'])){
+    try{ $n=db()->prepare("DELETE FROM donor_mappings WHERE donor_id=?"); $n->execute([$before['donor_id']]);
+      if($n->rowCount()) audit('delete','mappings',$before['donor_id'],"Auto-unmapped ".$n->rowCount()." project link(s) because donor ".$before['donor_id']." was deleted");
+    }catch(Exception $e){}
+  }
+  if($resource==='projects' && !empty($before['project_id'])){
+    try{ $n=db()->prepare("DELETE FROM donor_mappings WHERE project_id=?"); $n->execute([$before['project_id']]);
+      if($n->rowCount()) audit('delete','mappings',$before['project_id'],"Removed ".$n->rowCount()." donor link(s) because project ".$before['project_id']." was deleted");
+    }catch(Exception $e){}
+    try{ if(in_array('project_id',table_columns('geographies'))){
+      $n=db()->prepare("UPDATE geographies SET project_id=NULL WHERE project_id=?"); $n->execute([$before['project_id']]);
+      if($n->rowCount()) audit('update','geographies',$before['project_id'],"Unlinked ".$n->rowCount()." geographies (places kept) because project ".$before['project_id']." was deleted");
+    }}catch(Exception $e){}
+  }
   audit('delete',$resource,$id,"Deleted $resource #$id",$before,null);
   out(['ok'=>true]);
 }

@@ -771,8 +771,15 @@ async function ensureLookups(){
       (LOOKUPS.donor_projects[dp.donor_id]=LOOKUPS.donor_projects[dp.donor_id]||[]).push({project_id:dp.project_id, project_name:dp.project_name, programme_id:dp.programme_id});
       if(dp.project_id && !LOOKUPS.project_donor[dp.project_id]) LOOKUPS.project_donor[dp.project_id]=dp.donor_id;
     }
-  }catch(e){ ['programmes','projects','donors','indicators','shgs','geographies'].forEach(k=>LOOKUPS[k]=LOOKUPS[k]||[]); }
-  LOOKUPS._loaded=true;
+    LOOKUPS._loaded=true;                     // ONLY on success — a failed load must retry
+  }catch(e){
+    // One failed load used to mark the lists as "loaded" anyway → every dropdown and
+    // filter stayed EMPTY for the whole session until the tab was closed. Now the next
+    // page render simply retries, and the user is told instead of left guessing.
+    ['programmes','projects','donors','indicators','shgs','geographies'].forEach(k=>LOOKUPS[k]=LOOKUPS[k]||[]);
+    LOOKUPS._loaded=false;
+    toast('⚠ Some lists failed to load — retrying on your next click','t-warn');
+  }
 }
 /* Beneficiary lookup (~2,700) — fetched once, cached; refreshed only after a beneficiary is added. */
 async function ensureBeneficiaries(){
@@ -1895,6 +1902,12 @@ function foGeoIn(flt){ return (LOOKUPS.geographies||[]).filter(g=>
   (!flt.block || String(g.block||'')===flt.block) &&
   (!flt.gram_panchayat || String(g.gram_panchayat||'')===flt.gram_panchayat)); }
 function foDistinct(list,field){ const s=new Set(); (list||[]).forEach(g=>{ const v=String(g[field]||'').trim(); if(v) s.add(v); }); return [...s].sort((a,b)=>a.localeCompare(b,'en',{numeric:true,sensitivity:'base'})); }
+/* Places assigned to a project (Projects → 🌍 Geographies). No project chosen → all places. */
+function projectGeoPool(pid){ const all=LOOKUPS.geographies||[]; if(!pid) return all; return all.filter(g=>String(g.project_id||'')===String(pid)); }
+function foGeoPool(pool,flt){ return (pool||[]).filter(g=>
+  (!flt.district || String(g.district||'')===flt.district) &&
+  (!flt.block || String(g.block||'')===flt.block) &&
+  (!flt.gram_panchayat || String(g.gram_panchayat||'')===flt.gram_panchayat)); }
 
 /* ── Workspace ⇄ server sync — workspaces live in the DB (upgrade9) so admins see
    everyone's in MIS Status, HQ can assign them, and officers get theirs on any device.
@@ -1988,10 +2001,19 @@ function foListHTML(){
 function foSetupHTML(){
   if(!FO_DRAFT) foInitDraftBlank();
   const d=FO_DRAFT;
-  const districts=rptGeoList('district');
-  const inD=foGeoIn({district:d.district}), blocks=foDistinct(inD,'block');
-  const inB=foGeoIn({district:d.district,block:d.block}), gps=foDistinct(inB,'gram_panchayat');
-  const villages=foGeoIn({district:d.district,block:d.block,gram_panchayat:d.gram_panchayat});
+  // Once a Project is chosen, every place list narrows to ITS assigned geographies
+  // (Projects → 🌍 Geographies) — officers only ever see the places of their project.
+  const GPOOL=projectGeoPool(d.project_id);
+  const districts = d.project_id ? foDistinct(GPOOL,'district').map(x=>({id:x,label:x})) : rptGeoList('district');
+  const inD=foGeoPool(GPOOL,{district:d.district}), blocks=foDistinct(inD,'block');
+  const inB=foGeoPool(GPOOL,{district:d.district,block:d.block}), gps=foDistinct(inB,'gram_panchayat');
+  const villages=foGeoPool(GPOOL,{district:d.district,block:d.block,gram_panchayat:d.gram_panchayat});
+  const nDist=foDistinct(GPOOL,'district').length;
+  const poolNote = d.project_id
+    ? (GPOOL.length
+        ? `<div style="margin-top:10px;font-size:12.5px;color:var(--t2);background:var(--ok-soft);border:1px solid var(--ok);border-radius:9px;padding:8px 12px">🌍 Showing only this project's assigned places — <b>${GPOOL.length}</b> village${GPOOL.length>1?'s':''} across <b>${nDist}</b> district${nDist>1?'s':''}. Need more? Assign them in <b>Projects → 🌍 Geographies</b>.</div>`
+        : `<div style="margin-top:10px;font-size:12.5px;color:var(--warn);background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;padding:8px 12px">⚠ <b>No geographies assigned to this project yet.</b> Assign them in <b>Projects → 🌍 Geographies</b> and they will appear here.</div>`)
+    : `<div style="margin-top:10px;font-size:12px;color:var(--t4)">Tip: pick the <b>Project</b> first — the District/Block/Village lists then show only its assigned places.</div>`;
   const der=foDerive(d.project_id);
   const opt=(v,sel)=>`<option value="${esc(v)}" ${String(sel)===String(v)?'selected':''}>${esc(v)}</option>`;
   const ready=d.district&&d.project_id&&d.geography_id;
@@ -2003,6 +2025,7 @@ function foSetupHTML(){
       <button class="btn btn-ghost btn-sm" type="button" onclick="foCancelSetup()">← Back</button>
     </div>
     ${foHqAssignmentPickerHTML()}
+    ${poolNote}
     <div class="fo-grid" style="margin-top:12px">
       <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
         <select class="r-inp" onchange="foDraftSet('district',this.value)"><option value="">— Select district —</option>${districts.map(o=>opt(o.id,d.district)).join('')}</select>${nb('geographies','New district')}</div>
@@ -2045,6 +2068,7 @@ async function foLoadAssignments(){ try{ const d=await apiGet('?resource=hq_targ
 function foDraftSet(field,val){ if(!FO_DRAFT) foInitDraftBlank();
   const nm=$('fo-ws-name'); if(nm) FO_DRAFT.name=nm.value;
   FO_DRAFT[field]=val;
+  if(field==='project_id'){ FO_DRAFT.district=''; FO_DRAFT.block=''; FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; }   // new project = new place pool
   if(field==='district'){ FO_DRAFT.block=''; FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; }
   if(field==='block'){ FO_DRAFT.gram_panchayat=''; FO_DRAFT.geography_id=''; }
   if(field==='gram_panchayat'){ FO_DRAFT.geography_id=''; }
@@ -2231,7 +2255,7 @@ async function loadHQList(){
     </tr>`).join('')
   }</tbody></table></div>`;
 }
-async function hqDelete(id){ if(!confirm('Delete this HQ target row?')) return;
+async function hqDelete(id){ if(!confirm('⚠ PERMANENT DELETE\n\nThis HQ target row will be permanently deleted from the database and cannot be recovered.\n\nDelete permanently?')) return;
   try{ await apiDel('?resource=hq_targets&id='+id); toast('✓ Deleted'); loadHQList(); }catch(e){ toast('⚠ '+e.message,'t-err'); } }
 
 function renderHQSetupHTML(){
@@ -3044,8 +3068,29 @@ async function saveForm(key,id){
   finally{ __SAVE_BUSY=false; const sb=document.querySelector('#entry-form button[type=submit]'); if(sb){ sb.disabled=false; if(sb.dataset.lbl) sb.innerHTML=sb.dataset.lbl; } }
 }
 async function delRow(key,id){
-  if(!confirm('Delete this record?'))return;
-  try{ await apiDel('?resource='+key+'&id='+id); toast('Deleted','t-warn'); reloadResource(key); }
+  let msg='⚠ PERMANENT DELETE\n\nThis record will be permanently deleted from the database and CANNOT be recovered.';
+  try{
+    if(key==='donors'){
+      const d=await apiGet('?resource=donors&id='+id); const bid=(d.row||{}).donor_id||'';
+      const fund=((LOOKUPS.donor_projects||{})[bid])||[];
+      if(fund.length) msg+='\n\nThis donor FUNDS '+fund.length+' project'+(fund.length>1?'s':'')+':\n• '
+        +fund.slice(0,6).map(p=>p.project_name||p.project_id).join('\n• ')+(fund.length>6?'\n• …':'')
+        +'\n\nDeleting the donor will automatically UNMAP '+(fund.length>1?'these projects':'this project')
+        +' — their data stays, but it disappears from donor reports until they are re-mapped.';
+    } else if(key==='projects'){
+      const d=await apiGet('?resource=projects&id='+id); const bid=(d.row||{}).project_id||'';
+      const don=(LOOKUPS.project_donor||{})[bid];
+      const geos=(LOOKUPS.geographies||[]).filter(g=>String(g.project_id||'')===String(bid)).length;
+      if(don)  msg+='\n\nThis project is funded by '+lblOf(LOOKUPS.donors,don)+' — that mapping will be removed.';
+      if(geos) msg+='\n'+geos+' assigned geograph'+(geos>1?'ies':'y')+' will be unlinked (the places themselves are kept).';
+    }
+  }catch(e){}
+  msg+='\n\nDelete permanently?';
+  if(!confirm(msg))return;
+  try{
+    await apiDel('?resource='+key+'&id='+id); toast('Deleted permanently','t-warn'); reloadResource(key);
+    if(key==='donors'||key==='projects'||key==='mappings'){ LOOKUPS._loaded=false; ensureLookups(); }   // the chain changed — refresh every picker
+  }
   catch(e){ toast('⚠ '+e.message,'t-err'); }
 }
 
@@ -4713,6 +4758,7 @@ async function renderMisStatus(){
         <div class="f"><label>Workspace name <span class="fo-auto">optional</span></label><input id="mis-name" placeholder="Auto if left blank"></div>
         <div class="f"><label>Donor · Thematic <span class="fo-auto">auto</span></label><input id="mis-auto" readonly placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
       </div>
+      <div id="mis-geo-note" style="font-size:12px;color:var(--t3);margin-top:8px"></div>
       <div class="form-actions" style="margin-top:12px"><button class="btn btn-primary" onclick="misAssign()">📌 Assign workspace</button></div>
     </div>`:''}
     <div class="card" style="margin-top:14px">
@@ -4723,9 +4769,23 @@ async function renderMisStatus(){
   loadMisStatus();
 }
 function misOnProject(){ const pid=($('mis-project')||{}).value||''; const der=foDerive(pid);
-  const e=$('mis-auto'); if(e) e.value=pid?([lblOf(LOOKUPS.donors,der.donor_id),lblOf(LOOKUPS.programmes,der.programme_id)].filter(x=>x&&x!=='—').join(' · ')):''; }
-function misOnDistrict(){ const di=($('mis-district')||{}).value||'';
-  const vs=(LOOKUPS.geographies||[]).filter(g=>!di||String(g.district||'')===di);
+  const e=$('mis-auto'); if(e) e.value=pid?([lblOf(LOOKUPS.donors,der.donor_id),lblOf(LOOKUPS.programmes,der.programme_id)].filter(x=>x&&x!=='—').join(' · ')):'';
+  // narrow District to the project's assigned places (Projects → 🌍 Geographies)
+  const pool=projectGeoPool(pid);
+  const de=$('mis-district');
+  if(de){ const cur=de.value;
+    const ds = pid ? foDistinct(pool,'district') : rptGeoList('district').map(o=>o.id);
+    de.innerHTML='<option value="">— Select district —</option>'+ds.map(x=>`<option value="${esc(x)}" ${String(x)===String(cur)?'selected':''}>${esc(x)}</option>`).join('');
+    if(cur && !ds.includes(cur)) de.value='';
+  }
+  const note=$('mis-geo-note');
+  if(note) note.innerHTML = !pid ? '' : (pool.length
+    ? `🌍 ${pool.length} assigned place${pool.length>1?'s':''} for this project — the lists show only those.`
+    : `⚠ No geographies assigned to this project yet — assign them in <b>Projects → 🌍 Geographies</b> first.`);
+  misOnDistrict();
+}
+function misOnDistrict(){ const di=($('mis-district')||{}).value||'', pid=($('mis-project')||{}).value||'';
+  const vs=projectGeoPool(pid).filter(g=>!di||String(g.district||'')===di);
   const e=$('mis-village'); if(e) e.innerHTML='<option value="">— Officer picks later —</option>'+vs.map(g=>`<option value="${esc(g.id)}">${esc(g.label)}</option>`).join(''); }
 async function misAssign(){
   const u=($('mis-user')||{}).value, pid=($('mis-project')||{}).value, di=($('mis-district')||{}).value;
@@ -4747,18 +4807,28 @@ async function loadMisStatus(){
   try{ const d=await apiGet('?resource=workspaces&limit=2000'); rows=d.rows||[]; }
   catch(e){ const el=$('mis-list'); if(el) el.innerHTML='<div class="empty-state"><div class="empty-title">Workspaces table not found</div><div class="empty-sub">Run <b>sql/upgrade9.sql</b> once in phpMyAdmin, then click Refresh.</div></div>'; return; }
   __MIS_ROWS=rows;
-  const staff=LOOKUPS.staff||[];
+  // Live presence — who is signed in RIGHT NOW (fetched fresh on every 30s refresh)
+  let staff=LOOKUPS.staff||[], onlineSet=new Set(), lastSeen={};
+  try{
+    const sd=await apiGet('?action=staff_status');
+    if((sd.rows||[]).length){
+      staff=sd.rows.map(r=>({id:r.username, label:(r.name||r.username)+(r.role?(' · '+r.role):'')}));
+      sd.rows.forEach(r=>{ if(+r.online===1) onlineSet.add(String(r.username)); lastSeen[r.username]=r.last_seen||r.last_login||''; });
+    }
+  }catch(e){}
+  const isOn=u=>onlineSet.has(String(u));
+  const fmtSeen=v=>{ if(!v) return 'never'; return String(v).slice(0,16).replace('T',' '); };
   const st=$('mis-stats'); if(st) st.innerHTML=
-    kpiCard('Field staff',fmt(staff.length),'user accounts','--brand','--brand-soft','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z')+
+    kpiCard('Field staff',fmt(staff.length),onlineSet.size+' online now','--brand','--brand-soft','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z')+
     kpiCard('Workspaces',fmt(rows.length),'across all officers','--accent','--accent-soft','M2 3h20v14H2zM8 21h8M12 17v4')+
-    kpiCard('Active now',fmt(rows.filter(r=>+r.is_active===1).length),'officers mid-work','--ok','--ok-soft','M22 12h-4l-3 9L9 3l-3 9H2')+
+    kpiCard('Active now',fmt(rows.filter(r=>+r.is_active===1&&isOn(r.username)).length),'online officers mid-work','--ok','--ok-soft','M22 12h-4l-3 9L9 3l-3 9H2')+
     kpiCard('Assigned by HQ',fmt(rows.filter(r=>String(r.assigned_by||'').trim()).length),'vs self-created','--violet','--violet-soft','M9 11l3 3L22 4');
   const byUser={}; rows.forEach(r=>{ const k=r.username||'—'; (byUser[k]=byUser[k]||[]).push(r); });
-  const wsRow=r=>{ const on=+r.is_active===1;
+  const wsRow=(r,ownerOn)=>{ const on=+r.is_active===1 && ownerOn;
     return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid ${on?'var(--ok)':'var(--border)'};border-radius:10px;padding:9px 13px;margin:7px 0 0 37px;${on?'background:var(--ok-soft);':''}">
       <span style="width:8px;height:8px;border-radius:50%;background:${on?'var(--ok)':'var(--t4)'};flex-shrink:0"></span>
       <b style="font-size:13px">${esc(r.name||r.workspace_id||'Workspace')}</b>
-      ${on?'<span class="ws-badge">active</span>':''}
+      ${on?'<span class="ws-badge">active</span>':((+r.is_active===1&&!ownerOn)?'<span style="font-size:10.5px;color:var(--t4)" title="This is the workspace they were in — shown active only while the officer is online">last used</span>':'')}
       <span style="font-size:12px;color:var(--t3)">${esc(lblOf(LOOKUPS.projects,r.project_id))}</span>
       <span style="font-size:12px;color:var(--t4)">${esc([r.village,r.block,r.district].filter(Boolean).join(' · ')||'—')}</span>
       ${String(r.assigned_by||'').trim()?`<span class="fchip" title="Assigned by HQ">📌 by ${esc(r.assigned_by)}</span>`:''}
@@ -4768,18 +4838,19 @@ async function loadMisStatus(){
         ${can('delete')?`<button class="btn btn-ghost btn-xs" title="Remove workspace" onclick="misDeleteWs(${r.id})">🗑</button>`:''}
       </span></div>`; };
   const blocks=[], seen=new Set();
-  for(const s of staff){ const list=byUser[s.id]||[]; seen.add(s.id);
+  for(const s of staff){ const list=byUser[s.id]||[]; seen.add(s.id); const on=isOn(s.id);
     blocks.push(`<div style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:9px">
-        <span style="width:28px;height:28px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">${esc((s.label||'?')[0].toUpperCase())}</span>
+      <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+        <span style="width:28px;height:28px;border-radius:50%;background:${on?'var(--ok-soft)':'var(--brand-soft)'};color:${on?'var(--ok)':'var(--brand)'};display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">${esc((s.label||'?')[0].toUpperCase())}</span>
         <b style="font-size:13.5px">${esc(s.label)}</b>
+        ${on?'<span class="ws-badge">🟢 online now</span>':`<span style="font-size:11.5px;color:var(--t4)">⚪ offline · last seen ${esc(fmtSeen(lastSeen[s.id]))}</span>`}
         <span style="font-size:12px;color:var(--t4)">${list.length?list.length+' workspace'+(list.length>1?'s':''):''}</span>
-        ${list.some(r=>+r.is_active===1)?'<span class="ws-badge">working now</span>':''}
+        ${(on && list.some(r=>+r.is_active===1))?'<span class="ws-badge">working now</span>':''}
       </div>
-      ${list.length?list.map(wsRow).join(''):'<div style="font-size:12.5px;color:var(--t4);margin:6px 0 0 37px">No workspace yet — assign one above.</div>'}
+      ${list.length?list.map(r=>wsRow(r,on)).join(''):'<div style="font-size:12.5px;color:var(--t4);margin:6px 0 0 37px">No workspace yet — assign one above.</div>'}
     </div>`); }
   for(const u in byUser){ if(seen.has(u)) continue;
-    blocks.push(`<div style="margin-bottom:16px"><b style="font-size:13.5px">${esc(u)}</b> <span style="font-size:11px;color:var(--t4)">(no longer in Users)</span>${byUser[u].map(wsRow).join('')}</div>`); }
+    blocks.push(`<div style="margin-bottom:16px"><b style="font-size:13.5px">${esc(u)}</b> <span style="font-size:11px;color:var(--t4)">(no longer in Users)</span>${byUser[u].map(r=>wsRow(r,false)).join('')}</div>`); }
   const el=$('mis-list'); if(el) el.innerHTML=blocks.join('')||'<div style="color:var(--t4);font-size:13px">No staff yet.</div>';
 }
 async function misDeleteWs(id){ if(!confirm("Remove this workspace? (The officer's saved records are not affected.)")) return;
