@@ -854,7 +854,24 @@ function showModal(title,html){
   $('modal-body').innerHTML=`<div class="modal-head"><div class="modal-title">${esc(title)}</div><div class="modal-close" onclick="closeModal()">×</div></div>${html}`;
   $('modal-overlay').classList.add('show');
 }
-function closeModal(){$('modal-overlay').classList.remove('show');}
+function closeModal(){
+  $('modal-overlay').classList.remove('show');
+  // an open in-app confirm dismissed any other way (✕ / backdrop) counts as Cancel
+  if(window.__confirmResolve){ const r=window.__confirmResolve; window.__confirmResolve=null; r(false); }
+}
+/* In-app confirmation dialog (replaces the raw browser popup). Resolves true/false. */
+function appConfirm(title, html, okLabel){
+  return new Promise(res=>{
+    window.__confirmResolve=res;
+    showModal(title, `<div style="font-size:14px;line-height:1.75;color:var(--t1)">${html}</div>
+      <div class="form-actions" style="margin-top:20px">
+        <span style="flex:1"></span>
+        <button class="btn btn-ghost" onclick="__confirmDone(false)">Cancel</button>
+        <button class="btn btn-danger" onclick="__confirmDone(true)">${esc(okLabel||'Delete permanently')}</button>
+      </div>`);
+  });
+}
+function __confirmDone(v){ const r=window.__confirmResolve; window.__confirmResolve=null; closeModal(); if(r) r(v); }
 $('modal-overlay').addEventListener('click',e=>{if(e.target===$('modal-overlay'))closeModal();});
 
 /* ════════ GENERIC RESOURCE LIST ════════ */
@@ -2021,17 +2038,17 @@ function foSetupHTML(){
   return `<div class="card" style="background:linear-gradient(135deg,#f3f8ff,#fff);border:1.5px solid var(--brand-soft)">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
       <div><div class="card-title" style="margin:0">${FO_EDIT_ID?'✎ Edit workspace':'＋ New workspace'}</div>
-        <div class="card-sub" style="margin-top:2px">Pick District &amp; Project — Donor &amp; Thematic appear automatically — then Block, GP &amp; Village. Not in a list? Use the small ＋ links to add it.</div></div>
+        <div class="card-sub" style="margin-top:2px">Pick Project first — Donor &amp; Thematic appear automatically and the place lists narrow to its assigned geographies — then District, Block, GP &amp; Village. Not in a list? Use the small ＋ links to add it.</div></div>
       <button class="btn btn-ghost btn-sm" type="button" onclick="foCancelSetup()">← Back</button>
     </div>
     ${foHqAssignmentPickerHTML()}
     ${poolNote}
     <div class="fo-grid" style="margin-top:12px">
-      <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
-        <select class="r-inp" onchange="foDraftSet('district',this.value)"><option value="">— Select district —</option>${districts.map(o=>opt(o.id,d.district)).join('')}</select>${nb('geographies','New district')}</div>
       <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>
         <select class="r-inp" onchange="foDraftSet('project_id',this.value)"><option value="">— Select project —</option>${mappedProjects().map(p=>`<option value="${esc(p.id)}" ${String(d.project_id)===String(p.id)?'selected':''}>${esc(p.label)}</option>`).join('')}</select>
         ${unmappedProjects().length?`<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ ${unmappedProjects().length} project${unmappedProjects().length>1?'s':''} hidden — no donor linked yet (Donor Mapping)</div>`:''}${nb('projects','New project')}</div>
+      <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
+        <select class="r-inp" onchange="foDraftSet('district',this.value)"><option value="">— Select district —</option>${districts.map(o=>opt(o.id,d.district)).join('')}</select>${nb('geographies','New district')}</div>
       <div class="f"><label>Donor <span class="fo-auto">auto</span></label>
         <input class="r-inp" readonly value="${esc(der.donor_id?lblOf(LOOKUPS.donors,der.donor_id):'')}" placeholder="— shown after project —" style="background:var(--bg-soft)">${nb('donors','New donor')}</div>
       <div class="f"><label>Thematic Area <span class="fo-auto">auto</span></label>
@@ -2182,6 +2199,31 @@ async function foInjectFormTarget(key){
 
 /* ════════════════ HQ SETUP & TARGETS ════════════════ */
 let HQ_ROWS=[];
+let HQ_EDIT_ID=0;   // >0 = the Existing-Targets row being edited (Save updates instead of creating)
+async function hqEdit(id){
+  try{
+    const d=await apiGet('?resource=hq_targets&id='+id); const r=d.row;
+    if(!r){ toast('Target not found','t-err'); return; }
+    HQ_EDIT_ID=id;
+    const hp=$('hq-project'); if(hp){ hp.value=r.project_id||''; hqOnProject(); }
+    HQ_ROWS=[{district:r.district||'', target_blocks:r.target_blocks==null?'':r.target_blocks,
+      target_villages:r.target_villages==null?'':r.target_villages,
+      target_beneficiaries:r.target_beneficiaries==null?'':r.target_beneficiaries, assigned_to:r.assigned_to||''}];
+    renderHQRows(); hqEditNote(r.target_id||('#'+id));
+    if(hp) hp.scrollIntoView({behavior:'smooth',block:'center'});
+  }catch(e){ toast('⚠ '+e.message,'t-err'); }
+}
+function hqEditNote(label){
+  const n=$('hq-edit-note'); if(!n) return;
+  n.innerHTML = HQ_EDIT_ID
+    ? `<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;padding:9px 13px;font-size:12.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">✎ <b>Editing target ${esc(label||'')}</b> — Save updates this row instead of creating a new one.<button class="btn btn-ghost btn-xs" type="button" onclick="hqCancelEdit()">✕ Cancel edit</button></div>`
+    : '';
+}
+function hqCancelEdit(){
+  HQ_EDIT_ID=0; HQ_ROWS=[hqBlankRow()]; renderHQRows();
+  const hp=$('hq-project'); if(hp){ hp.value=''; hqOnProject(); }
+  hqEditNote('');
+}
 function hqBlankRow(){ return {district:'',target_blocks:'',target_villages:'',target_beneficiaries:'',assigned_to:''}; }
 function hqRowHTML(r,i){
   const districts=rptGeoList('district');
@@ -2227,6 +2269,16 @@ async function saveHQTargets(){
   const der=foDerive(pid);
   const rows=HQ_ROWS.filter(r=>String(r.district||'').trim());
   if(!rows.length){ toast('⚠ Add at least one district with targets','t-err'); return; }
+  if(HQ_EDIT_ID){
+    // Editing one existing target row — update it, don't create a duplicate
+    const r=rows[0];
+    const payload={ donor_id:der.donor_id, programme_id:der.programme_id, project_id:pid, district:r.district,
+      target_blocks:r.target_blocks||0, target_villages:r.target_villages||0,
+      target_beneficiaries:r.target_beneficiaries||0, assigned_to:r.assigned_to||'' };
+    try{ await apiPut('?resource=hq_targets&id='+HQ_EDIT_ID, payload); toast('✓ Target updated'); hqCancelEdit(); loadHQList(); }
+    catch(e){ toast('⚠ '+e.message,'t-err'); }
+    return;
+  }
   let ok=0;
   for(const r of rows){
     const payload={ donor_id:der.donor_id, programme_id:der.programme_id, project_id:pid, district:r.district,
@@ -2251,11 +2303,12 @@ async function loadHQList(){
       <td class="mono">${fmt(r.target_blocks)}</td><td class="mono">${fmt(r.target_villages)}</td>
       <td class="mono">${fmt(r.target_beneficiaries)}</td>
       <td>${r.assigned_to?`<span class="fchip">${esc(lblOf(LOOKUPS.staff,r.assigned_to))}</span>`:'<span style="color:var(--t4)">—</span>'}</td>
-      <td>${can('delete')?`<button class="btn btn-ghost btn-xs" onclick="hqDelete(${r.id})">🗑</button>`:''}</td>
+      <td style="white-space:nowrap">${can('write')?`<button class="btn btn-ghost btn-xs" title="Edit this target" onclick="hqEdit(${r.id})">✎</button> `:''}${can('delete')?`<button class="btn btn-ghost btn-xs" title="Delete this target" onclick="hqDelete(${r.id})">🗑</button>`:''}</td>
     </tr>`).join('')
   }</tbody></table></div>`;
 }
-async function hqDelete(id){ if(!confirm('⚠ PERMANENT DELETE\n\nThis HQ target row will be permanently deleted from the database and cannot be recovered.\n\nDelete permanently?')) return;
+async function hqDelete(id){
+  if(!(await appConfirm('⚠ Permanent delete','This HQ target row will be <b>permanently deleted</b> from the database and <b style="color:var(--bad)">cannot be recovered</b>.'))) return;
   try{ await apiDel('?resource=hq_targets&id='+id); toast('✓ Deleted'); loadHQList(); }catch(e){ toast('⚠ '+e.message,'t-err'); } }
 
 function renderHQSetupHTML(){
@@ -2275,6 +2328,7 @@ function renderHQSetupHTML(){
     </div>
     <div id="hq-rows" style="margin-top:8px"></div>
     <div style="font-size:12px;color:var(--t4);margin:2px 0 10px">One district per save — after saving, the form clears for the next district (one donor can fund many districts).</div>
+    <div id="hq-edit-note" style="margin-bottom:10px"></div>
     <div class="form-actions" style="margin-top:12px">
       <button class="btn btn-primary" type="button" onclick="saveHQTargets()">💾 Save HQ Targets</button>
     </div>
@@ -3068,25 +3122,24 @@ async function saveForm(key,id){
   finally{ __SAVE_BUSY=false; const sb=document.querySelector('#entry-form button[type=submit]'); if(sb){ sb.disabled=false; if(sb.dataset.lbl) sb.innerHTML=sb.dataset.lbl; } }
 }
 async function delRow(key,id){
-  let msg='⚠ PERMANENT DELETE\n\nThis record will be permanently deleted from the database and CANNOT be recovered.';
+  let msg='This record will be <b>permanently deleted</b> from the database and <b style="color:var(--bad)">cannot be recovered</b>.';
   try{
     if(key==='donors'){
       const d=await apiGet('?resource=donors&id='+id); const bid=(d.row||{}).donor_id||'';
       const fund=((LOOKUPS.donor_projects||{})[bid])||[];
-      if(fund.length) msg+='\n\nThis donor FUNDS '+fund.length+' project'+(fund.length>1?'s':'')+':\n• '
-        +fund.slice(0,6).map(p=>p.project_name||p.project_id).join('\n• ')+(fund.length>6?'\n• …':'')
-        +'\n\nDeleting the donor will automatically UNMAP '+(fund.length>1?'these projects':'this project')
-        +' — their data stays, but it disappears from donor reports until they are re-mapped.';
+      if(fund.length) msg+=`<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;padding:10px 13px;margin-top:12px">
+        This donor <b>funds ${fund.length} project${fund.length>1?'s':''}</b>:<br>• ${fund.slice(0,6).map(p=>esc(p.project_name||p.project_id)).join('<br>• ')}${fund.length>6?'<br>• …':''}<br><br>
+        Deleting the donor will automatically <b>unmap ${fund.length>1?'these projects':'this project'}</b> — their data stays, but it disappears from donor reports until they are re-mapped.</div>`;
     } else if(key==='projects'){
       const d=await apiGet('?resource=projects&id='+id); const bid=(d.row||{}).project_id||'';
       const don=(LOOKUPS.project_donor||{})[bid];
       const geos=(LOOKUPS.geographies||[]).filter(g=>String(g.project_id||'')===String(bid)).length;
-      if(don)  msg+='\n\nThis project is funded by '+lblOf(LOOKUPS.donors,don)+' — that mapping will be removed.';
-      if(geos) msg+='\n'+geos+' assigned geograph'+(geos>1?'ies':'y')+' will be unlinked (the places themselves are kept).';
+      if(don||geos) msg+=`<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;padding:10px 13px;margin-top:12px">
+        ${don?`This project is funded by <b>${esc(lblOf(LOOKUPS.donors,don))}</b> — that mapping will be removed.`:''}
+        ${geos?`<br>${geos} assigned geograph${geos>1?'ies':'y'} will be unlinked (the places themselves are kept).`:''}</div>`;
     }
   }catch(e){}
-  msg+='\n\nDelete permanently?';
-  if(!confirm(msg))return;
+  if(!(await appConfirm('⚠ Permanent delete', msg))) return;
   try{
     await apiDel('?resource='+key+'&id='+id); toast('Deleted permanently','t-warn'); reloadResource(key);
     if(key==='donors'||key==='projects'||key==='mappings'){ LOOKUPS._loaded=false; ensureLookups(); }   // the chain changed — refresh every picker
@@ -3214,7 +3267,6 @@ async function renderDashboard(){
       <div class="chart-card"><div class="chart-head"><div class="chart-title">Income Sources</div></div><div class="chart-wrap"><canvas id="ch-income"></canvas></div></div>
       <div class="card" style="margin:0"><div class="card-title">Top Activity Progress</div><div class="card-sub">Top 5 activities · cumulative achievement vs target · follows the dashboard filter</div><div id="prog-list"></div></div>
     </div>
-    <div class="card"><div class="card-title">Thematic Areas &amp; their Objectives</div><div class="card-sub">Each thematic area and every objective under it — live from the database</div><div id="prog-objectives"></div></div>
     <div class="card"><div class="card-title">Projects &amp; their Objectives</div><div class="card-sub">Each project's full list of objectives, target beneficiaries &amp; status — live from the database</div><div id="proj-objectives"></div></div>
     <div class="card"><div class="card-title">🤝 Donors &amp; the Projects they fund</div><div class="card-sub">Live from Donor Mappings — updates here the moment a mapping is added or changed</div><div id="donor-funded"></div></div>
     <div class="page-head" style="margin:26px 0 16px"><div><div class="page-title" style="font-size:22px">Custom Charts</div><div class="page-sub">Build your own from ANY data — beneficiaries, outputs, SHGs, loans, indicators, anything</div></div>
@@ -3479,19 +3531,8 @@ async function loadDash(){
     return `<div class="prog-row"><div class="prog-meta"><span class="prog-name">${esc(a.nm)}</span><span class="prog-val">${fmt(ac)}/${fmt(t)} · ${praw.toFixed(2)}%</span></div><div class="prog-track"><div class="prog-fill" style="width:${p}%;background:linear-gradient(90deg,${c}aa,${c})"></div></div></div>`;
   }).join('');
   // Programmes & their objectives panel
-  const pl=d.programmesList||[]; const po=$('prog-objectives');
-  if(po){
-    po.innerHTML=pl.length?pl.map((p,i)=>{
-      const c=PALETTE[i%PALETTE.length];
-      const objs=(p.objectives||[]);
-      return `<div style="border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;border-left:4px solid ${c}">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-          <div class="t-name" style="font-size:15px">${esc(p.programme_name)}</div>
-          <span class="pill pill-cyan">${objs.length} objective${objs.length===1?'':'s'}</span></div>
-        ${objs.length?`<ol style="margin:10px 0 0 18px;padding:0;color:var(--t2);font-size:13.5px;line-height:1.6">${objs.map(o=>`<li style="margin-bottom:5px">${esc(o.objective)} ${o.status?`<span class="bdg ${o.status==='Ongoing'?'bdg-active':'bdg-planned'}" style="margin-left:6px">${esc(o.status)}</span>`:''}</li>`).join('')}</ol>`:'<div style="color:var(--t4);font-size:13px;margin-top:8px">No objectives yet — add them from the Thematic Areas section → 🎯 Objectives.</div>'}
-      </div>`;
-    }).join(''):'<div class="empty">No programmes</div>';
-  }
+  // (The "Thematic Areas & their Objectives" dashboard panel was removed by request —
+  //  objectives remain visible in the Thematic Areas section and in the Excel exports.)
   // SHGs & their members panel (rendered only if a #shg-members slot is on the page —
   // the dashboard intentionally omits it; the SHGs page is where this data belongs)
   const shl=d.shgsList||[]; const sho=$('shg-members');
@@ -4597,7 +4638,7 @@ const ENTRY_GROUPS = [
   ['⭐ Everyday — Field Data', [
     ['beneficiaries','+ New Beneficiary','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z','--ok'],
     ['crops','Progress of Production & Output','M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5','--ok'],
-    ['activities','+ New Activity','M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z','--warn'],
+    ['activities','New Activity Progress','M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z','--warn'],
   ]],
   ['SHG &amp; Finance', [
     ['shgs','+ New SHG','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z','--pink'],
@@ -4649,6 +4690,7 @@ function renderDataEntry(){
   foMigrateLegacy();
   // Returning from a "+ New …" master form? restore the tab + in-progress state.
   let __rz=null; try{ __rz=JSON.parse(sessionStorage.getItem('vmis_de_resume')||'null'); sessionStorage.removeItem('vmis_de_resume'); }catch(e){}
+  HQ_EDIT_ID=0;   // a fresh page render always starts in create mode (no stale edit)
   if(__rz && __rz.tab==='fo'){ FO_MODE=__rz.foMode||'list'; FO_DRAFT=__rz.foDraft||null; FO_EDIT_ID=__rz.foEdit||''; }
   else { FO_MODE='list'; FO_EDIT_ID=''; }
   $('main').innerHTML = `
@@ -4853,7 +4895,8 @@ async function loadMisStatus(){
     blocks.push(`<div style="margin-bottom:16px"><b style="font-size:13.5px">${esc(u)}</b> <span style="font-size:11px;color:var(--t4)">(no longer in Users)</span>${byUser[u].map(r=>wsRow(r,false)).join('')}</div>`); }
   const el=$('mis-list'); if(el) el.innerHTML=blocks.join('')||'<div style="color:var(--t4);font-size:13px">No staff yet.</div>';
 }
-async function misDeleteWs(id){ if(!confirm("Remove this workspace? (The officer's saved records are not affected.)")) return;
+async function misDeleteWs(id){
+  if(!(await appConfirm('Remove workspace',"This workspace shortcut will be removed permanently. <b>The officer's saved records are NOT affected</b> — only the workspace itself is deleted.",'Remove workspace'))) return;
   try{ await apiDel('?resource=workspaces&id='+id); toast('✓ Removed'); loadMisStatus(); }catch(e){ toast('⚠ '+e.message,'t-err'); } }
 async function misRenameWs(id){
   const r=__MIS_ROWS.find(x=>+x.id===+id); if(!r) return;
