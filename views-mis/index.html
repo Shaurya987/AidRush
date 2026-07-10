@@ -611,9 +611,9 @@ function canHQ(){ if(!CU) return false; const r=(CU.role||'').toLowerCase();
 const SEL_STATUS=['Planned','Ongoing','Completed','On Hold'];
 const RES={
   programmes:{label:'Thematic Areas',sub:'Top-level programmes — projects, donors & activities link here',icon:'M3 3h18v18H3zM3 9h18M9 21V9',
-    cols:[['programme_name','Name'],['thematic_area','Theme'],['programme_status','Status','status'],['programme_manager','Manager']],
-    filters:[['programme_status','Status',['Planned','Ongoing','Completed','On Hold']],['thematic_area','Theme',['Livelihood','Health','Education','WASH','Nutrition','Women Empowerment','Road Safety','Agriculture']]],
-    fields:[['programme_id','Thematic Area ID',1],['programme_name','Thematic Area Name',1],['programme_objective','Objective','area'],['thematic_area','Thematic Area','dl',['Livelihood','Health','Education','WASH','Nutrition','Women Empowerment','Road Safety','Agriculture','Skill Development','Climate & Environment']],['programme_status','Status','sel',SEL_STATUS],['programme_manager','Thematic Area Manager'],['programme_start_date','Start Date','date'],['programme_end_date','End Date','date'],['remarks','Remarks']]},
+    cols:[['programme_name','Name'],['programme_status','Status','status'],['programme_manager','Manager']],
+    filters:[['programme_status','Status',['Planned','Ongoing','Completed','On Hold']]],
+    fields:[['programme_id','Thematic Area ID',1],['programme_name','Thematic Area Name',1],['programme_objective','Objective','area'],['programme_status','Status','sel',SEL_STATUS],['programme_manager','Thematic Area Manager'],['programme_start_date','Start Date','date'],['programme_end_date','End Date','date'],['remarks','Remarks']]},
   objectives:{label:'Thematic Area Objectives',sub:'Each programme can have many objectives — add as many as you need',icon:'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
     cols:[['programme_id','Thematic Area'],['objective','Objective'],['status','Status','status']],
     filters:['programme_id',['status','Status',['Planned','Ongoing','Completed','On Hold']]],
@@ -625,7 +625,7 @@ const RES={
   projects:{label:'Projects',sub:'Implementation projects linked to programmes',icon:'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
     cols:[['project_name','Name'],['programme_id','Thematic Area'],['_donor','Donor / Funding','maplink'],['project_status','Status','status']],
     filters:['programme_id',['project_status','Status',['Planned','Ongoing','Completed','On Hold']]],
-    fields:[['project_id','Project ID',1],['programme_id','Thematic Area','ref','programmes'],['donor_id','Funded by — Donor (required: creates the donor↔project link)','ref','donors'],['approved_amount_inr','Approved Amount from Donor (₹)','num'],['project_name','Project Name',1],['project_objective','Objective','area'],['project_status','Status','sel',SEL_STATUS],['project_geography_summary','Geography Summary'],['target_beneficiaries','Target Beneficiaries'],['implementation_partner','Implementation Partner'],['project_start_date','Start Date','date'],['project_end_date','End Date','date'],['remarks','Remarks']]},
+    fields:[['project_id','Project ID',1],['programme_id','Thematic Area','ref','programmes'],['donor_id','Funded by — Donor (required: creates the donor↔project link)','ref','donors'],['approved_amount_inr','Approved Amount from Donor (₹)','num'],['project_name','Project Name',1],['project_objective','Objective','area'],['project_status','Status','sel',SEL_STATUS],['target_beneficiaries','Total Target Beneficiaries (in numbers)','num'],['implementation_partner','Implementation Partner'],['project_start_date','Start Date','date'],['project_end_date','End Date','date'],['remarks','Remarks']]},
   donors:{label:'Donors',sub:'Funding agencies, CSR partners, foundations & government schemes',icon:'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
     view:'cards',
     cols:[['donor_name','Name'],['donor_type','Type'],['contact_person','Contact'],['total_approved_budget_inr','Budget','inr']],
@@ -638,7 +638,7 @@ const RES={
   geographies:{label:'Geography',sub:'Country → State → District → Block → GP → Village hierarchy',icon:'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
     cols:[['state','State'],['district','District'],['block','Block'],['gram_panchayat','GP'],['village_or_ward','Village/Ward'],['project_id','Project'],['responsible_staff','Staff']],
     filters:['programme_id','project_id'],
-    fields:[['geography_id','Geography ID',1],['country','Country'],['state','State'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village_or_ward','Village / Ward',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['responsible_staff','Responsible Staff'],['remarks','Remarks']]},
+    fields:[['geography_id','Geography ID',1],['country','Country'],['state','State'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village_or_ward','Village / Ward'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['responsible_staff','Responsible Staff'],['remarks','Remarks']]},
   villages:{label:'Village Demographics',sub:'Total HHs, project coverage & social-order breakdown',icon:'M3 21h18M5 21V9l7-6 7 6v12M9 21v-7h6v7',
     cols:[['district','District'],['block','Block'],['village','Village'],['total_hhs','Total HHs','num'],['hhs_covered_under_project','Covered','num'],['sc_hhs','SC','num'],['st_hhs','ST','num'],['obc_hhs','OBC','num'],['general_hhs','Gen','num']],
     filters:['programme_id','donor_id','project_id'],
@@ -761,7 +761,7 @@ async function ensureLookups(){
     LOOKUPS.donors=(d.donors||[]).map(x=>({id:x.id,label:x.name,reporting_frequency:x.reporting_frequency,donor_type:x.donor_type,budget:x.total_approved_budget_inr}));
     LOOKUPS.indicators=(d.indicators||[]).map(x=>({id:x.id,label:x.name,programme_id:x.programme_id,project_id:x.project_id}));
     LOOKUPS.shgs=(d.shgs||[]).map(x=>({id:x.id,label:x.name,programme_id:x.programme_id,project_id:x.project_id,donor_id:x.donor_id}));
-    LOOKUPS.geographies=(d.geographies||[]).map(x=>({id:x.id,label:x.name||x.id,district:x.district,block:x.block,gram_panchayat:x.gram_panchayat,village:x.village,project_id:x.project_id||''})).sort((a,b)=>String(a.label).localeCompare(String(b.label),'en',{numeric:true,sensitivity:'base'}));
+    LOOKUPS.geographies=(d.geographies||[]).map(x=>({id:x.id,label:x.name||x.id,state:x.state||'',district:x.district,block:x.block,gram_panchayat:x.gram_panchayat,village:x.village,project_id:x.project_id||''})).sort((a,b)=>String(a.label).localeCompare(String(b.label),'en',{numeric:true,sensitivity:'base'}));
     LOOKUPS.staff=(d.staff||[]).map(x=>({id:x.id,label:(x.name||x.id)+(x.role?(' · '+x.role):'')}));
     // NOTE: beneficiaries (~2,700) are loaded lazily by ensureBeneficiaries() — only the Production
     // form needs them — so options stays small & fast for login / dashboard / every save.
@@ -1080,6 +1080,31 @@ function onProgrammeComboChange(){
 /* ════════ Auto-fill: picking one linked record fills the related fields ════════ */
 function setIf(key,val){ const e=$('ff-'+key); if(e && val!=null && String(val)!=='') e.value=val; }
 function comboSet(key,id){ const h=$('ff-'+key); if(h) h.value=(id==null?'':id); const ci=$('cin-'+key); if(ci){ const o=((__COMBO[key]||{}).opts||[]).find(x=>String(x.id)===String(id)); ci.value=o?o.label:''; } }
+/* SMART geography form — every level suggests the values that already exist, cascading:
+   State suggests known states; District only that state's districts; Block only that
+   district's blocks; GP only that block's GPs. Typing something NEW is always allowed —
+   the dropdown just saves re-typing what the system already knows. */
+function geoSmartWire(){
+  const form=$('entry-form'); if(!form || $('geo-dls')) return;
+  const flds=['state','district','block','gram_panchayat'];
+  const host=document.createElement('div'); host.id='geo-dls'; form.appendChild(host);
+  const refresh=()=>{
+    const v=k=>String((($('ff-'+k)||{}).value)||'').trim().toLowerCase();
+    const match=(g,k)=>!v(k)||String(g[k]||'').toLowerCase()===v(k);
+    const pool=LOOKUPS.geographies||[];
+    const uniq=a=>[...new Set(a.filter(Boolean))].sort((x,y)=>x.localeCompare(y,'en',{sensitivity:'base'}));
+    const opts={
+      state: uniq(pool.map(g=>g.state)),
+      district: uniq(pool.filter(g=>match(g,'state')).map(g=>g.district)),
+      block: uniq(pool.filter(g=>match(g,'state')&&match(g,'district')).map(g=>g.block)),
+      gram_panchayat: uniq(pool.filter(g=>match(g,'district')&&match(g,'block')).map(g=>g.gram_panchayat)),
+    };
+    host.innerHTML=flds.map(k=>`<datalist id="dl-geo-${k}">${(opts[k]||[]).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`).join('');
+  };
+  flds.forEach(k=>{ const e=$('ff-'+k); if(e){ e.setAttribute('list','dl-geo-'+k); e.setAttribute('placeholder','pick existing or type new'); e.addEventListener('input',refresh); } });
+  refresh();
+}
+
 /* Geography form: remember the last State / District / Block entered, and pre-fill
    them (editable) on the next new Geography — so adding many villages in one area is fast. */
 function geoRememberSticky(p){ try{ localStorage.setItem('vmis_geo_last', JSON.stringify({state:p.state||'',district:p.district||'',block:p.block||''})); }catch(e){} }
@@ -1147,6 +1172,13 @@ function validatePayload(key, payload){
     if(/variance|net_profit/.test(k)) continue;
     const v=payload[k]; if(v==null||String(v).trim()==='') continue;
     if(Number(v)<0) return l+' cannot be negative';
+  }
+  // ── Long-text fields (objectives, remarks, …) are capped at 300 words ──
+  for(const f of (cfg.fields||[])){
+    const [k,l,type]=f; if(type!=='area') continue;
+    const v=String(payload[k]||'').trim(); if(!v) continue;
+    const words=v.split(/\s+/).length;
+    if(words>300) return l+' is too long — please keep it under 300 words (currently '+words+')';
   }
   // ── Date sanity — a bad date silently breaks every date-filtered report ──
   for(const f of (cfg.fields||[])){
@@ -1256,7 +1288,6 @@ async function saveInlineGeography(){
 const INLINE_ADD = {
   programmes:{combo:'programme_id', title:'New Thematic Area', fields:[
     {k:'programme_name',l:'Thematic area name',req:true},
-    {k:'thematic_area',l:'Thematic area'},
     {k:'programme_status',l:'Status',sel:SEL_STATUS,def:'Ongoing'},
   ]},
   projects:{combo:'project_id', title:'New Project', parentProg:true, fields:[
@@ -1803,6 +1834,7 @@ async function openForm(key,id){
   if(!id&&key==='loans') injectLoanShgFilter();
   if(key==='loans') ['programme_id','project_id','donor_id'].forEach(foHideField);   // silently filled from the picked SHG — never shown
   if(!id&&key==='geographies') geoPrefillSticky();
+  if(key==='geographies') geoSmartWire();   // cascading suggestions: state → district → block → GP
   formMarkClean();   // baseline for the unsaved-changes guard (after all auto-fills)
   setTimeout(()=>{ const el=document.querySelector('#entry-form input:not([readonly]):not([disabled]):not([type=hidden]), #entry-form select:not([disabled])'); if(el) el.focus(); },50);
 }
@@ -2226,16 +2258,26 @@ function hqCancelEdit(){
 }
 function hqBlankRow(){ return {district:'',target_blocks:'',target_villages:'',target_beneficiaries:'',assigned_to:''}; }
 function hqRowHTML(r,i){
-  const districts=rptGeoList('district');
+  // Districts come from the PROJECT's assigned geographies (Projects → 🌍) — the same
+  // pool field officers see, so HQ can only target places the project actually covers.
+  const pid=($('hq-project')||{}).value||'';
+  const pool=projectGeoPool(pid);
+  const districts = pid ? foDistinct(pool,'district').map(x=>({id:x,label:x})) : rptGeoList('district');
+  const geoHint = !pid
+    ? '<div style="font-size:11.5px;color:var(--t4);margin-top:4px">Pick the Project above — this list then shows only its assigned districts.</div>'
+    : (districts.length
+        ? `<div style="font-size:11.5px;color:var(--t3);margin-top:4px">🌍 ${districts.length} assigned district${districts.length>1?'s':''} — need another? Assign its geography in <b>Projects → 🌍 Geographies</b>.</div>`
+        : '<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ No geographies assigned to this project yet — assign them in <b>Projects → 🌍 Geographies</b> first.</div>');
   const numF=(k,lbl)=>`<div class="f"><label>${lbl}</label><input type="number" step="any" min="0" value="${esc(r[k])}" oninput="HQ_ROWS[${i}].${k}=this.value"></div>`;
   return `<div class="hq-row" style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;background:#fff">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div style="font-weight:700;color:var(--brand);font-size:13px">District #${i+1}</div>
+      <div style="font-weight:700;color:var(--brand);font-size:13px">Project Geography${HQ_ROWS.length>1?' #'+(i+1):''}</div>
       ${HQ_ROWS.length>1?`<button class="btn btn-ghost btn-xs" type="button" onclick="hqRemoveRow(${i})">✕ Remove</button>`:''}
     </div>
     <div class="fo-grid">
       <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
         <select onchange="HQ_ROWS[${i}].district=this.value"><option value="">— Select district —</option>${districts.map(o=>`<option value="${esc(o.id)}" ${r.district===o.id?'selected':''}>${esc(o.label)}</option>`).join('')}</select>
+        ${geoHint}
         <div class="fo-newrow">${deNewBtn('geographies','New district')}</div></div>
       ${numF('target_blocks','Total Blocks — target')}
       ${numF('target_villages','Total Villages — target')}
@@ -2262,6 +2304,10 @@ function hqOnProject(){
   if(de) de.value = der.donor_id ? lblOf(LOOKUPS.donors,der.donor_id) : '';
   if(pe) pe.value = der.programme_id ? lblOf(LOOKUPS.programmes,der.programme_id) : '';
   $('hq-donor').dataset.id=der.donor_id||''; $('hq-prog').dataset.id=der.programme_id||'';
+  // new project = new geography pool → clear districts that no longer apply, refresh the rows
+  const ds=new Set(foDistinct(projectGeoPool(pid),'district'));
+  HQ_ROWS.forEach(r=>{ if(pid && r.district && !ds.has(r.district)) r.district=''; });
+  renderHQRows();
 }
 async function saveHQTargets(){
   const pid=($('hq-project')||{}).value||'';
@@ -2596,6 +2642,18 @@ async function doResetPassword(userId){
    ════════════════════════════════════════════════════════════════ */
 let POBJ_CACHE = null;   // last loaded list for the open modal
 let POBJ_CTX = null;     // {project_id, project_name, programme_id}
+/* After creating a project: guide the two linkages that make it fully usable. */
+function showProjectNextSteps(pid,pname,progId){
+  const pn=String(pname||'').replace(/'/g,"\\'"), pi=String(pid||'').replace(/'/g,"\\'"), pg=String(progId||'').replace(/'/g,"\\'");
+  showModal('✅ Project created — '+(pname||pid),
+    `<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:10px">Two quick steps make this project fully usable everywhere — its places power the dashboard &amp; field entry, and it can have as many objectives as you need:</div>
+     <div style="display:flex;flex-direction:column;gap:8px">
+       <button class="btn btn-primary" onclick="closeModal();openProjectGeos('${pi}','${pn}')">🌍 Assign geographies — where this project works</button>
+       <button class="btn btn-ghost" onclick="closeModal();openProjectObjectives('${pi}','${pn}','${pg}')">🎯 Add objectives — one or many</button>
+     </div>
+     <div class="form-actions" style="margin-top:14px"><span style="flex:1"></span><button class="btn btn-ghost" onclick="closeModal()">Done — later</button></div>`);
+}
+
 /* ── 🌍 Project ↔ Geography manager — one project, many places. The dashboard's
    district/block counts, the Geography section and donor reports all follow this link. ── */
 let PGEO_CTX=null;
@@ -3114,6 +3172,9 @@ async function saveForm(key,id){
       }
       if(key==='beneficiaries'||key==='crops'){
         showAddAnotherPrompt(key, r&&r.business_id, pickCarryOver(key,payload));
+      } else if(key==='projects'){
+        goPage('projects');
+        showProjectNextSteps(r&&r.business_id, payload.project_name||'', payload.programme_id||'');
       } else {
         goPage(__formReturn||key);
       }
@@ -3614,7 +3675,7 @@ const CHART_SOURCES={
   villages:{label:'Villages',dims:[['block','Block'],['district','District'],['programme_id','Thematic Area'],['donor_id','Donor']],measures:[['count','Number of villages'],['total_hhs','Total HHs'],['hhs_covered_under_project','Covered HHs'],['sc_hhs','SC HHs'],['st_hhs','ST HHs'],['obc_hhs','OBC HHs']]},
   donors:{label:'Donors',dims:[['donor_type','Donor Type'],['reporting_frequency','Reporting Frequency']],measures:[['count','Number of donors'],['total_approved_budget_inr','Total approved budget (₹)']]},
   projects:{label:'Projects',dims:[['programme_id','Thematic Area'],['project_status','Status']],measures:[['count','Number of projects']]},
-  programmes:{label:'Thematic Areas',dims:[['thematic_area','Theme'],['programme_status','Status']],measures:[['count','Number of programmes']]},
+  programmes:{label:'Thematic Areas',dims:[['programme_status','Status']],measures:[['count','Number of programmes']]},
   objectives:{label:'Thematic Area Objectives',dims:[['programme_id','Thematic Area'],['status','Status']],measures:[['count','Number of objectives']]},
   project_objectives:{label:'Project Objectives',dims:[['project_id','Project'],['programme_id','Thematic Area'],['status','Status']],measures:[['count','Number of objectives']]},
   indicators:{label:'Indicators (progress over time)',special:true},
