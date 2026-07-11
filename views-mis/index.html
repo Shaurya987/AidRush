@@ -638,7 +638,7 @@ const RES={
   geographies:{label:'Geography',sub:'Country → State → District → Block → GP → Village hierarchy',icon:'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
     cols:[['state','State'],['district','District'],['block','Block'],['gram_panchayat','GP'],['village_or_ward','Village/Ward'],['project_id','Project'],['responsible_staff','Staff']],
     filters:['programme_id','project_id'],
-    fields:[['geography_id','Geography ID',1],['country','Country'],['state','State'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village_or_ward','Village / Ward'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['responsible_staff','Responsible Staff'],['remarks','Remarks']]},
+    fields:[['geography_id','Geography ID',1],['country','Country'],['state','State'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village_or_ward','Village / Ward'],['programme_id','Thematic Area (auto from project)','ref','programmes'],['project_id','Project — required, links this place to it','ref','projects'],['responsible_staff','Responsible Staff'],['remarks','Remarks']]},
   villages:{label:'Village Demographics',sub:'Total HHs, project coverage & social-order breakdown',icon:'M3 21h18M5 21V9l7-6 7 6v12M9 21v-7h6v7',
     cols:[['district','District'],['block','Block'],['village','Village'],['total_hhs','Total HHs','num'],['hhs_covered_under_project','Covered','num'],['sc_hhs','SC','num'],['st_hhs','ST','num'],['obc_hhs','OBC','num'],['general_hhs','Gen','num']],
     filters:['programme_id','donor_id','project_id'],
@@ -1118,10 +1118,13 @@ function geoSmartWire(){
 
 /* Geography form: remember the last State / District / Block entered, and pre-fill
    them (editable) on the next new Geography — so adding many villages in one area is fast. */
-function geoRememberSticky(p){ try{ localStorage.setItem('vmis_geo_last', JSON.stringify({state:p.state||'',district:p.district||'',block:p.block||''})); }catch(e){} }
+function geoRememberSticky(p){ try{ localStorage.setItem('vmis_geo_last', JSON.stringify({state:p.state||'',district:p.district||''})); }catch(e){} }
 function geoPrefillSticky(){
+  // Only State & District carry over — Block/GP/Village always start EMPTY so a stale
+  // "last block" can never appear when the officer is adding a NEW block (the dropdown
+  // still offers every existing block to pick from).
   let s={}; try{ s=JSON.parse(localStorage.getItem('vmis_geo_last')||'{}'); }catch(e){}
-  ['state','district','block'].forEach(k=>{ const e=$('ff-'+k); if(e && !e.value && s[k]) e.value=s[k]; });
+  ['state','district'].forEach(k=>{ const e=$('ff-'+k); if(e && !e.value && s[k]) e.value=s[k]; });
 }
 /* Geography → fill the address fields (district / block / GP / village) on the form. */
 function autofillFromGeography(gid){
@@ -1885,6 +1888,13 @@ async function gotoNewRecord(createResource, targetCombo){
   if(createResource==='projects' && snapshot.programme_id) prefill.programme_id=snapshot.programme_id;
   __PENDING.push({ returnKey:__formKey, returnId:__formId, targetCombo, createResource, snapshot, prefill });
   await openForm(createResource); applyPrefill(prefill);
+  if(createResource==='geographies'){
+    // adding a place mid-entry: fetch Project + District from the active workspace,
+    // exactly like the workspace-setup ＋New buttons do
+    const ws=getActiveWs()||{};
+    if(ws.project_id && __COMBO['project_id']){ comboSet('project_id',ws.project_id); autofillDonorFromProject(ws.project_id); }
+    const de=$('ff-district'); if(de && !de.value && ws.district){ de.value=ws.district; de.dispatchEvent(new Event('input')); }
+  }
   formMarkClean();   // prefill is automatic, not user-typed
 }
 /* ── Per-user field LOCK — keeps the context fields filled across entries, ONLY on this
@@ -2176,7 +2186,20 @@ function foDeleteWs(id){ if(!confirm('Remove this workspace? (Your saved records
   if(String(getActiveWsId())===String(id)) setActiveWsId(''); foRerender(); }
 /* Open a real master form to add a missing District/Project/Donor/etc., then return
    to this Data-Entry tab with the in-progress workspace / HQ rows intact. */
-function deNewRecord(res){ openForm(res); }   // openForm stashes the tab (CP==='dataentry')
+function deNewRecord(res){
+  const fromSetup = (res==='geographies' && FO_MODE==='edit' && FO_DRAFT) ? Object.assign({},FO_DRAFT) : null;
+  openForm(res).then(()=>{   // openForm stashes the tab (CP==='dataentry')
+    if(!fromSetup) return;
+    // Fetched from the field-office context — the Project and the places picked so far
+    // arrive pre-filled (Block/GP/Village that AREN'T picked stay empty, dropdown ready).
+    // Saving auto-links the new place to the project — no separate assignment needed.
+    if(fromSetup.project_id && __COMBO['project_id']){ comboSet('project_id',fromSetup.project_id); autofillDonorFromProject(fromSetup.project_id); }
+    [['district',fromSetup.district],['block',fromSetup.block],['gram_panchayat',fromSetup.gram_panchayat]].forEach(([k,v])=>{
+      const e=$('ff-'+k); if(e && !e.value && v){ e.value=v; e.dispatchEvent(new Event('input')); }   // input event re-filters the cascading dropdowns
+    });
+    formMarkClean();   // context is auto-filled, not user-typed
+  });
+}
 function deNewBtn(res,label){ return canWriteResource(res)?`<button type="button" class="fo-newbtn" onclick="deNewRecord('${res}')">＋ ${esc(label)}</button>`:''; }
 /* HQ "add activity / output / indicator" — open the real form WITHOUT the field-office
    workspace context (HQ is planning, not entering against an active workspace). */
@@ -3112,6 +3135,9 @@ async function saveForm(key,id){
   if(key==='users' && !id){ payload.username=(payload.email||payload.user_name||'user').split('@')[0].toLowerCase().replace(/[^a-z0-9]/g,''); payload.password_hash=''; }
   // Blank registration date = today (a blank would silently hide the person from date-filtered reports)
   if(key==='beneficiaries' && !String(payload.registration_date||'').trim()) payload.registration_date=todayIST();
+  // Geography MUST belong to a project — this link powers the dashboard counts,
+  // HQ target districts and the field-office place lists.
+  if(key==='geographies' && !String(payload.project_id||'').trim()){ toast('⚠ Select the Project this geography belongs to — it links the place to HQ targets, field entry & the dashboard','t-err'); return; }
   // Geography with a project but no thematic: derive it (the project pins its theme)
   if(key==='geographies' && payload.project_id && !String(payload.programme_id||'').trim()){
     payload.programme_id=foDerive(payload.project_id).programme_id||'';
