@@ -284,7 +284,7 @@ Master Data is set up early and touched rarely — but understanding it explains
 
 **Production & Output Progress** — the actuals against HQ's output targets: any intervention output (a harvest, a livelihoods batch, a health camp result…). Pick the beneficiary (the picker can be narrowed by village) and their context fills in; then record the intervention, season/year, quantity, income and net profit (a loss — negative profit — is allowed, because a loss is real data). These records feed the income trend and the outputs sheets of every report.
 
-**Activity Progress** — delivery tracked year by year in one compact table. Set the activity's total target, then fill each year's row: its target and the **Q1–Q4** achievements (or flip the switch to **Monthly** and type the 12 months — they roll up into the quarters automatically). **＋ Add Year** extends the table up to six years. Each year's achievement and the cumulative total **calculate themselves**, and a live progress bar shows the % achieved against the total target — always arithmetic, never opinion. From the field-office page, the *Activity Progress* card opens this full section (filters, search, edit and ＋ New) so progress is updated on the existing activity rather than re-created.
+**Activity Progress** — delivery tracked year by year in one compact table. Set the activity's total target, then fill each year's row: its target and the **Q1–Q4** achievements (or flip the switch to **Monthly** and type the 12 months — they roll up into the quarters automatically). **＋ Add Year** extends the table up to six years. Each year's achievement and the cumulative total **calculate themselves**, and a live progress bar shows the % achieved against the total target — always arithmetic, never opinion. From the field-office page, the *Activity Progress* card opens this full section (filters, search, **✎ Update progress** on each row, and ＋ New activity) so progress is updated on the existing activity rather than re-created. **The target boxes — and adding or deleting activities — need the 🎯 Targets right (§12):** without it the plan is read-only 🔒 and only the achievements can be typed.
 
 ---
 
@@ -345,10 +345,11 @@ A table of everything in the system, grouped for sanity, with **View / Edit / De
 - **Pages & modules** — can they *open* Dashboard? Reports? **Data Entry — Field-Office Entry**? **Data Entry — HQ Setup & Targets**? MIS Status? Audit Trail? Users & Access? Note that Data Entry is **two separate boxes** — this is how a field officer sees only their tab while a manager sees both. On pages, Edit/Delete control the actions inside (e.g. on MIS Status, Edit = assign & rename workspaces, Delete = remove them).
 - **Master data / Field data / M&E / Planning & control** — per record type: View (see it), Edit (add & change), Delete (remove). Example: field officers usually get Edit on Beneficiaries but no Delete — mistakes are edited, not erased.
 - **Sensitive rows** — MIS Status, Audit Trail and Users & Access are hidden from everyone until you explicitly tick them. Handing someone Users & Access is delegation of trust: they can manage users, but they can never create or promote an Admin, and can never touch a root-protected account.
+- **🎯 Targets — the one row that protects your plan.** Every planned number in the system — activity targets (total and per-year), indicator baselines & targets, HQ plan rows, a project's target beneficiaries — is **locked for everyone** until you tick *Edit* on the **🎯 Targets** row (admins always can). Without it, a person can still update achievements and progress against those targets, but the target boxes are read-only 🔒, they cannot add or delete activities/indicators (a new one would carry new targets), and the server refuses target changes even from a tampered request. This is deliberate: the field reports *against* the plan; only HQ *sets* the plan.
 
 **Preset buttons** give you a sound starting point in one click — then adjust any box:
-- **👷 Field officer** — Field-Office Entry + the field data they enter. No HQ tab, no admin pages, no delete.
-- **🏢 HQ staff** — everything except Users & Access.
+- **👷 Field officer** — Field-Office Entry + the field data they enter. No HQ tab, no admin pages, no delete — and **no 🎯 Targets**: they update progress, never the plan.
+- **🏢 HQ staff** — everything except Users & Access, **including 🎯 Targets**.
 - **👁 Viewer** — sees everything non-sensitive, changes nothing.
 - **✕ Clear all** — start from zero.
 

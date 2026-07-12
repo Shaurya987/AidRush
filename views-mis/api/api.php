@@ -256,6 +256,24 @@ function can_delete($resource){
   if(isset($map[$resource])) return $map[$resource]['d']===1;
   return legacy_role_can('delete',$resource);
 }
+/* 🎯 TARGETS are a separate, explicit grant — the numbers HQ plans against.
+   Field officers update ACHIEVEMENTS; they can never set or change a target
+   unless the admin ticks the 'targets' row (Edit) in Users & Access.
+   Deny by default: no matrix row = no target rights (admins/root always can). */
+function can_edit_targets(){
+  $u=current_user(); if(!$u) return false;
+  if(is_admin()) return true;
+  $map=load_user_permissions($u['id']);
+  return isset($map['targets']) && $map['targets']['e']===1;
+}
+/* The target-carrying columns of each resource — stripped from edits made
+   without the grant, so the HQ-set numbers can never be overwritten. */
+function target_columns($resource){
+  if($resource==='activities') return ['total_target','target_year_1','target_year_2','target_year_3','target_year_4','target_year_5','target_year_6'];
+  if($resource==='indicators') return ['project_target','baseline_value'];
+  if($resource==='projects')   return ['target_beneficiaries'];
+  return [];
+}
 
 function table_columns($table){
   static $cache=[];
@@ -509,6 +527,9 @@ if ($action==='bulk_create') {
   // Special-case 'users' — admin-only and password is required
   if($bres==='users'){ require_admin(); }
   else if(!can_write($bres)) out(['error'=>'You do not have permission to import to this resource'],403);
+  // 🎯 Target lock — importing rows that carry targets needs the Targets grant too
+  if(in_array($bres,['activities','indicators','hq_targets']) && !can_edit_targets())
+    out(['error'=>'Targets are locked — only target-setters (HQ) can import '.$bres.'. Ask your admin to tick 🎯 Targets in Users & Access.'],403);
   $btable = $RES[$bres];
   $bcols  = table_columns($btable);
   $idCol  = isset($ID_GEN[$bres]) ? $ID_GEN[$bres][0] : null;
@@ -1254,6 +1275,10 @@ if ($method==='POST') {
     out(['ok'=>true,'id'=>$newid],201);
   }
   if(!can_write($resource)) out(['error'=>'You do not have permission to add records'],403);
+  // 🎯 Target lock — new activities / indicators / HQ plan rows CARRY targets,
+  // so creating them needs the explicit Targets grant (Users & Access → 🎯 Targets)
+  if(in_array($resource,['activities','indicators','hq_targets']) && !can_edit_targets())
+    out(['error'=>'Targets are locked — only target-setters (HQ) can add this. Ask your admin to tick 🎯 Targets in Users & Access.'],403);
   $b=body(); $cols=table_columns($table);
   // Multi-user accountability — stamp who entered the record (column exists after upgrade8)
   $me=current_user();
@@ -1343,6 +1368,13 @@ if ($method==='PUT') {
   }
   if(!can_write($resource)) out(['error'=>'You do not have permission to edit records'],403);
   $b=body(); $cols=table_columns($table);
+  // 🎯 Target lock — without the Targets grant the HQ-set numbers cannot change:
+  // hq_targets rows are fully blocked; on activities / indicators / projects the
+  // target columns are stripped so achievements still save but targets stay put.
+  if(!can_edit_targets()){
+    if($resource==='hq_targets') out(['error'=>'HQ targets are locked — only target-setters can change them. Ask your admin to tick 🎯 Targets in Users & Access.'],403);
+    foreach(target_columns($resource) as $tc) unset($b[$tc]);
+  }
   // Multi-user accountability — stamp who last changed the record (column exists after upgrade8)
   $me=current_user();
   if($me && in_array('updated_by',$cols)) $b['updated_by']=$me['username'];
@@ -1378,6 +1410,9 @@ if ($method==='DELETE') {
     out(['ok'=>true]);
   }
   if(!can_delete($resource)) out(['error'=>'You do not have permission to delete records'],403);
+  // 🎯 Target lock — deleting an activity / indicator / HQ plan row destroys its HQ-set targets
+  if(in_array($resource,['activities','indicators','hq_targets']) && !can_edit_targets())
+    out(['error'=>'Targets are locked — only target-setters (HQ) can delete this. Ask your admin to tick 🎯 Targets in Users & Access.'],403);
   $st=db()->prepare("SELECT * FROM `$table` WHERE id=?"); $st->execute([$id]); $before=$st->fetch();
   $st=db()->prepare("DELETE FROM `$table` WHERE id=?"); $st->execute([$id]);
   // ── Chain hygiene — nothing may keep pointing at a deleted donor/project ──

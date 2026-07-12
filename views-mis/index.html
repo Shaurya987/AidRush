@@ -638,6 +638,17 @@ function canWriteResource(res){
   if(r.includes('donor') || r.includes('view')) return false;
   return true; // verifier / data-entry default when no explicit matrix row
 }
+/* 🎯 TARGETS are a separate, explicit grant — HQ plans them, the field reports
+   against them. DENY by default: only admins/root, or users whose 'targets'
+   matrix row has Edit ticked, can set / change / delete ANY target
+   (activity targets, indicator targets, HQ plan rows, project target
+   beneficiaries). The server enforces the same rule — this only shapes the UI. */
+function canTargets(){
+  if(!CU) return false;
+  const r=(CU.role||'').toLowerCase();
+  if(r.includes('admin') || CU.is_root) return true;
+  return !!(CU.permissions && CU.permissions.targets && CU.permissions.targets.e===1);
+}
 
 /* ── Two-tier Data Entry access — HQ planning and field entry are SEPARATE grants.
    Field officers see only Field-Office Entry; HQ Setup & Targets needs its own tick.
@@ -1558,7 +1569,9 @@ async function renderResource(key){
           <button class="btn btn-success btn-sm" onclick="toggleExportMenu(event,'${key}')">⬇ Export ▾</button>
           <div class="x-menu" id="xmenu-${key}"></div>
         </div>
-        ${canW?`<button class="btn btn-primary btn-sm" onclick="openForm('${key}')">+ New</button>`:''}
+        ${key==='activities'
+          ? (canW&&canTargets()?`<button class="btn btn-primary btn-sm" onclick="openForm('activities')">+ New activity</button>`:'')
+          : (canW?`<button class="btn btn-primary btn-sm" onclick="openForm('${key}')">+ New</button>`:'')}
       </div></div>
     ${linkBanner}
     ${filterBar}
@@ -1785,6 +1798,13 @@ async function reloadResource(key){
           ${canW?`<button class="btn btn-warn btn-xs" onclick="openForm('${key}',${row.id})">✎</button> `:''}
           ${canD?`<button class="btn btn-danger btn-xs" onclick="delRow('${key}',${row.id})">✕</button>`:(!canW?'<span style="color:var(--t4);font-size:11px">view</span>':'')}
         </td>`;
+      } else if(key==='activities'){
+        // Updating the PROGRESS is everyday field work; adding/deleting an activity
+        // (and its targets) is HQ's — the delete needs the 🎯 Targets grant too.
+        acts = `<td style="white-space:nowrap">
+          ${canW?`<button class="btn btn-warn btn-xs" onclick="openForm('activities',${row.id})" title="Update activity progress — targets stay locked unless you hold the 🎯 Targets right">✎ Update progress</button> `:''}
+          ${(canD&&canTargets())?`<button class="btn btn-danger btn-xs" onclick="delRow('activities',${row.id})" title="Delete this activity & its targets (HQ)">✕</button>`:(!canW?'<span style="color:var(--t4);font-size:11px">view</span>':'')}
+        </td>`;
       } else if(key==='shgs'){
         // SHG Members live INSIDE the SHGs section — one click opens an inline manager.
         const sn = String(row.shg_name||'').replace(/'/g,"\\'");
@@ -1865,6 +1885,8 @@ function renderPager(){
 async function openForm(key,id){
   if(key==='users') return openUserForm(id);
   if(key==='activities') return openActivityForm(id);   // dedicated multi-year table form
+  // 🎯 A NEW indicator carries its baseline & target — creating one needs the Targets grant
+  if(key==='indicators' && !id && !canTargets()){ toast('🔒 New indicators (and their targets) are set by HQ — ask your admin to tick 🎯 Targets in Users & Access.','t-err'); return; }
   const __foSupp=__foSuppressOnce; __foSuppressOnce=false;   // HQ "add" buttons open forms WITHOUT the field-office context
   if(CP==='dataentry') deStashResume();   // so "← Back" returns to the SAME Data-Entry tab (Field-Office vs HQ)
   const cfg=RES[key]; let row={};
@@ -1958,6 +1980,12 @@ async function openForm(key,id){
   else if(!id&&hasCtx){ updateLockBtn(); if(formLockOn()) applyLock(); }
   if(!id&&key==='progress') injectEntryFreq(key);
   if(key==='progress') wireProgressAuto(id);            // cumulative & variance compute themselves
+  // 🎯 Target lock — HQ-set target fields go read-only without the Targets grant
+  if(id && !canTargets() && (key==='indicators'||key==='projects')){
+    ({indicators:['project_target','baseline_value'],projects:['target_beneficiaries']})[key].forEach(k=>{
+      const e=$('ff-'+k); if(e){ e.readOnly=true; e.style.background='var(--bg-soft)'; e.title='🔒 Set by HQ — needs the 🎯 Targets right in Users & Access'; }
+    });
+  }
   if(key==='beneficiaries') wireLandTotal();            // Total Land auto-sums the crop areas
   if(key==='projects') pobjInlineInit(id,row);          // objectives editor inside the form
   if(key==='projects'){ const amt=$('ff-approved_amount_inr'); if(amt) amt.addEventListener('input',()=>{ amt.dataset.auto=''; }); }   // typing your own amount stops the auto-fill
@@ -2395,6 +2423,7 @@ async function foInjectFormTarget(key){
 let HQ_ROWS=[];
 let HQ_EDIT_ID=0;   // >0 = the Existing-Targets row being edited (Save updates instead of creating)
 async function hqEdit(id){
+  if(!canTargets()){ toast('🔒 Targets are locked — ask your admin to tick 🎯 Targets in Users & Access','t-err'); return; }
   try{
     const d=await apiGet('?resource=hq_targets&id='+id); const r=d.row;
     if(!r){ toast('Target not found','t-err'); return; }
@@ -2450,8 +2479,8 @@ function hqRowHTML(r,i){
     <div style="margin-top:12px">
       <div style="font-size:11px;color:var(--t4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px">Activities · Indicators · Output — added as real records (their targets live on the record)</div>
       <div class="fo-newrow">
-        ${canWriteResource('activities')?`<button type="button" class="fo-newbtn" onclick="deHQForm('activities')">＋ Add activity &amp; target</button>`:''}
-        ${canWriteResource('indicators')?`<button type="button" class="fo-newbtn" onclick="deHQForm('indicators')">＋ Add indicator &amp; target</button>`:''}
+        ${(canWriteResource('activities')&&canTargets())?`<button type="button" class="fo-newbtn" onclick="deHQForm('activities')">＋ Add activity &amp; target</button>`:''}
+        ${(canWriteResource('indicators')&&canTargets())?`<button type="button" class="fo-newbtn" onclick="deHQForm('indicators')">＋ Add indicator &amp; target</button>`:''}
         ${canWriteResource('crops')?`<button type="button" class="fo-newbtn" onclick="deHQForm('crops')">＋ Add output / production</button>`:''}
       </div>
     </div>
@@ -2472,6 +2501,7 @@ function hqOnProject(){
   renderHQRows();
 }
 async function saveHQTargets(){
+  if(!canTargets()){ toast('🔒 Targets are locked — ask your admin to tick 🎯 Targets in Users & Access','t-err'); return; }
   const pid=($('hq-project')||{}).value||'';
   if(!pid){ toast('⚠ Select a Project first','t-err'); return; }
   const der=foDerive(pid);
@@ -2511,7 +2541,7 @@ async function loadHQList(){
       <td class="mono">${fmt(r.target_blocks)}</td><td class="mono">${fmt(r.target_villages)}</td>
       <td class="mono">${fmt(r.target_beneficiaries)}</td>
       <td>${r.assigned_to?`<span class="fchip">${esc(lblOf(LOOKUPS.staff,r.assigned_to))}</span>`:'<span style="color:var(--t4)">—</span>'}</td>
-      <td style="white-space:nowrap">${can('write')?`<button class="btn btn-ghost btn-xs" title="Edit this target" onclick="hqEdit(${r.id})">✎</button> `:''}${can('delete')?`<button class="btn btn-ghost btn-xs" title="Delete this target" onclick="hqDelete(${r.id})">🗑</button>`:''}</td>
+      <td style="white-space:nowrap">${(can('write')&&canTargets())?`<button class="btn btn-ghost btn-xs" title="Edit this target" onclick="hqEdit(${r.id})">✎</button> `:''}${(can('delete')&&canTargets())?`<button class="btn btn-ghost btn-xs" title="Delete this target" onclick="hqDelete(${r.id})">🗑</button>`:''}</td>
     </tr>`).join('')
   }</tbody></table></div>`;
 }
@@ -2620,6 +2650,9 @@ function actNum(v){ const n=+v; return isFinite(n)?n:0; }
 function actHas(v){ return v!=null && String(v).trim()!=='' && +v!==0; }
 async function openActivityForm(id){
   const __foSupp=__foSuppressOnce; __foSuppressOnce=false;   // HQ "add" buttons open it WITHOUT the field-office context
+  // 🎯 A NEW activity carries its targets — creating one needs the Targets grant.
+  // Existing activities stay open to everyone with edit rights (progress updates).
+  if(!id && !canTargets()){ toast('🔒 New activities (and their targets) are set by HQ — you can update progress on existing ones. Ask your admin to tick 🎯 Targets in Users & Access.','t-err'); return; }
   if(CP==='dataentry') deStashResume();                       // "← Back" returns to the same Data-Entry tab
   let row={};
   if(id){ try{ const d=await apiGet('?resource=activities&id='+id); row=d.row||{}; }catch(e){ toast('⚠ '+e.message,'t-err'); return; } }
@@ -2672,7 +2705,9 @@ async function openActivityForm(id){
         <div class="act-plan">
           <div class="act-plan-head">
             <div><div class="act-plan-title">📊 Year-wise plan &amp; achievement</div>
-              <div class="act-plan-sub">Type each year's target and its quarterly / monthly figures — the year achievement and cumulative total fill in automatically.</div></div>
+              <div class="act-plan-sub">${canTargets()
+                ?'Type each year\'s target and its quarterly / monthly figures — the year achievement and cumulative total fill in automatically.'
+                :'🔒 <b>Targets are set by HQ and locked.</b> Fill in the quarterly / monthly achievements — the totals compute themselves.'}</div></div>
             <div class="act-seg" id="act-seg">
               <button type="button" class="act-seg-btn" data-f="Q" onclick="actFreq('Q')">Quarterly</button>
               <button type="button" class="act-seg-btn" data-f="M" onclick="actFreq('M')">Monthly</button>
@@ -2691,27 +2726,31 @@ async function openActivityForm(id){
       </form>
     </div>`;
   actRenderTable(); actSegSync(); actSummary();
+  if(!canTargets()){ const tt=$('ff-total_target'); if(tt){ tt.readOnly=true; tt.style.background='var(--bg-soft)'; tt.title='🔒 Set by HQ — needs the 🎯 Targets right in Users & Access'; } }
   if(!id && !__foSupp && foActive()) applyFieldOfficeContext('activities');
   formMarkClean();
   setTimeout(()=>{ const el=document.querySelector('#entry-form input:not([readonly]):not([disabled]):not([type=hidden])'); if(el) el.focus(); },50);
 }
 function actRenderTable(){
   const host=$('act-table'); if(!host||!ACT) return;
+  // 🎯 Without the Targets grant the Target column is read-only — HQ set it
+  const lockT=!canTargets();
+  const tLock=lockT?' readonly title="🔒 Set by HQ — needs the 🎯 Targets right" style="background:var(--bg-soft);border-color:var(--border)"':'';
   let head,rows='';
   if(ACT.freq==='Q'){
     const Q=[['Q1','Apr–Jun'],['Q2','Jul–Sep'],['Q3','Oct–Dec'],['Q4','Jan–Mar']];
-    head='<th class="act-yr">Year</th><th>Target<span>for the year</span></th>'+Q.map(q=>`<th>${q[0]}<span>${q[1]}</span></th>`).join('')+'<th class="act-ach">Achieved<span>auto = Q1+Q2+Q3+Q4</span></th>';
+    head='<th class="act-yr">Year</th><th>Target<span>'+(lockT?'🔒 set by HQ':'for the year')+'</span></th>'+Q.map(q=>`<th>${q[0]}<span>${q[1]}</span></th>`).join('')+'<th class="act-ach">Achieved<span>auto = Q1+Q2+Q3+Q4</span></th>';
     for(let y=1;y<=ACT.years;y++){ const d=ACT.d[y];
       rows+=`<tr><td class="act-yr">Year ${y}</td>
-        <td><input class="act-in act-tgt" type="number" step="any" min="0" value="${d.target}" oninput="actT(${y},this.value)"></td>
+        <td><input class="act-in act-tgt" type="number" step="any" min="0" value="${d.target}" oninput="actT(${y},this.value)"${tLock}></td>
         ${[0,1,2,3].map(i=>`<td><input class="act-in" type="number" step="any" min="0" value="${d.q[i]}" oninput="actQ(${y},${i},this.value)"></td>`).join('')}
         <td class="act-ach"><input class="act-in act-achin" id="at-a-${y}" type="number" step="any" min="0" value="${d.ach}" oninput="actA(${y},this.value)" title="Auto = Q1+Q2+Q3+Q4 — type here only if you have no quarterly split"></td></tr>`;
     }
   } else {
-    head='<th class="act-yr">Year</th><th>Target<span>for the year</span></th>'+ACT_MONTHS.map(m=>`<th class="act-moh">${m.slice(0,3)}</th>`).join('')+'<th class="act-ach">Achieved<span>auto</span></th>';
+    head='<th class="act-yr">Year</th><th>Target<span>'+(lockT?'🔒 set by HQ':'for the year')+'</span></th>'+ACT_MONTHS.map(m=>`<th class="act-moh">${m.slice(0,3)}</th>`).join('')+'<th class="act-ach">Achieved<span>auto</span></th>';
     for(let y=1;y<=ACT.years;y++){ const d=ACT.d[y];
       rows+=`<tr><td class="act-yr">Year ${y}</td>
-        <td><input class="act-in act-tgt act-mi" type="number" step="any" min="0" value="${d.target}" oninput="actT(${y},this.value)"></td>
+        <td><input class="act-in act-tgt act-mi" type="number" step="any" min="0" value="${d.target}" oninput="actT(${y},this.value)"${tLock}></td>
         ${ACT_MONTHS.map(m=>`<td><input class="act-in act-mi" type="number" step="any" min="0" value="${d.m[m]!=null?d.m[m]:''}" oninput="actM(${y},'${m}',this.value)" title="${m}"></td>`).join('')}
         <td class="act-ach"><input class="act-in act-achin act-mi" id="at-a-${y}" type="number" step="any" min="0" value="${d.ach}" oninput="actA(${y},this.value)" title="Auto = sum of the 12 months"></td></tr>`;
     }
@@ -2807,7 +2846,8 @@ const PERMISSION_SECTIONS = [
   ['crops','Production & Output Progress'],
   ['activities','Activity Progress'],['shgs','SHGs'],['loans','SHG Loans'],
   ['indicators','Indicators',null,'Monitoring & evaluation'],['progress','Indicator Progress'],
-  ['hq_targets','HQ Targets (plan rows)',null,'Planning & control'],
+  ['targets','🎯 Targets — set / change ANY planned target (tick Edit to grant)',null,'Planning & control'],
+  ['hq_targets','HQ Targets (plan rows)'],
   ['workspaces','Field Workspaces (records)'],
   ['charts','Custom Charts'],
 ];
@@ -2895,8 +2935,8 @@ function permPreset(mode){
   document.querySelectorAll('#perm-matrix input[type=checkbox]').forEach(cb=>{
     const sec=cb.dataset.sec, k=cb.dataset.k; let on=false;
     if(mode==='hq') on=(sec!=='users');                    // everything except Users & Access — tick that one deliberately
-    else if(mode==='viewer') on=(k==='v' && !SENSITIVE.includes(sec) && sec!=='dataentry_fo' && sec!=='dataentry_hq');
-    else if(mode==='field') on=(sec==='dataentry_fo'&&k==='v') || (FIELD_EDIT.includes(sec)&&(k==='v'||k==='e'));
+    else if(mode==='viewer') on=(k==='v' && !SENSITIVE.includes(sec) && sec!=='dataentry_fo' && sec!=='dataentry_hq' && sec!=='targets');
+    else if(mode==='field') on=(sec==='dataentry_fo'&&k==='v') || (FIELD_EDIT.includes(sec)&&(k==='v'||k==='e'));   // NOTE: no 'targets' — field officers update progress, never targets
     cb.checked=on;
   });
   toast('Preset applied — fine-tune any box, then Save');
@@ -5106,7 +5146,9 @@ function renderDataEntry(){
     ['shgs','SHGs'],['shg_members','SHG Members'],['loans','SHG Loans'],
     ['indicators','Indicators'],['progress','Indicator Progress'],
   ];
-  const importCards = importTargets.map(([k,l])=>`
+  const importCards = importTargets
+    .filter(([k])=>!(['activities','indicators'].includes(k) && !canTargets()))   // 🎯 target-carrying imports need the Targets grant
+    .map(([k,l])=>`
     <button class="de-imp-card" onclick="openImport('${k}')">
       <span class="de-imp-ico">📥</span>
       <span><span class="de-imp-lbl">${l}</span><span class="de-imp-sub">Bulk upload .xlsx / .csv</span></span>
