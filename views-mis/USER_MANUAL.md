@@ -80,7 +80,7 @@ Keep these two ideas in mind and every screen in this guide will feel obvious.
 
 - **Overview** — Dashboard · Reports & Analytics · Data Entry (where you will live day-to-day)
 - **Master Data** — Donor Mappings · Donors · Thematic Areas · Projects · Geography · Village Demographics (the building blocks — set up once, touched rarely)
-- **Field Data** — Beneficiaries · Production & Output Progress · Activities & Targets
+- **Field Data** — Beneficiaries · Production & Output Progress · Activity Progress
 - **SHG & Finance** — Self-Help Groups · SHG Loans
 - **Monitoring and Evaluation (MNE)** — Indicators · Indicator Progress
 - **Admin** — MIS Status · Users & Access · Audit Trail (management and administrators)
@@ -197,7 +197,7 @@ While a workspace is **active**, every form you open is already filled with this
 
 **Everything you can do with workspaces:**
 
-- **＋ New workspace** — choose District → Project → Block → GP → Village step-by-step (each list narrows the next). Name it what you like — "Ganjam · Millet · Badagada" — or leave the name blank and the system names it sensibly.
+- **＋ New workspace** — choose Project → District, then optionally Block → GP → Village (each list narrows the next; **Village is optional** — leave it blank to pick the village per record instead). Name it what you like — "Ganjam · Millet · Badagada" — or leave the name blank and the system names it sensibly.
 - **⚡ Quick start** — instead of picking piece by piece, start from an HQ assignment: project and district pre-filled, you add the village.
 - **Switch with one click** — every workspace is a pill at the top. Working two projects in one day? Two pills; click to switch. There is no limit — keep one per village if you like.
 - **✎ Rename / edit** and **✕ Remove** on each pill. Removing a workspace **never touches the records you entered with it** — it only removes the shortcut.
@@ -205,7 +205,7 @@ While a workspace is **active**, every form you open is already filled with this
 - **Your workspaces follow you.** They are saved centrally, so they appear on whatever computer you sign in from — and your supervisor can see who is working where (§11), which is a feature, not surveillance: it is how help gets sent where it is needed.
 - **🎯 HQ Targets for this workspace** — the matching plan numbers (blocks, villages, beneficiaries) are shown on the workspace and inside the forms — so you always know what you are working toward.
 
-**The entry cards** (New Beneficiary, Progress of Production & Output, New Activity, New SHG, New SHG Loan, Indicator Progress) sit below. They look dimmed until a workspace is active — a gentle reminder to set your context first (you *can* still open them without one; they simply will not be pre-filled). Each card shows a live count of records already in that section.
+**The entry cards** (New Beneficiary, Progress of Production & Output, Activity Progress, New SHG, New SHG Loan, Indicator Progress) sit below. They look dimmed until a workspace is active — a gentle reminder to set your context first (you *can* still open them without one; they simply will not be pre-filled). Each card shows a live count of records already in that section.
 
 ### 6.4 My Assignments
 
@@ -258,6 +258,7 @@ Master Data is set up early and touched rarely — but understanding it explains
 
 **Projects** — your delivery units. Key points:
 - **"Funded by — Donor" is required.** You cannot create a project without naming who pays for it — this is the moment the chain is forged, and it is why every later record automatically knows its donor.
+- **Objectives are added right on the form** — the golden **🎯 ＋ Add objective** button adds a row per objective (each with an optional beneficiary target); add as many as the project has and they are saved together with the project. When editing later, the same golden button opens the live objectives manager.
 - **Status is automatic** — Planned / Ongoing / Completed derives from the start and end dates you enter. No one "forgets" to update a status.
 - The table's **Donor / Funding column** shows each project's funder as a chip — or a loud **⚠ Unmapped** badge for older projects created before this rule. A banner at the top counts them and links to the repair (§15).
 
@@ -277,13 +278,13 @@ Master Data is set up early and touched rarely — but understanding it explains
 - **Identity** — name, father/spouse, gender, age (0–120), social order (SC/ST/OBC/General), religion — these power the inclusion charts and breakdowns donors require.
 - **Contact number** — must be a real 10-digit Indian mobile; +91 or a leading 0 are accepted and cleaned automatically.
 - **Geography** — pick the village; district/block/GP fill themselves.
-- **Land & livelihood** — landholding and income source classifications.
+- **Land & livelihood** — landholding and income source classifications. **Total Land (acres) adds itself up** from the paddy/millet/vegetable areas you type in the baseline section (you can still overtype it if the household holds other land).
 - **Baseline income breakdown** — income at the time of registration, split by source (paddy, millet, vegetables, mushroom, goat, poultry, micro-enterprise) with a total that adds itself up. **Take two extra minutes here** — this baseline is the "before" in every Before-vs-After income chart and in the Avg. Income Change headline. Without it, impact cannot be shown for this person.
 - Each beneficiary row later offers an **income view** — their baseline vs current income and a year-by-year trend.
 
 **Production & Output Progress** — the actuals against HQ's output targets: any intervention output (a harvest, a livelihoods batch, a health camp result…). Pick the beneficiary (the picker can be narrowed by village) and their context fills in; then record the intervention, season/year, quantity, income and net profit (a loss — negative profit — is allowed, because a loss is real data). These records feed the income trend and the outputs sheets of every report.
 
-**Activities & Targets** — delivery tracked quarter by quarter. Enter the total target and the quarterly achievements — **the yearly total and cumulative figures calculate themselves** and cannot be typed, so the achievement % you see is always arithmetic, never opinion.
+**Activity Progress** — delivery tracked year by year in one compact table. Set the activity's total target, then fill each year's row: its target and the **Q1–Q4** achievements (or flip the switch to **Monthly** and type the 12 months — they roll up into the quarters automatically). **＋ Add Year** extends the table up to six years. Each year's achievement and the cumulative total **calculate themselves**, and a live progress bar shows the % achieved against the total target — always arithmetic, never opinion. From the field-office page, the *Activity Progress* card opens this full section (filters, search, edit and ＋ New) so progress is updated on the existing activity rather than re-created.
 
 ---
 
@@ -309,7 +310,8 @@ Repayment status appears as a colour badge in the table, and loans-by-financial-
 - **The indicator list shows only the chosen project's indicators.** You cannot accidentally report against another project's indicator — the chain protecting data quality again.
 - **🗓 Data entry frequency** — choose Monthly or Quarterly. Pick the month (or quarter + year) and the **Reporting Period writes itself** — everyone's periods are worded identically, so grouped reports group correctly.
 - **Reporting Year** accepts `2025` or the Indian financial year form `2025-26` — nothing else, so "25" vs "2025" chaos cannot enter the data.
-- Enter the achievement for the period and the cumulative figure; variance may be negative (under-achievement is information, not an error).
+- **Pick the indicator and everything else fills itself** — its thematic area, project *and* donor (through the project's funding link).
+- Enter only the achievement for the period. **Cumulative and Variance calculate themselves**: cumulative adds every earlier period logged for that indicator, and variance compares the cumulative against the indicator's total project target (negative = behind plan — that is information, not an error). Neither can be typed, so the running totals can never drift.
 
 ---
 

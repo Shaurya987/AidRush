@@ -57,8 +57,47 @@ body{min-height:100vh;overflow-x:hidden;background:radial-gradient(1200px 600px 
 .x-menu .x-sep{height:1px;background:var(--border);margin:5px 6px}
 /* Reports Centre inputs */
 .r-lbl{display:block;font-size:11.5px;font-weight:600;color:var(--t3);margin-bottom:5px;letter-spacing:.4px;text-transform:uppercase}
-.r-inp{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:#fff;color:var(--t1)}
+.r-inp{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;background:#fff;color:var(--t1)}
 .r-inp:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
+select.r-inp{padding-right:32px}
+/* Golden "＋ Add objective" — as visible as the field it replaced */
+.btn-gold{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 14px;border:none;border-radius:9px;font-size:14px;font-weight:700;font-family:inherit;color:#7c2d12;background:linear-gradient(135deg,#fde68a,#f59e0b);box-shadow:0 2px 8px rgba(245,158,11,.35);cursor:pointer;transition:all .15s}
+.btn-gold:hover{filter:brightness(1.04);box-shadow:0 4px 14px rgba(245,158,11,.45);transform:translateY(-1px)}
+.pobj-row{display:flex;gap:7px;align-items:center;margin-bottom:7px}
+.pobj-row input:first-of-type{flex:1;min-width:0}
+.pobj-row input[type=number]{width:132px;flex:none}
+.pobj-n{width:22px;height:22px;border-radius:50%;background:var(--warn-soft);color:#b45309;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pobj-x{width:28px;height:28px;border:none;border-radius:7px;background:var(--bg-soft);color:var(--t3);cursor:pointer;font-size:13px;flex-shrink:0}
+.pobj-x:hover{background:var(--bad-soft);color:var(--bad)}
+.pobj-hint{font-size:11.5px;color:var(--t4);margin-top:6px}
+/* Activity Progress — year × quarter/month plan table */
+.act-plan{margin-top:16px;border:1.5px solid var(--border);border-radius:13px;padding:15px 16px;background:linear-gradient(135deg,#fffdf6,#fff)}
+.act-plan-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+.act-plan-title{font-family:'Plus Jakarta Sans';font-weight:800;font-size:15px;color:var(--t1)}
+.act-plan-sub{font-size:12px;color:var(--t3);margin-top:2px}
+.act-seg{display:flex;background:var(--bg-soft);border-radius:9px;padding:3px;gap:3px}
+.act-seg-btn{border:none;background:transparent;padding:7px 16px;border-radius:7px;font-size:12.5px;font-weight:700;color:var(--t3);cursor:pointer;font-family:inherit;transition:all .15s}
+.act-seg-btn.on{background:#fff;color:var(--brand);box-shadow:var(--sh-1)}
+.act-tblwrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:#fff}
+.act-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.act-tbl th{background:var(--bg-soft);color:var(--t3);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;padding:8px 6px;text-align:center;white-space:nowrap;border-bottom:1px solid var(--border)}
+.act-tbl th span{display:block;font-size:9.5px;color:var(--t4);letter-spacing:0;text-transform:none;font-weight:600}
+.act-tbl td{padding:5px 4px;border-bottom:1px solid var(--border);text-align:center}
+.act-tbl tr:last-child td{border-bottom:none}
+.act-yr{font-weight:800;color:var(--brand);white-space:nowrap;padding:5px 12px!important;font-size:12px;text-align:left!important}
+.act-in{width:78px;padding:7px 5px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;text-align:center;font-family:'JetBrains Mono';outline:none;background:#fff;transition:border-color .15s,box-shadow .15s}
+.act-in:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
+.act-in::-webkit-outer-spin-button,.act-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.act-in[type=number]{-moz-appearance:textfield}
+.act-mi{width:54px;padding:6px 3px;font-size:12px}
+.act-tgt{border-color:#fcd34d;background:#fffbeb}
+.act-achin{background:var(--bg-soft);font-weight:700;color:var(--ok)}
+.act-ach{background:var(--ok-soft)}
+.act-ach span{display:block;font-size:9px;color:var(--ok)}
+.act-sum{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--t3);flex-wrap:wrap}
+.act-sum b{font-family:'JetBrains Mono';font-size:15px;color:var(--t1)}
+.act-sum-bar{width:130px;height:7px;border-radius:99px;background:var(--bg-soft);overflow:hidden;display:inline-block;border:1px solid var(--border)}
+.act-sum-bar span{display:block;height:100%;border-radius:99px}
 /* Data Entry shortcut cards */
 .de-group{margin-bottom:18px}
 .de-group-title{font-size:11.5px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:1px;padding:0 4px 8px}
@@ -123,7 +162,7 @@ body{min-height:100vh;overflow-x:hidden;background:radial-gradient(1200px 600px 
 .imp-cell-ok{background:#ecfdf5}
 .imp-cell-warn{background:#fffbeb}
 .imp-cell-err{background:#fef2f2;color:var(--bad);font-weight:600}
-.imp-prev select{width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff;font-family:inherit}
+.imp-prev select{width:100%;padding:5px 24px 5px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background-color:#fff;background-position:right 7px center;font-family:inherit}
 .imp-prev select:focus{border-color:var(--brand);outline:none}
 .imp-legend{font-size:11.5px;color:var(--t4);margin-top:8px;display:flex;gap:14px;align-items:center}
 .imp-legend>span{display:inline-block;width:11px;height:11px;border-radius:3px;border:1px solid var(--border);vertical-align:middle;margin-right:4px}
@@ -138,6 +177,11 @@ body{min-height:100vh;overflow-x:hidden;background:radial-gradient(1200px 600px 
 @keyframes imp-pop{0%{transform:scale(0);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
 button{font-family:inherit;cursor:pointer;border:none;background:none}
 input,select,textarea{font-family:inherit}
+/* ═══ ONE dropdown look everywhere — every <select> matches the entry-form fields
+   (same border, radius, focus ring and chevron), no matter which panel it sits in. ═══ */
+select{-webkit-appearance:none;-moz-appearance:none;appearance:none;background-color:#fff;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%2364748b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding:10px 32px 10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;color:var(--t1);outline:none;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
+select:disabled{background-color:var(--bg-soft);color:var(--t4);cursor:not-allowed}
 a{color:inherit;text-decoration:none}
 .mono{font-family:'JetBrains Mono',monospace}
 #login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2f9 0%,#f4f6fb 50%,#e8edf6 100%);overflow:hidden;z-index:100}
@@ -269,7 +313,8 @@ tbody tr:last-child td{border-bottom:none}
 .fg-2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .fg-3{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 .f label{display:block;font-size:12.5px;font-weight:600;color:var(--t2);margin-bottom:5px}
-.f input,.f select,.f textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14.5px;background:#fff;outline:none;transition:all .15s}
+.f input,.f textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14.5px;background:#fff;outline:none;transition:all .15s}
+.f select{width:100%;font-size:14.5px}
 .f input:focus,.f select:focus,.f textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
 .combo{position:relative}
 .combo-list{position:absolute;z-index:60;left:0;right:0;top:calc(100% + 4px);max-height:230px;overflow-y:auto;background:#fff;border:1.5px solid var(--border-2);border-radius:10px;box-shadow:var(--sh-2);display:none}
@@ -303,7 +348,9 @@ tbody tr:last-child td{border-bottom:none}
 .fchip-x{cursor:pointer;font-weight:800;opacity:.65;line-height:1}
 .fchip-x:hover{opacity:1}
 .filter-bar label{font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
-.filter-bar select,.filter-bar input{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;background:#fff;outline:none;min-width:150px}
+.filter-bar input{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;background:#fff;outline:none}
+.filter-bar select,.filter-bar input{min-width:150px}
+.filter-bar select{max-width:330px;font-size:13.5px;padding-top:8px;padding-bottom:8px}
 /* ENTITY CARDS (Donors) */
 .ent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:18px}
 .ent-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--sh-2);transition:all .2s;position:relative;overflow:hidden}
@@ -399,7 +446,8 @@ body.silent .page-head,body.silent .kpi,body.silent .chart-card,body.silent .car
 .de-locked{opacity:.96}
 .fo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
 .fo-grid .f label{font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
-.fo-grid select,.fo-grid input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;background:#fff;outline:none}
+.fo-grid input{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;background:#fff;outline:none}
+.fo-grid select,.fo-grid input{width:100%}
 .fo-auto{font-size:9.5px;font-weight:800;color:var(--brand);background:var(--brand-soft);border-radius:5px;padding:1px 6px;letter-spacing:.4px;vertical-align:middle}
 .fo-chip{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:5px 13px;font-size:13px;color:var(--t1)}
 .fo-chip-k{font-size:10.5px;font-weight:800;color:var(--t4);text-transform:uppercase;letter-spacing:.4px}
@@ -420,7 +468,7 @@ body.silent .page-head,body.silent .kpi,body.silent .chart-card,body.silent .car
 .ws-mini{border:none;border-left:1px solid var(--border);background:transparent;cursor:pointer;padding:0 10px;color:var(--t4);font-size:12px}
 .ws-mini:hover{background:var(--bg-soft);color:var(--t1)}
 /* Injected form toolbars (SHG-loan finder, data-entry frequency) — style their bare selects */
-#loan-shg-filter select,#entry-freq-wrap select{padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;background:#fff;color:var(--t1);font-family:inherit;outline:none;min-width:170px;max-width:300px;transition:all .15s}
+#loan-shg-filter select,#entry-freq-wrap select{min-width:170px;max-width:300px;font-size:13.5px}
 #loan-shg-filter select:focus,#entry-freq-wrap select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
 /* Inline "+ New" links under workspace / HQ selects */
 .fo-newrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
@@ -625,7 +673,7 @@ const RES={
   projects:{label:'Projects',sub:'Implementation projects linked to programmes',icon:'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
     cols:[['project_name','Name'],['programme_id','Thematic Area'],['_donor','Donor / Funding','maplink'],['project_status','Status','status']],
     filters:['programme_id',['project_status','Status',['Planned','Ongoing','Completed','On Hold']]],
-    fields:[['project_id','Project ID',1],['programme_id','Thematic Area','ref','programmes'],['donor_id','Funded by — Donor (required: creates the donor↔project link)','ref','donors'],['approved_amount_inr','Approved Amount from Donor (₹)','num'],['project_name','Project Name',1],['project_objective','Objective','area'],['project_status','Status','sel',SEL_STATUS],['target_beneficiaries','Total Target Beneficiaries (in numbers)','num'],['implementation_partner','Implementation Partner'],['project_start_date','Start Date','date'],['project_end_date','End Date','date'],['remarks','Remarks']]},
+    fields:[['project_id','Project ID',1],['programme_id','Thematic Area','ref','programmes'],['donor_id','Funded by — Donor (required: creates the donor↔project link)','ref','donors'],['approved_amount_inr','Approved Amount from Donor (₹)','num'],['project_name','Project Name',1],['__objectives','Objectives — add one or many','pobj'],['project_status','Status','sel',SEL_STATUS],['target_beneficiaries','Total Target Beneficiaries (in numbers)','num'],['implementation_partner','Implementation Partner'],['project_start_date','Start Date','date'],['project_end_date','End Date','date'],['remarks','Remarks']]},
   donors:{label:'Donors',sub:'Funding agencies, CSR partners, foundations & government schemes',icon:'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
     view:'cards',
     cols:[['donor_name','Name'],['donor_type','Type'],['contact_person','Contact'],['total_approved_budget_inr','Budget','inr']],
@@ -646,15 +694,22 @@ const RES={
   beneficiaries:{label:'Beneficiaries',sub:'Farmer & household beneficiaries — full demographic & economic profile',icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',badge:true,
     cols:[['beneficiary_id','ID'],['beneficiary_farmer_name','Name'],['gender','Gender','gender'],['caste','Social Order','caste'],['religion','Religion'],['village','Village'],['block','Block'],['primary_income_source','Income Source'],['current_income_per_annum_inr','Annual Income','inr']],
     filters:['programme_id','project_id','donor_id','caste','gender'],
-    fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['__bl_hdr','Baseline livelihood income — at registration','group'],['bl_paddy_area','Baseline · Paddy — Area (acre)','num'],['bl_paddy_income','Baseline · Paddy — Income (₹)','blinc'],['bl_millet_area','Baseline · Millet — Area (acre)','num'],['bl_millet_income','Baseline · Millet — Income (₹)','blinc'],['bl_vegetable_area','Baseline · Vegetable — Area (acre)','num'],['bl_vegetable_income','Baseline · Vegetable — Income (₹)','blinc'],['bl_mushroom_income','Baseline · Mushroom Cultivation — Income (₹)','blinc'],['bl_goat_income','Baseline · Goat Rearing — Income (₹)','blinc'],['bl_poultry_income','Baseline · Backyard Poultry — Income (₹)','blinc'],['bl_micro_enterprise_income','Baseline · Micro Enterprise — Income (₹)','blinc'],['__bl_total','Total Baseline Income (auto)','bltotal'],['total_land_acre','Total Land (acres)','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
+    fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['__bl_hdr','Baseline livelihood income — at registration','group'],['bl_paddy_area','Baseline · Paddy — Area (acre)','num'],['bl_paddy_income','Baseline · Paddy — Income (₹)','blinc'],['bl_millet_area','Baseline · Millet — Area (acre)','num'],['bl_millet_income','Baseline · Millet — Income (₹)','blinc'],['bl_vegetable_area','Baseline · Vegetable — Area (acre)','num'],['bl_vegetable_income','Baseline · Vegetable — Income (₹)','blinc'],['bl_mushroom_income','Baseline · Mushroom Cultivation — Income (₹)','blinc'],['bl_goat_income','Baseline · Goat Rearing — Income (₹)','blinc'],['bl_poultry_income','Baseline · Backyard Poultry — Income (₹)','blinc'],['bl_micro_enterprise_income','Baseline · Micro Enterprise — Income (₹)','blinc'],['__bl_total','Total Baseline Income (auto)','bltotal'],['total_land_acre','Total Land (acres) — auto-sums the crop areas','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
   crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — crops, alternative livelihoods, health, road safety, anything',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
-    cols:[['beneficiary_id','Beneficiary'],['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['production_kg','Output Qty','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr']],
+    cols:[['beneficiary_id','Beneficiary'],['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['production_kg','Output Qty (kg)','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr']],
     filters:['programme_id','project_id','donor_id',['project_year','Year',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']]],
-    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity','num'],['rate_inr_per_kg','Rate (₹)','num'],['income_inr','Income (₹)','num'],['self_consumption_kg','Self Consumption','num'],['net_profit_inr','Net Profit (₹)','num'],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
-  activities:{label:'Activities & Targets',sub:'Quarterly target vs achievement across 3 project years',icon:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
+    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹)','num'],['self_consumption_kg','Self Consumption (kg)','num'],['net_profit_inr','Net Profit (₹)','num'],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
+  activities:{label:'Activity Progress',sub:'Every activity\'s multi-year targets & quarterly / monthly achievements — totals auto-computed',icon:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
     cols:[['project_activity','Activity'],['unit_of_measurement','Unit'],['total_target','Total Tgt','num'],['target_year_1','Y1 Tgt','num'],['y1_total_achievement','Y1 Ach','num'],['cumulative_achievement','Cum Ach','num']],
-    filters:['programme_id','project_id','donor_id',['unit_of_measurement','Units',['Number','Percentage','INR','Event','Acres']]],
-    fields:[['activity_id','Activity ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['project_activity','Project Activity',1],['unit_of_measurement','Unit','sel',['Number','Percentage','INR','Event','Acres']],['total_target','Total Target','num'],['target_year_1','Y1 Target','num'],['y1_q1','Y1 Q1 (Apr-Jun)','num'],['y1_q2','Y1 Q2 (Jul-Sep)','num'],['y1_q3','Y1 Q3 (Oct-Dec)','num'],['y1_q4','Y1 Q4 (Jan-Mar)','num'],['y1_total_achievement','Y1 Achievement','num'],['target_year_2','Y2 Target','num'],['y2_total_achievement','Y2 Achievement','num'],['target_year_3','Y3 Target','num'],['y3_total_achievement','Y3 Achievement','num'],['cumulative_achievement','Cumulative Achievement','num'],['means_of_verification','Means of Verification'],['remarks','Remarks']]},
+    filters:['programme_id','project_id','donor_id',['unit_of_measurement','Units',['Number','Percentage','INR','Event','Acres','Kilograms']]],
+    fields:[['activity_id','Activity ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['project_activity','Project Activity',1],['unit_of_measurement','Unit','sel',['Number','Percentage','INR','Event','Acres','Kilograms']],['total_target','Total Target','num'],
+      ['target_year_1','Y1 Target','num'],['y1_q1','Y1 Q1 (Apr-Jun)','num'],['y1_q2','Y1 Q2 (Jul-Sep)','num'],['y1_q3','Y1 Q3 (Oct-Dec)','num'],['y1_q4','Y1 Q4 (Jan-Mar)','num'],['y1_total_achievement','Y1 Achievement','num'],
+      ['target_year_2','Y2 Target','num'],['y2_q1','Y2 Q1 (Apr-Jun)','num'],['y2_q2','Y2 Q2 (Jul-Sep)','num'],['y2_q3','Y2 Q3 (Oct-Dec)','num'],['y2_q4','Y2 Q4 (Jan-Mar)','num'],['y2_total_achievement','Y2 Achievement','num'],
+      ['target_year_3','Y3 Target','num'],['y3_q1','Y3 Q1 (Apr-Jun)','num'],['y3_q2','Y3 Q2 (Jul-Sep)','num'],['y3_q3','Y3 Q3 (Oct-Dec)','num'],['y3_q4','Y3 Q4 (Jan-Mar)','num'],['y3_total_achievement','Y3 Achievement','num'],
+      ['target_year_4','Y4 Target','num'],['y4_q1','Y4 Q1 (Apr-Jun)','num'],['y4_q2','Y4 Q2 (Jul-Sep)','num'],['y4_q3','Y4 Q3 (Oct-Dec)','num'],['y4_q4','Y4 Q4 (Jan-Mar)','num'],['y4_total_achievement','Y4 Achievement','num'],
+      ['target_year_5','Y5 Target','num'],['y5_q1','Y5 Q1 (Apr-Jun)','num'],['y5_q2','Y5 Q2 (Jul-Sep)','num'],['y5_q3','Y5 Q3 (Oct-Dec)','num'],['y5_q4','Y5 Q4 (Jan-Mar)','num'],['y5_total_achievement','Y5 Achievement','num'],
+      ['target_year_6','Y6 Target','num'],['y6_q1','Y6 Q1 (Apr-Jun)','num'],['y6_q2','Y6 Q2 (Jul-Sep)','num'],['y6_q3','Y6 Q3 (Oct-Dec)','num'],['y6_q4','Y6 Q4 (Jan-Mar)','num'],['y6_total_achievement','Y6 Achievement','num'],
+      ['cumulative_achievement','Cumulative Achievement','num'],['means_of_verification','Means of Verification'],['remarks','Remarks']]},
   shg_members:{label:'SHG Members',sub:'Individual members of each SHG',icon:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
     cols:[['shg_id','SHG'],['member_name','Member'],['role','Role','status'],['gender','Gender','gender'],['age','Age','num'],['savings_contribution_inr','Savings','inr']],
     filters:['shg_id','role','gender'],
@@ -674,7 +729,7 @@ const RES={
   progress:{label:'Indicator Progress',sub:'Period-wise achievement, cumulative progress & variance',icon:'M18 20V10M12 20V4M6 20v-6',
     cols:[['indicator_id','Indicator'],['reporting_period','Period'],['target_for_period','Target','num'],['achievement_for_period','Achieved','num'],['variance','Variance','num'],['_status','Status','achv']],
     filters:['programme_id','project_id','indicator_id',['quarter','Quarter',['Q1','Q2','Q3','Q4']]],
-    fields:[['progress_id','Progress ID',1],['indicator_id','Indicator — search by name','ref','indicators'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['reporting_period','Reporting Period'],['reporting_year','Reporting Year'],['quarter','Quarter','sel',['Q1','Q2','Q3','Q4']],['achievement_for_period','Achievement','num'],['cumulative_achievement','Cumulative','num'],['variance','Variance','num'],['verification_source','Verification Source'],['remarks','Remarks']]},
+    fields:[['progress_id','Progress ID',1],['indicator_id','Indicator — search by name','ref','indicators'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['reporting_period','Reporting Period'],['reporting_year','Reporting Year'],['quarter','Quarter','sel',['Q1','Q2','Q3','Q4']],['achievement_for_period','Achievement','num'],['cumulative_achievement','Cumulative — auto (all periods of this indicator)','num'],['variance','Variance vs indicator target — auto','num'],['verification_source','Verification Source'],['remarks','Remarks']]},
   users:{label:'Users & Access',sub:'Admin-only: create users, set per-section permissions, reset passwords. Sessions are tab-bound and audit-logged.',icon:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 11h-6M19 8v6',
     cols:[['username','Username'],['user_name','Full Name'],['role','Role','status'],['email','Email'],['last_login','Last Login','datetime'],['is_root','Root','flag']],
     fields:[['username','Username',1],['user_name','Full Name',1],['email','Email'],['phone','Phone'],['designation','Designation'],['organization','Organization'],['role','Role','sel',['Admin','Verifier','Data Entry','Viewer','Donor Viewer']],['access_level','Access Level','sel',['Full','Thematic Area','Project','Donor','Read-only']],['password','Password (set or change)','password'],['remarks','Remarks']]},
@@ -1141,10 +1196,70 @@ function autofillFromShg(sid){
   ['programme_id','project_id','donor_id'].forEach(k=>{ if(__COMBO[k]) foHideField(k); });
 }
 /* Indicator → fill its Programme & Project on the Indicator-Progress form. */
+/* Indicator picked → its Thematic Area, Project AND Donor fill themselves (the
+   indicator's project pins the donor via Donor Mapping), and the auto totals load. */
 function autofillFromIndicator(iid){
-  const it=(LOOKUPS.indicators||[]).find(x=>String(x.id)===String(iid)); if(!it) return;
-  if(it.programme_id){ comboSet('programme_id',it.programme_id); if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(it.programme_id); }
-  if(it.project_id) comboSet('project_id',it.project_id);
+  const it=(LOOKUPS.indicators||[]).find(x=>String(x.id)===String(iid));
+  if(it){
+    if(it.programme_id){ comboSet('programme_id',it.programme_id); if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(it.programme_id); }
+    if(it.project_id){ comboSet('project_id',it.project_id); autofillDonorFromProject(it.project_id); }
+  }
+  progressAutoLoad(iid);
+}
+/* ── Indicator-Progress AUTO math — Cumulative & Variance are never typed:
+   cumulative = every earlier achievement logged for this indicator + this period;
+   variance   = cumulative − the indicator's total project target (negative = behind). ── */
+let __PROG_AUTO={base:0,target:null};
+async function progressAutoLoad(iid){
+  if(__formKey!=='progress') return;
+  __PROG_AUTO={base:0,target:null};
+  if(iid){
+    try{
+      const [pd,idr]=await Promise.all([
+        apiGet('?resource=progress&indicator_id='+encodeURIComponent(iid)+'&limit=10000'),
+        apiGet('?resource=indicators&indicator_id='+encodeURIComponent(iid)+'&limit=1')
+      ]);
+      // "earlier" = rows entered before this one (when editing, only rows older than it)
+      __PROG_AUTO.base=(pd.rows||[]).filter(r=>!__formId || +r.id<+__formId).reduce((s,r)=>s+(+r.achievement_for_period||0),0);
+      const ind=(idr.rows||[])[0]||{};
+      if(ind.project_target!=null && String(ind.project_target)!=='') __PROG_AUTO.target=+ind.project_target;
+      if(ind.donor_id && !((($('ff-donor_id')||{}).value)||'')) comboSet('donor_id',ind.donor_id);
+    }catch(e){}
+  }
+  progressAutoCalc();
+}
+function progressAutoCalc(){
+  if(__formKey!=='progress') return;
+  const cumE=$('ff-cumulative_achievement'), varE=$('ff-variance'); if(!cumE&&!varE) return;
+  const iid=((($('ff-indicator_id')||{}).value)||'');
+  const aRaw=((($('ff-achievement_for_period')||{}).value)||'');
+  const a=+aRaw||0;
+  const cum=+(( (iid?__PROG_AUTO.base:0) + a ).toFixed(2));
+  if(cumE) cumE.value=(iid || aRaw!=='') ? cum : '';
+  if(varE) varE.value=(iid && __PROG_AUTO.target!=null) ? +((cum-__PROG_AUTO.target).toFixed(2)) : '';
+}
+function wireProgressAuto(id){
+  const cumE=$('ff-cumulative_achievement'), varE=$('ff-variance');
+  [cumE,varE].forEach(e=>{ if(e){ e.readOnly=true; e.style.background='var(--bg-soft)'; } });
+  if(cumE) cumE.title='Auto = all earlier achievements for this indicator + this period';
+  if(varE) varE.title='Auto = cumulative − the indicator’s total project target (negative = behind plan)';
+  const a=$('ff-achievement_for_period'); if(a) a.addEventListener('input',progressAutoCalc);
+  const iid=((($('ff-indicator_id')||{}).value)||'');
+  if(iid) progressAutoLoad(iid); else progressAutoCalc();
+}
+/* Beneficiary form: Total Land auto-sums the three baseline crop areas (Paddy +
+   Millet + Vegetable) the same way the income total does — still editable, and a
+   value the officer typed themselves is never overwritten. */
+function wireLandTotal(){
+  const land=$('ff-total_land_acre'); if(!land) return;
+  const areas=['bl_paddy_area','bl_millet_area','bl_vegetable_area'];
+  const sum=()=>areas.reduce((s,k)=>s+(+((($('ff-'+k)||{}).value)||0)),0);
+  if(!land.value || (sum()>0 && +land.value===+sum().toFixed(2))) land.dataset.auto='1';
+  land.addEventListener('input',()=>{ land.dataset.auto=''; });   // typing your own figure stops the auto-fill
+  areas.forEach(k=>{ const e=$('ff-'+k); if(e) e.addEventListener('input',()=>{
+    if(land.value && land.dataset.auto!=='1') return;
+    const s=sum(); land.value=s? +s.toFixed(2) : ''; land.dataset.auto='1';
+  }); });
 }
 /* Beneficiary → pull its Thematic Area / Project / Donor / Geography (+ address) into the form
    (used by Production / Output so a record is just: pick the person, fill the output). */
@@ -1749,6 +1864,7 @@ function renderPager(){
 /* ════════ FORM (create/edit) ════════ */
 async function openForm(key,id){
   if(key==='users') return openUserForm(id);
+  if(key==='activities') return openActivityForm(id);   // dedicated multi-year table form
   const __foSupp=__foSuppressOnce; __foSuppressOnce=false;   // HQ "add" buttons open forms WITHOUT the field-office context
   if(CP==='dataentry') deStashResume();   // so "← Back" returns to the SAME Data-Entry tab (Field-Office vs HQ)
   const cfg=RES[key]; let row={};
@@ -1772,6 +1888,7 @@ async function openForm(key,id){
       return `<div class="f"><label>${esc(l)}</label><input value="✦ Auto-generated on save" readonly style="background:var(--bg-soft);color:var(--brand);font-style:italic"></div>`;
     }
     if(type==='group') return `<div class="f" style="grid-column:1/-1;margin:8px 0 2px"><div style="font-family:'Plus Jakarta Sans';font-weight:700;font-size:12.5px;color:var(--brand);border-top:1px dashed var(--border-2);padding-top:13px">${esc(l)}</div></div>`;
+    if(type==='pobj') return `<div class="f"><label>${esc(l)}</label><div id="pobj-inline"></div></div>`;   // objectives editor lives where the old Objective box was
     if(type==='bltotal'){ const _blt=['bl_paddy_income','bl_millet_income','bl_vegetable_income','bl_mushroom_income','bl_goat_income','bl_poultry_income','bl_micro_enterprise_income'].reduce((s,kk)=>s+(+row[kk]||0),0); return `<div class="f" style="grid-column:1/-1"><label>${esc(l)}</label><input id="bl-total-display" type="number" readonly value="${_blt?_blt.toFixed(2):''}" style="background:var(--brand-soft);color:var(--brand);font-weight:800;font-family:'JetBrains Mono'"></div>`; }
     let inp;
     if(type==='area')inp=`<textarea id="ff-${k}" rows="3">${esc(v)}</textarea>`;
@@ -1799,11 +1916,7 @@ async function openForm(key,id){
     const sid= String(row.shg_id||'').replace(/'/g,"\\'");
     extraBtn = `<button class="btn btn-ghost btn-sm" type="button" onclick="closeModal();openShgMembers('${sid}','${sn}')">👥 Manage Members</button>`;
   }
-  if(id && key==='projects' && row.project_id){
-    const pn = String(row.project_name||'').replace(/'/g,"\\'");
-    const pid= String(row.project_id||'').replace(/'/g,"\\'");
-    extraBtn = `<button class="btn btn-ghost btn-sm" type="button" onclick="closeModal();openProjectObjectives('${pid}','${pn}','${row.programme_id||''}')">🎯 Manage Objectives</button>`;
-  }
+  // (Projects: the objectives editor sits INSIDE the form grid — see pobjInlineInit)
   if(id && key==='programmes' && row.programme_id){
     const gn = String(row.programme_name||'').replace(/'/g,"\\'");
     const gid= String(row.programme_id||'').replace(/'/g,"\\'");
@@ -1811,7 +1924,7 @@ async function openForm(key,id){
   }
   /* Per-form display titles — fixes the naive strip-the-s bug ("Indicator Progres",
      "Beneficiarie") and renames field entry to "progress" language (targets come from HQ). */
-  const FORM_TITLES={ crops:'Progress of Production & Output', progress:'Indicator Progress', beneficiaries:'Beneficiary', activities:'Activity & Target' };
+  const FORM_TITLES={ crops:'Progress of Production & Output', progress:'Indicator Progress', beneficiaries:'Beneficiary', activities:'Activity Progress' };
   const noNew=['crops','progress'];   // these read as headings, not "New …"
   const base=FORM_TITLES[key]||cfg.label.replace(/s$/,'');
   const titleTxt = noNew.includes(key) ? (id?('Edit — '+base):base) : ((id?'Edit ':'New ')+base);
@@ -1843,8 +1956,10 @@ async function openForm(key,id){
     </div>`;
   if(!id&&!__foSupp&&foActive()&&FO_FORMS.includes(key)){ applyFieldOfficeContext(key); }
   else if(!id&&hasCtx){ updateLockBtn(); if(formLockOn()) applyLock(); }
-  if(!id&&(key==='progress'||key==='activities')) injectEntryFreq(key);
-  if(key==='activities') wireActivityTotals();
+  if(!id&&key==='progress') injectEntryFreq(key);
+  if(key==='progress') wireProgressAuto(id);            // cumulative & variance compute themselves
+  if(key==='beneficiaries') wireLandTotal();            // Total Land auto-sums the crop areas
+  if(key==='projects') pobjInlineInit(id,row);          // objectives editor inside the form
   if(key==='projects'){ const amt=$('ff-approved_amount_inr'); if(amt) amt.addEventListener('input',()=>{ amt.dataset.auto=''; }); }   // typing your own amount stops the auto-fill
   if(!id&&key==='loans') injectLoanShgFilter();
   if(key==='loans') ['programme_id','project_id','donor_id'].forEach(foHideField);   // silently filled from the picked SHG — never shown
@@ -1874,12 +1989,18 @@ function formCancel(){
 function captureFormState(){
   const cfg=RES[__formKey]; const snap={};
   for(const f of ((cfg&&cfg.fields)||[])){ const k=f[0]; const e=$('ff-'+k); if(e) snap[k]=e.value; }
+  // widgets that live outside plain ff- inputs — captured so a nested "＋ New …" hop keeps them
+  if(__formKey==='projects') snap.__objectives=JSON.stringify(__POBJ_DRAFT||[]);
+  if(__formKey==='activities'&&ACT) snap.__act=JSON.stringify(ACT);
   return snap;
 }
 function restoreFormState(snap){
   if(!snap) return;
   if(snap.programme_id){ comboSet('programme_id',snap.programme_id); if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(snap.programme_id); }
-  for(const k in snap){ if(k==='programme_id') continue; const v=snap[k]; if(v===''||v==null) continue; if(__COMBO[k]) comboSet(k,v); else { const e=$('ff-'+k); if(e) e.value=v; } }
+  for(const k in snap){ if(k==='programme_id'||k.slice(0,2)==='__') continue; const v=snap[k]; if(v===''||v==null) continue; if(__COMBO[k]) comboSet(k,v); else { const e=$('ff-'+k); if(e) e.value=v; } }
+  if(snap.__objectives){ try{ __POBJ_DRAFT=JSON.parse(snap.__objectives)||[]; }catch(e){} pobjInlineRender(); }
+  if(snap.__act){ try{ ACT=JSON.parse(snap.__act)||ACT; }catch(e){} actRenderTable(); actSegSync(); actSummary();
+    const b=$('act-addyear'); if(b&&ACT){ b.style.display=ACT.years>=ACT_MAX_YEARS?'none':''; b.textContent='＋ Add Year '+(ACT.years+1); } }
 }
 function applyPrefill(prefill){ if(prefill && prefill.programme_id) comboSet('programme_id',prefill.programme_id); }
 async function gotoNewRecord(createResource, targetCombo){
@@ -1953,7 +2074,7 @@ function getActiveWsId(){ try{ return localStorage.getItem('vmis_ws_active')||''
 function setActiveWsId(id){ try{ localStorage.setItem('vmis_ws_active', id||''); }catch(e){} }
 function getActiveWs(){ const id=getActiveWsId(); return getWorkspaces().find(w=>String(w.id)===String(id))||null; }
 function getFO(){ const w=getActiveWs(); return w? Object.assign({active:true},w) : {}; }
-function foActive(){ const w=getActiveWs(); return !!(w && w.project_id && w.geography_id); }
+function foActive(){ const w=getActiveWs(); return !!(w && w.project_id && (w.district || w.geography_id)); }   // Village is optional — Project + District is a working workspace
 function foMigrateLegacy(){ /* fold an older single context into the new list, once */
   try{ const old=JSON.parse(localStorage.getItem('vmis_focontext')||'null');
     if(old && old.active && old.project_id){ const ws=getWorkspaces();
@@ -2052,7 +2173,7 @@ function foListHTML(){
         ${mine.map(r=>{ const i=(__HQ_ASSIGN||[]).indexOf(r);
           return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;padding:9px 13px">
             <div><b>${esc(lblOf(LOOKUPS.projects,r.project_id))}</b> · ${esc(r.district||'—')}${r.target_beneficiaries?`<span style="color:var(--t4);font-size:12px;margin-left:8px">🎯 ${fmt(r.target_beneficiaries)} beneficiaries</span>`:''}</div>
-            <button class="btn btn-primary btn-sm" type="button" onclick="foStartAssignment(${i})">Start ▸</button>
+            <button class="btn btn-primary btn-sm" type="button" onclick="foStartAssignment(${i})">＋ Add another workspace</button>
           </div>`; }).join('')}
       </div>
     </div>` : '';
@@ -2087,7 +2208,7 @@ function foSetupHTML(){
     : `<div style="margin-top:10px;font-size:12px;color:var(--t4)">Tip: pick the <b>Project</b> first — the District/Block/Village lists then show only its assigned places.</div>`;
   const der=foDerive(d.project_id);
   const opt=(v,sel)=>`<option value="${esc(v)}" ${String(sel)===String(v)?'selected':''}>${esc(v)}</option>`;
-  const ready=d.district&&d.project_id&&d.geography_id;
+  const ready=d.district&&d.project_id;   // Village is optional — it can be picked per record
   const nb=(res,label)=> canWriteResource(res)?`<button type="button" class="fo-newbtn" onclick="deNewRecord('${res}')">＋ ${esc(label)}</button>`:'';
   return `<div class="card" style="background:linear-gradient(135deg,#f3f8ff,#fff);border:1.5px solid var(--brand-soft)">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
@@ -2111,14 +2232,14 @@ function foSetupHTML(){
         <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('block',this.value)"><option value="">${d.district?'— Select block —':'pick district first'}</option>${blocks.map(b=>opt(b,d.block)).join('')}</select>${nb('geographies','New block')}</div>
       <div class="f"><label>Gram Panchayat</label>
         <select class="r-inp" ${d.block?'':'disabled'} onchange="foDraftSet('gram_panchayat',this.value)"><option value="">${d.block?'— Select GP —':'pick block first'}</option>${gps.map(g=>opt(g,d.gram_panchayat)).join('')}</select>${nb('geographies','New gram panchayat')}</div>
-      <div class="f"><label>Village / Ward <span style="color:var(--bad)">*</span></label>
-        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('geography_id',this.value)"><option value="">${d.district?'— Select village —':'pick district first'}</option>${villages.map(v=>`<option value="${esc(v.id)}" ${String(d.geography_id)===String(v.id)?'selected':''}>${esc(v.village||v.label)}</option>`).join('')}</select>${nb('geographies','New village / ward')}</div>
+      <div class="f"><label>Village / Ward <span class="fo-auto">optional</span></label>
+        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('geography_id',this.value)"><option value="">${d.district?'— All villages (pick per record) —':'pick district first'}</option>${villages.map(v=>`<option value="${esc(v.id)}" ${String(d.geography_id)===String(v.id)?'selected':''}>${esc(v.village||v.label)}</option>`).join('')}</select>${nb('geographies','New village / ward')}</div>
       <div class="f"><label>Workspace name</label>
         <input class="r-inp" id="fo-ws-name" value="${esc(d.name||'')}" placeholder="auto from project · village"></div>
     </div>
     <div class="form-actions" style="margin-top:14px">
       <button class="btn btn-primary" type="button" ${ready?'':'disabled'} onclick="foSaveWorkspace()">${FO_EDIT_ID?'💾 Save changes':'📍 Save & activate'}</button>
-      <span style="font-size:12.5px;color:var(--t4)">${ready?'Ready — this workspace auto-fills every form.':'Select District, Project &amp; Village.'}</span>
+      <span style="font-size:12.5px;color:var(--t4)">${ready?'Ready — this workspace auto-fills every form.':'Select the Project &amp; District (Village is optional).'}</span>
     </div>
   </div>`;
 }
@@ -2152,7 +2273,7 @@ function foEditWorkspace(id){ const w=getWorkspaces().find(x=>String(x.id)===Str
 function foCancelSetup(){ FO_MODE='list'; FO_EDIT_ID=''; foRerender(); }
 async function foSaveWorkspace(){
   const d=FO_DRAFT||{}; const nm=$('fo-ws-name'); if(nm) d.name=nm.value;
-  if(!(d.district&&d.project_id&&d.geography_id)){ toast('⚠ Select District, Project & Village first','t-err'); return; }
+  if(!(d.district&&d.project_id)){ toast('⚠ Select the Project & District first (Village is optional)','t-err'); return; }
   const der=foDerive(d.project_id);
   const g=(LOOKUPS.geographies||[]).find(x=>String(x.id)===String(d.geography_id))||{};
   const ctx={ project_id:d.project_id, programme_id:der.programme_id, donor_id:der.donor_id, geography_id:d.geography_id,
@@ -2240,8 +2361,14 @@ function applyFieldOfficeContext(key){
   if(present.has('project_id') && f.project_id){ comboSet('project_id',f.project_id); if(__COMBO['indicator_id']) filterIndicatorsByProject(f.project_id); }
   if(present.has('donor_id') && f.donor_id) comboSet('donor_id',f.donor_id);
   if(present.has('geography_id') && f.geography_id){ if(__COMBO['geography_id']) __COMBO['geography_id'].opts=LOOKUPS.geographies||[]; comboSet('geography_id',f.geography_id); autofillFromGeography(f.geography_id); if(__COMBO['beneficiary_id']) filterBeneficiaryByGeography(f.geography_id); }
+  // Workspace saved WITHOUT a village → the Village picker stays on the form,
+  // narrowed to the workspace's own place pool (project → district → block → GP)
+  if(present.has('geography_id') && !f.geography_id && f.project_id && __COMBO['geography_id']){
+    __COMBO['geography_id'].opts=foGeoPool(projectGeoPool(f.project_id),{district:f.district||'',block:f.block||'',gram_panchayat:f.gram_panchayat||''});
+  }
   ['district','block','gram_panchayat','village'].forEach(k=>{ if(present.has(k) && f[k]!=null){ const e=$('ff-'+k); if(e) e.value=f[k]; } });
-  FO_CTX_FIELDS.forEach(k=>{ if(present.has(k)) foHideField(k); });
+  // Hide ONLY the fields the workspace actually fills — an empty Village must stay pickable
+  FO_CTX_FIELDS.forEach(k=>{ if(present.has(k) && f[k]!=null && String(f[k])!=='') foHideField(k); });
   const lb=$('form-lock-btn'); if(lb) lb.style.display='none';   // workspace replaces the per-field lock
   // Context banner at the top of the form
   const form=$('entry-form');
@@ -2429,19 +2556,18 @@ function deTab(which){
   else if(foActive()){ foLoadTargets(); }
 }
 
-/* ── Monthly / Quarterly data-entry selector for Indicator-Progress & Activity forms.
+/* ── Monthly / Quarterly data-entry selector for the Indicator-Progress form.
    Quarterly = the existing quarter field; Monthly = pick a month, which fills the
    reporting period and maps to the right quarter automatically. ── */
 function injectEntryFreq(key){
   const form=$('entry-form'); if(!form || $('entry-freq-wrap')) return;
   const months=['April','May','June','July','August','September','October','November','December','January','February','March'];
-  const monthSel = (key==='progress')
-    ? `<select id="entry-month" style="display:none" onchange="freqMonthPick()"><option value="">— Select month —</option>${months.map(m=>`<option>${m}</option>`).join('')}</select>` : '';
+  const monthSel=`<select id="entry-month" style="display:none" onchange="freqMonthPick()"><option value="">— Select month —</option>${months.map(m=>`<option>${m}</option>`).join('')}</select>`;
   const div=document.createElement('div'); div.id='entry-freq-wrap';
   div.style.cssText='grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--bg-soft);border-radius:10px;padding:11px 14px;margin-bottom:6px';
   div.innerHTML=`<span style="font-size:12px;font-weight:700;color:var(--t2)">🗓 Data entry frequency</span>
     <select id="entry-freq" onchange="freqChange('${key}')"><option value="Q">Quarterly</option><option value="M">Monthly</option></select>
-    ${monthSel}<span id="entry-freq-note" style="font-size:12px;color:var(--t4);display:none">Enter the monthly figure — it rolls up into the quarterly columns below.</span>`;
+    ${monthSel}`;
   const fg=form.querySelector('.fg'); if(fg) fg.parentNode.insertBefore(div,fg);
   if(key==='progress'){
     // "Reporting Period" is set automatically by the frequency picker — make it read-only.
@@ -2453,9 +2579,8 @@ function injectEntryFreq(key){
   }
 }
 function freqChange(key){
-  const f=($('entry-freq')||{}).value||'Q'; const mo=$('entry-month'), note=$('entry-freq-note');
+  const f=($('entry-freq')||{}).value||'Q'; const mo=$('entry-month');
   if(mo) mo.style.display=(key==='progress'&&f==='M')?'':'none';
-  if(note) note.style.display=(key==='activities'&&f==='M')?'':'none';
   if(key==='progress' && f==='Q'){ const rp=$('ff-reporting_period'), q=$('ff-quarter'); if(rp&&q&&q.value){ const yr=($('ff-reporting_year')||{}).value||''; rp.value=(q.value+(yr?(' '+yr):'')).trim(); } }
 }
 /* SHG Loan: find the SHG by Thematic Area / Project — narrows the SHG picker below. */
@@ -2481,16 +2606,177 @@ function loanShgFilter(which){
   const h=$('ff-shg_id');
   if(h && h.value && !(__COMBO['shg_id'].opts||[]).some(s=>String(s.id)===String(h.value))){ h.value=''; const ci=$('cin-shg_id'); if(ci) ci.value=''; }
 }
-/* Activity form: auto-sum Y1 Q1–Q4 → Y1 Achievement, and Y1/Y2/Y3 → Cumulative
-   (read-only, live) so the totals can never drift from manual typing. */
-function wireActivityTotals(){
-  const y1=$('ff-y1_total_achievement'), cum=$('ff-cumulative_achievement');
-  if(y1){ y1.readOnly=true; y1.style.background='var(--bg-soft)'; y1.title='Auto = Y1 Q1+Q2+Q3+Q4'; }
-  if(cum){ cum.readOnly=true; cum.style.background='var(--bg-soft)'; cum.title='Auto = Y1 + Y2 + Y3 achievement'; }
-  const g=k=>+((($('ff-'+k)||{}).value)||0);
-  const rc=()=>{ const t1=g('y1_q1')+g('y1_q2')+g('y1_q3')+g('y1_q4'); if(y1) y1.value=t1?t1:''; if(cum){ const t=t1+g('y2_total_achievement')+g('y3_total_achievement'); cum.value=t?t:''; } };
-  ['y1_q1','y1_q2','y1_q3','y1_q4','y2_total_achievement','y3_total_achievement'].forEach(k=>{ const e=$('ff-'+k); if(e) e.addEventListener('input',rc); });
-  rc();
+/* ════════════════════════════════════════════════════════════════
+   ACTIVITY PROGRESS — dedicated multi-year form.
+   One activity; up to 6 years; each year = its target + Q1–Q4 (or all
+   12 months) in ONE compact table. Year achievements and the cumulative
+   total compute themselves, so the totals can never drift.
+   ════════════════════════════════════════════════════════════════ */
+const ACT_MONTHS=['April','May','June','July','August','September','October','November','December','January','February','March'];
+const ACT_MAX_YEARS=6;
+let ACT=null;
+function actBlankYear(){ return {target:'',q:['','','',''],m:{},ach:'',auto:true}; }
+function actNum(v){ const n=+v; return isFinite(n)?n:0; }
+function actHas(v){ return v!=null && String(v).trim()!=='' && +v!==0; }
+async function openActivityForm(id){
+  const __foSupp=__foSuppressOnce; __foSuppressOnce=false;   // HQ "add" buttons open it WITHOUT the field-office context
+  if(CP==='dataentry') deStashResume();                       // "← Back" returns to the same Data-Entry tab
+  let row={};
+  if(id){ try{ const d=await apiGet('?resource=activities&id='+id); row=d.row||{}; }catch(e){ toast('⚠ '+e.message,'t-err'); return; } }
+  // ── parse the record into the year-table state ──
+  ACT={freq:'Q', years:1, d:{}, id:id||0};
+  let months=null;
+  try{ const mb=JSON.parse(row.monthly_breakup||'null'); if(mb && mb.months){ months=mb.months; ACT.freq='M'; } }catch(e){}
+  for(let y=1;y<=ACT_MAX_YEARS;y++){
+    const t=row['target_year_'+y], q=[1,2,3,4].map(i=>row['y'+y+'_q'+i]), a=row['y'+y+'_total_achievement'];
+    const yr=actBlankYear();
+    yr.target = actHas(t)? +t : '';
+    yr.q      = q.map(x=>actHas(x)? +x : '');
+    yr.ach    = actHas(a)? +a : '';
+    if(months && months[y]) yr.m=months[y]||{};
+    const qSum=yr.q.reduce((s,x)=>s+actNum(x),0);
+    // a stored total that differs from its quarters was typed by hand — keep it manual
+    yr.auto = !(yr.ach!=='' && Math.round(+yr.ach*100)!==Math.round(qSum*100));
+    if(yr.target!=='' || yr.ach!=='' || yr.q.some(x=>x!=='') || Object.keys(yr.m).length) ACT.years=Math.max(ACT.years,y);
+    ACT.d[y]=yr;
+  }
+  __formReturn=(CP && CP!=='__form') ? CP : (__formReturn||'dataentry');
+  __formKey='activities'; __formId=id||0;
+  CP='__form'; setActiveNav(__formReturn);
+  const v=k=>row[k]==null?'':row[k];
+  const units=['Number','Percentage','INR','Event','Acres','Kilograms'];
+  const _hidden=unmappedProjects().length;
+  $('main').innerHTML=`
+    <div class="page-head">
+      <div><div class="page-title">${id?'Edit — Activity Progress':'New Activity Progress'}</div>
+        <div class="page-sub">One activity, its multi-year targets &amp; quarterly / monthly achievements — the totals compute themselves.</div></div>
+      <div class="page-actions"><button class="btn btn-ghost btn-sm" type="button" onclick="formCancel()">← Back</button></div>
+    </div>
+    ${!id?'<div style="font-size:12.5px;color:var(--t3);background:var(--brand-soft);border-radius:10px;padding:10px 14px;margin-bottom:14px">✦ The ID is created automatically — just fill the details and Save. Use <b>Tab</b> to move between fields.</div>':''}
+    ${id&&(row.created_by||row.updated_by)?`<div style="font-size:12.5px;color:var(--t3);background:var(--bg-soft);border-radius:10px;padding:9px 14px;margin-bottom:14px">👤 ${row.created_by?('Added by <b>'+esc(row.created_by)+'</b>'):''}${row.created_by&&row.updated_by?' · ':''}${row.updated_by?('Last updated by <b>'+esc(row.updated_by)+'</b>'):''}</div>`:''}
+    <div class="card" style="max-width:1180px;margin:0 auto">
+      <form id="entry-form" autocomplete="off" onsubmit="event.preventDefault();saveActivityForm();"
+        onkeydown="if(event.key==='Enter'&&event.target.tagName!=='TEXTAREA'&&!event.target.classList.contains('combo-input')&&event.target.tagName!=='BUTTON'){event.preventDefault();}">
+        <div class="fg fg-2">
+          <div class="f"><label>Activity ID</label><input value="${id?esc(v('activity_id')):'✦ Auto-generated on save'}" readonly style="background:var(--bg-soft);${id?"color:var(--t3);font-family:'JetBrains Mono'":'color:var(--brand);font-style:italic'}"></div>
+          <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>${comboHTML('project_id',projectListFor(v('programme_id')),v('project_id'))+inlineAddBtn('projects','project')}
+            ${_hidden?`<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ ${_hidden} project${_hidden>1?'s':''} hidden — no donor linked yet. <a onclick="goPage('mappings')" style="color:var(--brand);cursor:pointer;text-decoration:underline">Map in Donor Mapping</a> to use ${_hidden>1?'them':'it'} here.</div>`:''}</div>
+          <div class="f"><label>Thematic Area <span class="fo-auto">auto</span></label>${comboHTML('programme_id',(LOOKUPS.programmes||[]),v('programme_id'))}</div>
+          <div class="f"><label>Donor <span class="fo-auto">auto</span></label>${comboHTML('donor_id',(LOOKUPS.donors||[]),v('donor_id'))}</div>
+          <div class="f" style="grid-column:1/-1"><label>Project Activity <span style="color:var(--bad)">*</span></label><input id="ff-project_activity" value="${esc(v('project_activity'))}" placeholder="e.g. Construction of 100 porta homes"></div>
+          <div class="f"><label>Unit of Measurement</label><select id="ff-unit_of_measurement"><option value="">— Select —</option>${units.map(u=>`<option ${u===v('unit_of_measurement')?'selected':''}>${u}</option>`).join('')}</select></div>
+          <div class="f"><label>Total Target — whole project</label><input id="ff-total_target" type="number" step="any" min="0" value="${actHas(v('total_target'))?esc(v('total_target')):''}" oninput="actSummary()"></div>
+          <div class="f"><label>Means of Verification</label><input id="ff-means_of_verification" value="${esc(v('means_of_verification'))}"></div>
+          <div class="f"><label>Remarks</label><input id="ff-remarks" value="${esc(v('remarks'))}"></div>
+        </div>
+        <div class="act-plan">
+          <div class="act-plan-head">
+            <div><div class="act-plan-title">📊 Year-wise plan &amp; achievement</div>
+              <div class="act-plan-sub">Type each year's target and its quarterly / monthly figures — the year achievement and cumulative total fill in automatically.</div></div>
+            <div class="act-seg" id="act-seg">
+              <button type="button" class="act-seg-btn" data-f="Q" onclick="actFreq('Q')">Quarterly</button>
+              <button type="button" class="act-seg-btn" data-f="M" onclick="actFreq('M')">Monthly</button>
+            </div>
+          </div>
+          <div id="act-table"></div>
+          <div style="margin-top:11px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <button type="button" class="btn btn-ghost btn-sm" id="act-addyear" onclick="actAddYear()" style="${ACT.years>=ACT_MAX_YEARS?'display:none':''}">＋ Add Year ${ACT.years+1}</button>
+            <div id="act-summary"></div>
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top:16px">
+          <button type="submit" class="btn btn-primary">${id?'Update':'Save'} &nbsp;⏎</button>
+          <button type="button" class="btn btn-ghost" onclick="formCancel()">Cancel</button>
+        </div>
+      </form>
+    </div>`;
+  actRenderTable(); actSegSync(); actSummary();
+  if(!id && !__foSupp && foActive()) applyFieldOfficeContext('activities');
+  formMarkClean();
+  setTimeout(()=>{ const el=document.querySelector('#entry-form input:not([readonly]):not([disabled]):not([type=hidden])'); if(el) el.focus(); },50);
+}
+function actRenderTable(){
+  const host=$('act-table'); if(!host||!ACT) return;
+  let head,rows='';
+  if(ACT.freq==='Q'){
+    const Q=[['Q1','Apr–Jun'],['Q2','Jul–Sep'],['Q3','Oct–Dec'],['Q4','Jan–Mar']];
+    head='<th class="act-yr">Year</th><th>Target<span>for the year</span></th>'+Q.map(q=>`<th>${q[0]}<span>${q[1]}</span></th>`).join('')+'<th class="act-ach">Achieved<span>auto = Q1+Q2+Q3+Q4</span></th>';
+    for(let y=1;y<=ACT.years;y++){ const d=ACT.d[y];
+      rows+=`<tr><td class="act-yr">Year ${y}</td>
+        <td><input class="act-in act-tgt" type="number" step="any" min="0" value="${d.target}" oninput="actT(${y},this.value)"></td>
+        ${[0,1,2,3].map(i=>`<td><input class="act-in" type="number" step="any" min="0" value="${d.q[i]}" oninput="actQ(${y},${i},this.value)"></td>`).join('')}
+        <td class="act-ach"><input class="act-in act-achin" id="at-a-${y}" type="number" step="any" min="0" value="${d.ach}" oninput="actA(${y},this.value)" title="Auto = Q1+Q2+Q3+Q4 — type here only if you have no quarterly split"></td></tr>`;
+    }
+  } else {
+    head='<th class="act-yr">Year</th><th>Target<span>for the year</span></th>'+ACT_MONTHS.map(m=>`<th class="act-moh">${m.slice(0,3)}</th>`).join('')+'<th class="act-ach">Achieved<span>auto</span></th>';
+    for(let y=1;y<=ACT.years;y++){ const d=ACT.d[y];
+      rows+=`<tr><td class="act-yr">Year ${y}</td>
+        <td><input class="act-in act-tgt act-mi" type="number" step="any" min="0" value="${d.target}" oninput="actT(${y},this.value)"></td>
+        ${ACT_MONTHS.map(m=>`<td><input class="act-in act-mi" type="number" step="any" min="0" value="${d.m[m]!=null?d.m[m]:''}" oninput="actM(${y},'${m}',this.value)" title="${m}"></td>`).join('')}
+        <td class="act-ach"><input class="act-in act-achin act-mi" id="at-a-${y}" type="number" step="any" min="0" value="${d.ach}" oninput="actA(${y},this.value)" title="Auto = sum of the 12 months"></td></tr>`;
+    }
+  }
+  host.innerHTML=`<div class="act-tblwrap"><table class="act-tbl"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`
+    +(ACT.freq==='M'?'<div style="font-size:11.5px;color:var(--t4);margin-top:7px">Months roll up into the quarterly columns automatically (Apr–Jun → Q1 …) so every quarterly report stays correct.</div>':'');
+}
+function actT(y,v){ if(ACT&&ACT.d[y]){ ACT.d[y].target=v; actSummary(); } }
+function actQ(y,i,v){ const d=ACT&&ACT.d[y]; if(!d) return; d.q[i]=v; actAutoAch(y); }
+function actM(y,m,v){ const d=ACT&&ACT.d[y]; if(!d) return;
+  if(v==null||String(v).trim()==='') delete d.m[m]; else d.m[m]=v;
+  for(let qi=0;qi<4;qi++){ const ms=ACT_MONTHS.slice(qi*3,qi*3+3).map(k=>d.m[k]).filter(x=>x!=null&&String(x)!=='');
+    d.q[qi]=ms.length? +(ms.reduce((s,x)=>s+actNum(x),0)).toFixed(2) : ''; }
+  actAutoAch(y); }
+function actA(y,v){ const d=ACT&&ACT.d[y]; if(!d) return; d.ach=v; d.auto=(String(v).trim()==='');
+  if(d.auto) actAutoAch(y); else actSummary(); }
+function actAutoAch(y){ const d=ACT&&ACT.d[y]; if(!d) return;
+  if(d.auto){ const any=d.q.some(x=>x!==''&&x!=null); const s=d.q.reduce((s2,x)=>s2+actNum(x),0);
+    d.ach=any? +s.toFixed(2) : ''; const e=$('at-a-'+y); if(e) e.value=d.ach; }
+  actSummary(); }
+function actFreq(f){ if(!ACT||ACT.freq===f) return; ACT.freq=f; actRenderTable(); actSegSync(); actSummary(); }
+function actSegSync(){ if(!ACT) return; document.querySelectorAll('#act-seg .act-seg-btn').forEach(b=>b.classList.toggle('on',b.dataset.f===ACT.freq)); }
+function actAddYear(){ if(!ACT||ACT.years>=ACT_MAX_YEARS) return; ACT.years++; actRenderTable();
+  const b=$('act-addyear'); if(b){ b.style.display=ACT.years>=ACT_MAX_YEARS?'none':''; b.textContent='＋ Add Year '+(ACT.years+1); }
+  actSummary(); }
+function actSummary(){ if(!ACT) return; const box=$('act-summary'); if(!box) return;
+  let cum=0; for(let y=1;y<=ACT.years;y++) cum+=actNum(ACT.d[y]&&ACT.d[y].ach);
+  cum=+cum.toFixed(2);
+  const tgt=actNum((($('ff-total_target')||{}).value));
+  const pct=tgt>0? Math.round(cum/tgt*1000)/10 : null;
+  box.innerHTML=`<div class="act-sum"><span>Cumulative achievement</span><b>${fmt(cum)}</b>${pct!=null?`<span class="act-sum-bar"><span style="width:${Math.min(100,pct)}%;background:${pct>=100?'var(--ok)':'var(--brand)'}"></span></span><b style="color:${pct>=100?'var(--ok)':'var(--brand)'};font-size:13px">${pct}%</b><span>of ${fmt(tgt)} total target</span>`:''}</div>`; }
+async function saveActivityForm(){
+  if(__SAVE_BUSY||!ACT) return;
+  const g=k=>String((($('ff-'+k)||{}).value)||'').trim();
+  const payload={ programme_id:g('programme_id'), project_id:g('project_id'), donor_id:g('donor_id'),
+    project_activity:g('project_activity'), unit_of_measurement:g('unit_of_measurement'),
+    total_target:g('total_target'), means_of_verification:g('means_of_verification'), remarks:g('remarks') };
+  if(!payload.project_activity){ toast('⚠ Project Activity is required','t-err'); return; }
+  // The chain: an activity MUST belong to a project — that link powers the donor filter, dashboard & reports
+  if(!payload.project_id){ toast('⚠ Select the Project this activity belongs to — it links the targets to the donor, dashboard & reports','t-err'); return; }
+  if(!payload.programme_id) payload.programme_id=foDerive(payload.project_id).programme_id||'';
+  if(!payload.donor_id) payload.donor_id=(LOOKUPS.project_donor||{})[payload.project_id]||'';
+  let cum=0; const monthly={};
+  for(let y=1;y<=ACT_MAX_YEARS;y++){
+    const d=ACT.d[y]||actBlankYear(); const on=y<=ACT.years;
+    payload['target_year_'+y]= (on&&String(d.target).trim()!=='')? d.target : '';
+    [1,2,3,4].forEach(i=>{ payload['y'+y+'_q'+i]= (on&&String(d.q[i-1]).trim()!=='')? d.q[i-1] : ''; });
+    const hasA= on && String(d.ach).trim()!=='';
+    payload['y'+y+'_total_achievement']= hasA? d.ach : '';
+    if(hasA) cum+=actNum(d.ach);
+    if(on && ACT.freq==='M'){ const mm={}; ACT_MONTHS.forEach(m=>{ if(d.m[m]!=null&&String(d.m[m]).trim()!=='') mm[m]=+d.m[m]; }); if(Object.keys(mm).length) monthly[y]=mm; }
+  }
+  payload.cumulative_achievement=+cum.toFixed(2);
+  payload.monthly_breakup=(ACT.freq==='M'&&Object.keys(monthly).length)? JSON.stringify({freq:'M',months:monthly}) : '';
+  const vErr=validatePayload('activities',payload); if(vErr){ toast('⚠ '+vErr,'t-err'); return; }
+  __SAVE_BUSY=true;
+  const sb=document.querySelector('#entry-form button[type=submit]');
+  if(sb){ sb.disabled=true; sb.dataset.lbl=sb.innerHTML; sb.innerHTML='Saving…'; }
+  try{
+    if(ACT.id){ await apiPut('?resource=activities&id='+ACT.id,payload); toast('✓ Saved'); }
+    else { const r=await apiPost('?resource=activities',payload); toast('✓ Created'+(r&&r.business_id?' — ID '+r.business_id:'')); }
+    __FORM_INITIAL=null;
+    goPage(__formReturn||'activities');
+  }catch(e){ toast('⚠ '+e.message,'t-err'); }
+  finally{ __SAVE_BUSY=false; const b=document.querySelector('#entry-form button[type=submit]'); if(b){ b.disabled=false; if(b.dataset.lbl) b.innerHTML=b.dataset.lbl; } }
 }
 function freqMonthPick(){
   const mo=($('entry-month')||{}).value||''; if(!mo) return;
@@ -2519,7 +2805,7 @@ const PERMISSION_SECTIONS = [
   ['geographies','Geography'],['villages','Village Demographics'],
   ['beneficiaries','Beneficiaries',null,'Field data'],
   ['crops','Production & Output Progress'],
-  ['activities','Activities & Targets'],['shgs','SHGs'],['loans','SHG Loans'],
+  ['activities','Activity Progress'],['shgs','SHGs'],['loans','SHG Loans'],
   ['indicators','Indicators',null,'Monitoring & evaluation'],['progress','Indicator Progress'],
   ['hq_targets','HQ Targets (plan rows)',null,'Planning & control'],
   ['workspaces','Field Workspaces (records)'],
@@ -2677,17 +2963,51 @@ async function doResetPassword(userId){
    ════════════════════════════════════════════════════════════════ */
 let POBJ_CACHE = null;   // last loaded list for the open modal
 let POBJ_CTX = null;     // {project_id, project_name, programme_id}
-/* After creating a project: guide the two linkages that make it fully usable. */
-function showProjectNextSteps(pid,pname,progId){
-  const pn=String(pname||'').replace(/'/g,"\\'"), pi=String(pid||'').replace(/'/g,"\\'"), pg=String(progId||'').replace(/'/g,"\\'");
+/* After creating a project: objectives are already saved from the form itself,
+   so the only remaining linkage is WHERE the project works. */
+function showProjectNextSteps(pid,pname,progId,objCount){
+  const pn=String(pname||'').replace(/'/g,"\\'"), pi=String(pid||'').replace(/'/g,"\\'");
   showModal('✅ Project created — '+(pname||pid),
-    `<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:10px">Two quick steps make this project fully usable everywhere — its places power the dashboard &amp; field entry, and it can have as many objectives as you need:</div>
+    `<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:10px">${objCount?('🎯 <b>'+objCount+' objective'+(objCount>1?'s':'')+' saved</b> with it. '):''}One quick step makes this project fully usable everywhere — assign the places it works in; they power the dashboard counts, HQ targets &amp; field-office entry:</div>
      <div style="display:flex;flex-direction:column;gap:8px">
        <button class="btn btn-primary" onclick="closeModal();openProjectGeos('${pi}','${pn}')">🌍 Assign geographies — where this project works</button>
-       <button class="btn btn-ghost" onclick="closeModal();openProjectObjectives('${pi}','${pn}','${pg}')">🎯 Add objectives — one or many</button>
      </div>
      <div class="form-actions" style="margin-top:14px"><span style="flex:1"></span><button class="btn btn-ghost" onclick="closeModal()">Done — later</button></div>`);
 }
+
+/* ════════ 🎯 OBJECTIVES — inside the Project form itself ════════
+   NEW project: type any number of objectives BEFORE saving (the golden button
+   adds rows); they are created right after the project. EDITING an existing
+   project: the golden button opens the live objectives manager. */
+let __POBJ_DRAFT=[];
+function pobjInlineInit(id,row){
+  const host=$('pobj-inline'); if(!host) return;
+  if(id){
+    const pid=String((row||{}).project_id||''), pn=String((row||{}).project_name||'').replace(/'/g,"\\'");
+    host.innerHTML=`<button type="button" class="btn-gold" onclick="openProjectObjectives('${esc(pid)}','${pn}','${(row||{}).programme_id||''}')">🎯 View / add objectives <b id="pobj-cnt"></b></button>
+      <div class="pobj-hint">Opens the objectives manager — add, edit or remove; every change saves instantly.</div>`;
+    apiGet('?resource=project_objectives&project_id='+encodeURIComponent(pid)+'&limit=500')
+      .then(d=>{ const c=$('pobj-cnt'); if(c) c.textContent='· '+((d.rows||[]).length); }).catch(()=>{});
+  } else {
+    __POBJ_DRAFT=[];   // fresh form starts empty (a nested ＋New hop restores via the snapshot)
+    pobjInlineRender();
+  }
+}
+function pobjInlineRender(){
+  const host=$('pobj-inline'); if(!host) return;
+  const rows=(__POBJ_DRAFT||[]).map((o,i)=>`
+    <div class="pobj-row">
+      <span class="pobj-n">${i+1}</span>
+      <input placeholder="What will this project achieve?" value="${esc(o.objective||'')}" oninput="__POBJ_DRAFT[${i}].objective=this.value">
+      <input type="number" step="any" min="0" placeholder="🎯 target (optional)" title="Target beneficiaries for this objective — optional" value="${esc(o.target||'')}" oninput="__POBJ_DRAFT[${i}].target=this.value">
+      <button type="button" class="pobj-x" title="Remove this objective" onclick="pobjInlineRemove(${i})">✕</button>
+    </div>`).join('');
+  host.innerHTML=rows+`<button type="button" class="btn-gold" onclick="pobjInlineAdd()">🎯 ＋ Add objective</button>
+    <div class="pobj-hint">Add as many as the project has — they are saved together with the project.</div>`;
+}
+function pobjInlineAdd(){ (__POBJ_DRAFT=__POBJ_DRAFT||[]).push({objective:'',target:''}); pobjInlineRender();
+  const ins=document.querySelectorAll('#pobj-inline .pobj-row input'); const last=ins[ins.length-2]; if(last) last.focus(); }
+function pobjInlineRemove(i){ __POBJ_DRAFT.splice(i,1); pobjInlineRender(); }
 
 /* ── 🌍 Project ↔ Geography manager — one project, many places. The dashboard's
    district/block counts, the Geography section and donor reports all follow this link. ── */
@@ -2701,7 +3021,7 @@ async function openProjectGeos(projectId, projectName){
      </div>
      <div id="pgeo-list" style="margin-bottom:14px"><div class="empty">Loading…</div></div>
      ${canWriteResource('geographies')?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--bg-soft);border-radius:10px;padding:11px 13px">
-       <select id="pgeo-pick" style="flex:1;min-width:240px;padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;background:#fff">${pgeoPickOptions()}</select>
+       <select id="pgeo-pick" style="flex:1;min-width:240px;font-size:13.5px">${pgeoPickOptions()}</select>
        <button class="btn btn-primary btn-sm" onclick="pgeoAssign()">＋ Assign to this project</button>
        <button class="btn btn-ghost btn-sm" onclick="pgeoNewGeo()">＋ New geography</button>
      </div>`:''}
@@ -3162,12 +3482,6 @@ async function saveForm(key,id){
     if(sd||ed){ const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
       payload.project_status = (sd && today<sd) ? 'Planned' : ((ed && today>ed) ? 'Completed' : 'Ongoing'); }
   }
-  // Activity totals auto-computed (backstop to the live read-only fields)
-  if(key==='activities'){
-    const n=k=>+(payload[k])||0;
-    payload.y1_total_achievement = n('y1_q1')+n('y1_q2')+n('y1_q3')+n('y1_q4');
-    payload.cumulative_achievement = n('y1_total_achievement')+n('y2_total_achievement')+n('y3_total_achievement');
-  }
   // Duplicate guard — only on NEW records, only where it makes sense
   if(!id){
     const dup=await checkDuplicate(key,payload);
@@ -3191,6 +3505,16 @@ async function saveForm(key,id){
       const r=await apiPost('?resource='+key,payload);
       toast('✓ Created'+(r&&r.business_id?' — ID '+r.business_id:'')); __FORM_INITIAL=null;
       if(key==='projects') await upsertProjectDonorMapping(r&&r.business_id, payload.donor_id, payload.programme_id, payload.approved_amount_inr);
+      // Objectives typed on the New Project form are created right after the project itself
+      let __objN=0;
+      if(key==='projects'){
+        const objs=(__POBJ_DRAFT||[]).filter(o=>String(o.objective||'').trim());
+        for(const o of objs){
+          try{ await apiPost('?resource=project_objectives',{programme_id:payload.programme_id||'',project_id:(r&&r.business_id)||'',objective:String(o.objective).trim(),target_beneficiaries:o.target||'',status:'Planned'}); __objN++; }
+          catch(e){ toast('⚠ Objective not saved — '+e.message,'t-err'); }
+        }
+        __POBJ_DRAFT=[];
+      }
       if(key==='beneficiaries') LOOKUPS._benLoaded=false;
       LOOKUPS._loaded=false; await ensureLookups();
       // Created via a "＋ New …" redirect? Return to the form we came from and select the new record.
@@ -3212,7 +3536,7 @@ async function saveForm(key,id){
         showAddAnotherPrompt(key, r&&r.business_id, pickCarryOver(key,payload));
       } else if(key==='projects'){
         goPage('projects');
-        showProjectNextSteps(r&&r.business_id, payload.project_name||'', payload.programme_id||'');
+        showProjectNextSteps(r&&r.business_id, payload.project_name||'', payload.programme_id||'', __objN);
       } else {
         goPage(__formReturn||key);
       }
@@ -3707,7 +4031,7 @@ async function loadDash(){
 const CHART_SOURCES={
   beneficiaries:{label:'Beneficiaries',dims:[['caste','Social Order'],['gender','Gender'],['religion','Religion'],['block','Block'],['district','District'],['primary_income_source','Income Source'],['source_of_irrigation','Irrigation'],['programme_id','Thematic Area'],['project_id','Project'],['donor_id','Donor']],measures:[['count','Number of beneficiaries'],['current_income_per_annum_inr','Total annual income (₹)'],['total_land_acre','Total land (acre)'],['family_members','Total family members']]},
   crops:{label:'Production / Outputs',dims:[['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['project_year','Project Year'],['programme_id','Thematic Area'],['project_id','Project'],['donor_id','Donor']],measures:[['count','Number of records'],['production_kg','Total output'],['income_inr','Total income (₹)'],['net_profit_inr','Total net profit (₹)'],['area_acre','Total area']]},
-  activities:{label:'Activities & Targets',dims:[['project_id','Project'],['donor_id','Donor'],['unit_of_measurement','Unit'],['programme_id','Thematic Area']],measures:[['count','Number of activities'],['total_target','Total target'],['y1_total_achievement','Y1 achievement'],['cumulative_achievement','Cumulative achievement']]},
+  activities:{label:'Activity Progress',dims:[['project_id','Project'],['donor_id','Donor'],['unit_of_measurement','Unit'],['programme_id','Thematic Area']],measures:[['count','Number of activities'],['total_target','Total target'],['y1_total_achievement','Y1 achievement'],['cumulative_achievement','Cumulative achievement']]},
   shgs:{label:'Self-Help Groups',dims:[['block','Block'],['district','District'],['bank_name','Bank'],['programme_id','Thematic Area'],['project_id','Project'],['donor_id','Donor']],measures:[['count','Number of SHGs'],['no_of_members','Total members'],['monthly_savings_by_members_inr','Total monthly savings (₹)']]},
   loans:{label:'SHG Loans',dims:[['repayment_status','Repayment Status'],['loan_source','Loan Source'],['financial_year','Financial Year'],['donor_id','Donor']],measures:[['count','Number of loans'],['loan_amount_inr','Total loan amount (₹)']]},
   villages:{label:'Villages',dims:[['block','Block'],['district','District'],['programme_id','Thematic Area'],['donor_id','Donor']],measures:[['count','Number of villages'],['total_hhs','Total HHs'],['hhs_covered_under_project','Covered HHs'],['sc_hhs','SC HHs'],['st_hhs','ST HHs'],['obc_hhs','OBC HHs']]},
@@ -4398,7 +4722,7 @@ function _impStep2Render(){
       <div class="imp-stat">
         <span>📄 <b>${esc(IMP_STATE.fileName)}</b></span>
         ${(IMP_STATE.allSheets||[]).length>1
-          ? `<span>· sheet: <select style="padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:#fff" onchange="impSwitchSheet(this.value)">
+          ? `<span>· sheet: <select style="padding:3px 22px 3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;background-position:right 6px center" onchange="impSwitchSheet(this.value)">
               ${IMP_STATE.allSheets.map(n=>`<option value="${esc(n)}" ${n===IMP_STATE.pickedSheet?'selected':''}>${esc(n)}</option>`).join('')}
             </select></span>`
           : `<span>· sheet <b>${esc(IMP_STATE.pickedSheet||'')}</b></span>`}
@@ -4518,7 +4842,7 @@ const SHEET_ROUTE = {
   'villages':'villages','village demographics':'villages','village':'villages',
   'beneficiaries':'beneficiaries','beneficiary':'beneficiaries','farmer':'beneficiaries','farmers':'beneficiaries',
   'production':'crops','outputs':'crops','crops':'crops','crop':'crops','production / outputs':'crops','production outputs':'crops','production & output progress':'crops','production and output progress':'crops',
-  'activities':'activities','activity':'activities','activities & targets':'activities','activities and targets':'activities','targets':'activities',
+  'activities':'activities','activity':'activities','activity progress':'activities','activities & targets':'activities','activities and targets':'activities','targets':'activities',
   'shgs':'shgs','shg':'shgs','self-help groups':'shgs','self help groups':'shgs','selfhelpgroups':'shgs',
   'shg members':'shg_members','shg member':'shg_members','members':'shg_members',
   'loans':'loans','loan':'loans','shg loans':'loans',
@@ -4737,7 +5061,7 @@ const ENTRY_GROUPS = [
   ['⭐ Everyday — Field Data', [
     ['beneficiaries','+ New Beneficiary','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z','--ok'],
     ['crops','Progress of Production & Output','M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5','--ok'],
-    ['activities','New Activity Progress','M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z','--warn'],
+    ['activities','Activity Progress','M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z','--warn'],
   ]],
   ['SHG &amp; Finance', [
     ['shgs','+ New SHG','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z','--pink'],
@@ -4758,7 +5082,9 @@ function renderDataEntry(){
   const groups = ENTRY_GROUPS.map(([gname, items])=>{
     const cards = items.map(([key,label,icon,color])=>{
       const sub = RES[key] && RES[key].sub ? RES[key].sub : '';
-      return `<button class="de-card" onclick="openForm('${key}')">
+      // Activity Progress opens its FULL page (filters + list + ＋New + edit), not a bare form
+      const go = key==='activities' ? `goPage('activities')` : `openForm('${key}')`;
+      return `<button class="de-card" onclick="${go}">
         <span class="de-icon" style="background:var(${color}-soft);color:var(${color})">
           <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="${icon}"/></svg>
         </span>
@@ -4776,7 +5102,7 @@ function renderDataEntry(){
     ['donors','Donors'],['mappings','Donor Mappings'],
     ['geographies','Geography'],['villages','Village Demographics'],
     ['beneficiaries','Beneficiaries'],['crops','Production / Outputs'],
-    ['activities','Activities &amp; Targets'],
+    ['activities','Activity Progress'],
     ['shgs','SHGs'],['shg_members','SHG Members'],['loans','SHG Loans'],
     ['indicators','Indicators'],['progress','Indicator Progress'],
   ];
@@ -5083,7 +5409,7 @@ async function renderReports(){
         <li><strong>Cover sheet</strong> — donor name, reporting period, projects funded, filters applied, generated date/time (IST).</li>
         <li><strong>Donor → Projects overview</strong> — one row per project the donor funds with budget, beneficiaries and achievement %.</li>
         <li><strong>One sheet per project</strong> the donor funds — KPIs, activity quarterly performance, indicator progress, beneficiary roster, SHGs, outputs.</li>
-        <li><strong>Combined breakdowns</strong> — beneficiaries by social order, gender, block · activities Y1-Y3 quarterly · loans by FY · outputs by intervention · donor budget approved vs mapped.</li>
+        <li><strong>Combined breakdowns</strong> — beneficiaries by social order, gender, block · activities multi-year quarterly/monthly · loans by FY · outputs by intervention · donor budget approved vs mapped.</li>
       </ul>
     </div>`;
   loadReport();
