@@ -339,6 +339,27 @@ tbody tr:last-child td{border-bottom:none}
 .activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:7px}
 .activity-msg{font-size:13.5px;font-weight:500;color:var(--t1)}
 .activity-time{font-size:11.5px;color:var(--t4);margin-top:3px;font-family:'JetBrains Mono'}
+/* Audit Trail — forensic view */
+.aud-item{display:flex;gap:12px;padding:12px 14px;border-radius:11px;background:var(--bg-soft);border:1px solid var(--border);margin-bottom:10px}
+.aud-item .activity-dot{margin-top:8px}
+.aud-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.aud-user{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px 2px 3px;font-size:12px;font-weight:800}
+.aud-av{width:18px;height:18px;border-radius:50%;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.aud-ent{font-size:11.5px;font-weight:700;color:var(--t3)}
+.aud-day{font-size:11.5px;font-weight:800;color:var(--brand);text-transform:uppercase;letter-spacing:.6px;padding:14px 2px 8px;border-bottom:1px dashed var(--border);margin-bottom:10px}
+.aud-day span{color:var(--t4);font-weight:600;font-family:'JetBrains Mono';font-size:10px;margin-left:6px;text-transform:none;letter-spacing:0}
+.aud-chg{margin-top:7px;border:1px dashed var(--border-2);background:#fff;border-radius:8px;padding:6px 11px;font-size:12px;color:var(--t2);cursor:pointer;font-family:inherit;text-align:left;display:block;max-width:100%}
+.aud-chg:hover{border-color:var(--brand);color:var(--brand)}
+.aud-diff{margin-top:8px;background:#fff;border:1px solid var(--border);border-radius:9px;overflow-x:auto}
+.aud-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.aud-tbl th{text-align:left;padding:7px 11px;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--t4);background:var(--bg-soft);border-bottom:1px solid var(--border)}
+.aud-tbl td{padding:6px 11px;border-bottom:1px solid var(--border);vertical-align:top;word-break:break-word}
+.aud-tbl tr:last-child td{border-bottom:none}
+.aud-f{font-weight:700;color:var(--t2);white-space:nowrap}
+.aud-old{color:var(--bad);text-decoration:line-through;text-decoration-color:rgba(220,38,38,.4)}
+.aud-old2{color:var(--t2)}
+.aud-new{color:var(--ok);font-weight:600}
+.aud-arrow{color:var(--t4);width:20px;text-align:center}
 .prog-row{margin-bottom:14px}.prog-meta{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
 .prog-name{font-weight:600;color:var(--t1)}.prog-val{font-family:'JetBrains Mono';font-size:12px;font-weight:600;color:var(--t3)}
 .prog-track{height:7px;background:var(--bg-soft);border-radius:99px;overflow:hidden}.prog-fill{height:100%;border-radius:99px}
@@ -4164,27 +4185,179 @@ async function delChart(id){
 }
 
 /* ════════ AUDIT ════════ */
+/* ════════════════════════════════════════════════════════════════
+   AUDIT TRAIL — the forensic view.
+   Every event already stores WHO (user+role), WHEN (IST), WHERE FROM
+   (IP · device · tab) and the record's FULL before/after data.
+   This page surfaces all of it: highlighted user chips, day grouping,
+   filters by action / user / section, one-click Excel, and a per-event
+   expandable table showing EVERY field that changed (Before → After).
+   ════════════════════════════════════════════════════════════════ */
+let __AUD_ROWS=[], __AUD_VIEW=[], __AUD_LBLMAP=null, __AUD_T=null;
+const AUD_ACT={
+  create:['＋ CREATED','#059669'], update:['✎ EDITED','#d97706'], delete:['✕ DELETED','#dc2626'],
+  login:['→ SIGNED IN','#6366f1'], logout:['← SIGNED OUT','#64748b'],
+  login_fail:['⚠ FAILED LOGIN','#dc2626'], login_locked:['🔒 ACCOUNT LOCKED','#dc2626'],
+  password_reset:['🔑 PASSWORD RESET','#7c3aed'], permissions:['🛡 PERMISSIONS CHANGED','#7c3aed'],
+  bulk_import:['📥 BULK IMPORT','#0891b2'] };
+const AUD_UC=['#6366f1','#0891b2','#059669','#d97706','#db2777','#7c3aed','#dc2626','#0d9488','#4f46e5','#b45309'];
+function audUserColor(u){ let h=0; u=String(u||''); for(let i=0;i<u.length;i++) h=(h*31+u.charCodeAt(i))>>>0; return AUD_UC[h%AUD_UC.length]; }
+function audEntity(v){ return (RES[v]&&RES[v].label)||({auth:'Sign-in / Security',users:'Users & Access',hq_targets:'HQ Targets',workspaces:'Workspaces',charts:'Custom Charts'})[v]||titleize(String(v||'')); }
+function audDevice(ua){ if(!ua) return ''; ua=String(ua); let b=''; if(/edg/i.test(ua))b='Edge'; else if(/chrome|crios/i.test(ua))b='Chrome'; else if(/firefox|fxios/i.test(ua))b='Firefox'; else if(/safari/i.test(ua))b='Safari'; let os=''; if(/windows/i.test(ua))os='Windows'; else if(/android/i.test(ua))os='Android'; else if(/iphone|ipad/i.test(ua))os='iOS'; else if(/mac os|macintosh/i.test(ua))os='macOS'; else if(/linux/i.test(ua))os='Linux'; return [b,os].filter(Boolean).join(' · '); }
+/* field key → the human label used on the forms (built once from RES) */
+function audFieldLabel(k){
+  if(!__AUD_LBLMAP){
+    __AUD_LBLMAP={ username:'Username', user_name:'Full Name', role:'Role', email:'Email', phone:'Phone',
+      designation:'Designation', organization:'Organization', access_level:'Access Level', is_root:'Root protection',
+      is_active:'Active workspace', name:'Name', village:'Village', assigned_to:'Assigned to', assigned_by:'Assigned by',
+      target_blocks:'Blocks — target', target_villages:'Villages — target', target_beneficiaries:'Beneficiaries — target',
+      monthly_breakup:'Monthly figures (JSON)', donor_funded_component:'Funded Component', approved_amount_inr:'Approved Amount (₹)' };
+    for(const rk in RES) for(const f of (RES[rk].fields||[])){
+      if(!f[0]||f[0].slice(0,2)==='__'||__AUD_LBLMAP[f[0]]) continue;
+      __AUD_LBLMAP[f[0]]=String(f[1]||f[0]).split(' — ')[0].split(' (')[0].trim();
+    }
+  }
+  return __AUD_LBLMAP[k] || titleize(k);
+}
+const AUD_FK={programme_id:'programmes',project_id:'projects',donor_id:'donors',geography_id:'geographies',indicator_id:'indicators',shg_id:'shgs',beneficiary_id:'beneficiaries'};
+function audVal(k,v){
+  if(v==null||String(typeof v==='object'?JSON.stringify(v):v).trim()==='') return '<i style="color:var(--t5)">empty</i>';
+  let s=(typeof v==='object')?JSON.stringify(v):String(v);
+  if(AUD_FK[k]&&LOOKUPS[AUD_FK[k]]){ const o=(LOOKUPS[AUD_FK[k]]||[]).find(x=>String(x.id)===s); if(o) return esc(o.label)+' <span class="mono" style="font-size:10px;color:var(--t4)">'+esc(s)+'</span>'; }
+  if(s.length>90) return '<span title="'+esc(s)+'">'+esc(s.slice(0,90))+'…</span>';
+  return esc(s);
+}
+function audSame(a,b){ const A=(a==null?'':String(a).trim()), B=(b==null?'':String(b).trim());
+  if(A===B) return true;
+  if(A!==''&&B!==''&&isFinite(+A)&&isFinite(+B)) return +A===+B;   // "500" vs "500.00" is NOT a change
+  return false; }
+const AUD_SKIP=new Set(['id','created_at','updated_at','updated_by','created_by']);
+/* the stored before/after JSON → a field-level change list */
+function audChanges(e){
+  let b=null,a=null;
+  try{ b=JSON.parse(e.before_data||'null'); }catch(_){ }
+  try{ a=JSON.parse(e.after_data||'null'); }catch(_){ }
+  if(b&&typeof b!=='object') b=null; if(a&&typeof a!=='object') a=null;
+  if(a&&b){ const out=[]; for(const k in a){ if(AUD_SKIP.has(k)) continue; if(!audSame(b[k],a[k])) out.push([k,b[k],a[k]]); } return {mode:'diff',rows:out}; }
+  if(a) return {mode:'new', rows:Object.keys(a).filter(k=>!AUD_SKIP.has(k)&&String(a[k]==null?'':a[k]).trim()!=='').map(k=>[k,null,a[k]])};
+  if(b) return {mode:'was', rows:Object.keys(b).filter(k=>!AUD_SKIP.has(k)&&String(b[k]==null?'':b[k]).trim()!=='').map(k=>[k,b[k],null])};
+  return null;
+}
 async function renderAudit(){
-  $('main').innerHTML=`<div class="page-head"><div><div class="page-title">Audit Trail</div><div class="page-sub">Every login, create, edit & delete — recorded server-side, immutable</div></div>
-    <div class="page-actions"><span class="pill pill-warn">🔒 Server-logged</span><input class="search-input" id="aud-q" placeholder="Filter…" oninput="loadAudit()"></div></div>
-    <div class="card"><div class="activity-list" id="aud-list">Loading…</div></div>`;
+  $('main').innerHTML=`<div class="page-head"><div><div class="page-title">Audit Trail</div><div class="page-sub">Every sign-in, create, edit, delete, import, permission change &amp; password reset — who · when · from where · and every field that changed</div></div>
+    <div class="page-actions"><span class="pill pill-warn">🔒 Server-logged · immutable</span>
+      <button class="btn btn-success btn-sm" onclick="audExport()">⬇ Excel</button></div></div>
+    <div class="filter-bar"><label>Filter</label>
+      <input class="search-input" id="aud-q" placeholder="Search text, name or ID…" oninput="audDebounce()">
+      <select id="aud-act" onchange="audApply()"><option value="">All actions</option></select>
+      <select id="aud-user" onchange="audApply()"><option value="">All users</option></select>
+      <select id="aud-ent" onchange="audApply()"><option value="">All sections</option></select>
+      <button class="btn btn-ghost btn-sm" onclick="audClear()">✕ Clear</button></div>
+    <div id="aud-sum" style="margin-bottom:12px"></div>
+    <div class="card"><div class="activity-list" id="aud-list" style="max-height:none">Loading…</div></div>`;
   loadAudit();
 }
+function audDebounce(){ clearTimeout(__AUD_T); __AUD_T=setTimeout(loadAudit,300); }
+function audClear(){ ['aud-q','aud-act','aud-user','aud-ent'].forEach(i=>{ const e=$(i); if(e) e.value=''; }); loadAudit(); }
 async function loadAudit(){
-  const q=$('aud-q')?$('aud-q').value:'';
+  const q=($('aud-q')||{}).value||'';
   try{
-    const d=await apiGet('?action=audit&q='+encodeURIComponent(q));
-    const cm={create:'var(--ok)',update:'var(--warn)',delete:'var(--bad)',login:'var(--brand)',logout:'var(--brand)',bulk_import:'var(--violet)'};
-    const uaShort=(ua)=>{ if(!ua)return''; ua=String(ua); let b=''; if(/edg/i.test(ua))b='Edge'; else if(/chrome|crios/i.test(ua))b='Chrome'; else if(/firefox|fxios/i.test(ua))b='Firefox'; else if(/safari/i.test(ua))b='Safari'; let os=''; if(/windows/i.test(ua))os='Windows'; else if(/android/i.test(ua))os='Android'; else if(/iphone|ipad/i.test(ua))os='iOS'; else if(/mac os|macintosh/i.test(ua))os='macOS'; else if(/linux/i.test(ua))os='Linux'; return [b,os].filter(Boolean).join(' · '); };
-    const rows=d.rows||[];
-    $('aud-list').innerHTML=rows.length?('<div style="font-size:11px;color:var(--t4);padding:6px 0 12px;font-family:JetBrains Mono">📋 '+rows.length+' events · newest first · timestamps in IST</div>'+rows.map(e=>{
-      const color=cm[e.action]||'var(--brand)';
-      const act=(e.action||'').replace(/_/g,' ').toUpperCase();
-      const dev=uaShort(e.user_agent);
-      const meta=[ e.ip?('🌐 '+esc(e.ip)):'', dev?('💻 '+esc(dev)):'' ].filter(Boolean).join(' · ');
-      return `<div class="activity-item"><div class="activity-dot" style="background:${color}"></div><div style="flex:1;min-width:0"><div class="activity-msg">${act?`<span class="bdg" style="background:${color}1a;color:${color};margin-right:7px;font-size:10px;letter-spacing:.3px">${esc(act)}</span>`:''}${esc(e.message)}</div><div class="activity-time"><strong>${esc(e.username||'system')}</strong>${e.role?' · '+esc(e.role):''} · ${esc(e.ts_ist||e.ts)}${meta?' · '+meta:''}</div></div></div>`;
-    }).join('')):'<div class="empty">No events</div>';
-  }catch(e){ $('aud-list').innerHTML='<div class="empty">⚠ '+esc(e.message)+'</div>'; }
+    const d=await apiGet('?action=audit&q='+encodeURIComponent(q)+'&limit=2000');
+    __AUD_ROWS=d.rows||[];
+    const keep=id=>{ const e=$(id); return e?e.value:''; };
+    const selA=keep('aud-act'), selU=keep('aud-user'), selE=keep('aud-ent');
+    const fill=(id,vals,all,cur,lbl)=>{ const e=$(id); if(!e) return;
+      e.innerHTML=`<option value="">${all}</option>`+vals.map(v=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(lbl?lbl(v):v)}</option>`).join(''); };
+    fill('aud-act',[...new Set(__AUD_ROWS.map(r=>r.action||''))].filter(Boolean).sort(),'All actions',selA,a=>a.replace(/_/g,' '));
+    fill('aud-user',[...new Set(__AUD_ROWS.map(r=>r.username||'system'))].sort(),'All users',selU);
+    fill('aud-ent',[...new Set(__AUD_ROWS.map(r=>r.entity||''))].filter(Boolean).sort(),'All sections',selE,audEntity);
+    audApply();
+  }catch(e){ const l=$('aud-list'); if(l) l.innerHTML='<div class="empty">⚠ '+esc(e.message)+'</div>'; }
+}
+function audApply(){
+  const fA=($('aud-act')||{}).value||'', fU=($('aud-user')||{}).value||'', fE=($('aud-ent')||{}).value||'';
+  __AUD_VIEW=__AUD_ROWS.filter(r=>(!fA||r.action===fA)&&(!fU||(r.username||'system')===fU)&&(!fE||r.entity===fE));
+  const sum=$('aud-sum');
+  if(sum){
+    const cnt={}; __AUD_VIEW.forEach(r=>{ cnt[r.action]=(cnt[r.action]||0)+1; });
+    const users=new Set(__AUD_VIEW.map(r=>r.username||'system'));
+    sum.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span class="fchip" style="background:var(--bg-soft);color:var(--t2)">📋 <b>${__AUD_VIEW.length}</b> events</span>
+      <span class="fchip" style="background:var(--bg-soft);color:var(--t2)">👤 <b>${users.size}</b> user${users.size===1?'':'s'}</span>
+      ${Object.entries(cnt).sort((x,y)=>y[1]-x[1]).map(([a,c])=>{ const m=AUD_ACT[a]||[String(a).replace(/_/g,' ').toUpperCase(),'#64748b'];
+        return `<span class="fchip" style="background:${m[1]}18;color:${m[1]}">${m[0]} · <b>${c}</b></span>`; }).join('')}
+    </div>`;
+  }
+  const list=$('aud-list'); if(!list) return;
+  if(!__AUD_VIEW.length){ list.innerHTML='<div class="empty">No events match</div>'; return; }
+  const today=todayIST();
+  const yd=(()=>{ const d=new Date(today+'T00:00:00'); d.setDate(d.getDate()-1); return d.toLocaleDateString('en-CA'); })();
+  let lastDay=''; const out=[];
+  __AUD_VIEW.forEach((e,i)=>{
+    const day=String(e.ts_ist||e.ts||'').slice(0,10);
+    if(day && day!==lastDay){ lastDay=day;
+      const nice= day===today?'Today' : (day===yd?'Yesterday' : new Date(day+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}));
+      out.push(`<div class="aud-day">${esc(nice)} <span>${esc(day)}</span></div>`); }
+    out.push(audRowHTML(e,i));
+  });
+  list.innerHTML=out.join('');
+}
+function audRowHTML(e,i){
+  const m=AUD_ACT[e.action]||[String(e.action||'').replace(/_/g,' ').toUpperCase(),'#64748b'];
+  const uc=audUserColor(e.username||'system');
+  const dev=audDevice(e.user_agent);
+  const ch=audChanges(e);
+  const n=ch?ch.rows.length:0;
+  const chip = (ch&&n) ? (ch.mode==='diff'
+      ? `✎ ${n} field${n>1?'s':''} changed — ${ch.rows.slice(0,3).map(r=>audFieldLabel(r[0])).join(', ')}${n>3?' +'+(n-3)+' more':''}`
+      : (ch.mode==='new'?`＋ ${n} field${n>1?'s':''} recorded — view all`:`🗑 the deleted record carried ${n} field${n>1?'s':''} — view them`)) : '';
+  const full=String(e.ts_ist||e.ts||''); const time=full.length>10?full.slice(11,19):full;
+  return `<div class="aud-item">
+    <div class="activity-dot" style="background:${m[1]};flex-shrink:0"></div>
+    <div style="flex:1;min-width:0">
+      <div class="aud-line">
+        <span class="aud-user" style="background:${uc}1a;color:${uc};border:1px solid ${uc}44"><span class="aud-av" style="background:${uc}">${esc(String(e.username||'S').charAt(0).toUpperCase())}</span>${esc(e.username||'system')}</span>
+        <span class="bdg" style="background:${m[1]}18;color:${m[1]};font-size:10px;letter-spacing:.3px">${m[0]}</span>
+        <span class="aud-ent">${esc(audEntity(e.entity))}</span>
+        ${e.entity_id?`<span class="mono" style="font-size:10.5px;color:var(--t4)">${esc(e.entity_id)}</span>`:''}
+      </div>
+      <div class="activity-msg" style="margin-top:4px">${esc(e.message||'')}</div>
+      ${chip?`<button type="button" class="aud-chg" onclick="audToggle(${i})">${esc(chip)} <span id="aud-car-${i}">▾</span></button><div class="aud-diff" id="aud-diff-${i}" style="display:none"></div>`:''}
+      <div class="activity-time">🕒 ${esc(time)} IST${e.role?' · '+esc(e.role):''}${e.ip?' · 🌐 '+esc(e.ip):''}${dev?' · 💻 '+esc(dev):''}${e.tab_id?' · tab '+esc(String(e.tab_id).slice(0,8)):''}</div>
+    </div></div>`;
+}
+function audToggle(i){
+  const box=$('aud-diff-'+i), car=$('aud-car-'+i); if(!box) return;
+  if(box.style.display!=='none'){ box.style.display='none'; if(car) car.textContent='▾'; return; }
+  if(!box.innerHTML){
+    const e=__AUD_VIEW[i]; const ch=e?audChanges(e):null;
+    if(ch&&ch.rows.length){
+      const hdr= ch.mode==='diff' ? '<th>Field</th><th>Before</th><th></th><th>After</th>'
+        : (ch.mode==='new' ? '<th>Field</th><th colspan="3">Value entered</th>' : '<th>Field</th><th colspan="3">Value at deletion</th>');
+      box.innerHTML=`<table class="aud-tbl"><thead><tr>${hdr}</tr></thead><tbody>${
+        ch.rows.map(([k,ov,nv])=> ch.mode==='diff'
+          ? `<tr><td class="aud-f">${esc(audFieldLabel(k))}</td><td class="aud-old">${audVal(k,ov)}</td><td class="aud-arrow">→</td><td class="aud-new">${audVal(k,nv)}</td></tr>`
+          : `<tr><td class="aud-f">${esc(audFieldLabel(k))}</td><td colspan="3" class="${ch.mode==='new'?'aud-new':'aud-old2'}">${audVal(k, ch.mode==='new'?nv:ov)}</td></tr>`).join('')
+      }</tbody></table>`;
+    }
+  }
+  box.style.display=''; if(car) car.textContent='▴';
+}
+function audExport(){
+  if(typeof XLSX==='undefined'){ toast('Excel engine still loading…','t-warn'); return; }
+  if(!__AUD_VIEW.length){ toast('Nothing to export — no events match the filter','t-warn'); return; }
+  const V=v=>{ if(v==null||String(v).trim()==='') return '—'; return typeof v==='object'?JSON.stringify(v):String(v); };
+  const rows=__AUD_VIEW.map(e=>{ const ch=audChanges(e);
+    return {'Time (IST)':e.ts_ist||e.ts||'','User':e.username||'system','Role':e.role||'','Action':String(e.action||'').replace(/_/g,' '),
+      'Section':audEntity(e.entity),'Record':e.entity_id||'','What happened':e.message||'',
+      'Field changes':(ch&&ch.rows.length)?ch.rows.map(([k,o,nn])=>audFieldLabel(k)+': '+(ch.mode==='new'?V(nn):(ch.mode==='was'?V(o):(V(o)+' → '+V(nn))))).join(' · '):'',
+      'IP':e.ip||'','Device':audDevice(e.user_agent)||''}; });
+  XLS.workbook({ title:'VIEWS India MIS — Audit Trail',
+    filters:[['Generated',nowIST()],['Events',rows.length+''],['Scope','Newest first · every field change included']],
+    sheets:[{name:'Audit Trail', title:'Audit Trail — who did what, when, from where & every field that changed', subtitle:rows.length+' events · timestamps in IST', rows,
+      cols:[{key:'Time (IST)',label:'Time (IST)',type:'text'},{key:'User',label:'User',type:'text'},{key:'Role',label:'Role',type:'text'},{key:'Action',label:'Action',type:'text'},{key:'Section',label:'Section',type:'text'},{key:'Record',label:'Record',type:'text'},{key:'What happened',label:'What happened',type:'text'},{key:'Field changes',label:'Field changes',type:'text'},{key:'IP',label:'IP',type:'text'},{key:'Device',label:'Device',type:'text'}]}],
+    filename:'VIEWS_India_MIS_audit_'+todayIST()+'.xlsx' });
+  toast('✓ Audit trail downloaded — '+rows.length+' events');
 }
 
 /* ════════════════════════════════════════════════════════════════

@@ -1390,7 +1390,21 @@ if ($method==='PUT') {
   $vals[]=$id;
   $st=db()->prepare("UPDATE `$table` SET ".implode(',',$set)." WHERE id=?");
   $st->execute($vals);
-  audit('update',$resource,$id,"Edited $resource #$id",$before,$b);
+  // Forensic audit message — the record's business ID + exactly which fields changed
+  // (the full before/after values are stored alongside and shown in the Audit Trail)
+  $bizRef=null;
+  if(isset($ID_GEN[$resource]) && is_array($before)){ $bc=$ID_GEN[$resource][0]; if(!empty($before[$bc])) $bizRef=$before[$bc]; }
+  $changed=[];
+  foreach($b as $k=>$v){
+    if(!in_array($k,$cols) || in_array($k,['id','created_at','updated_at','updated_by','created_by'])) continue;
+    $ov=($before[$k] ?? null); $ov=($ov===null)?'':trim((string)$ov); $nv=($v===null)?'':trim((string)$v);
+    if($ov===$nv) continue;
+    if($ov!=='' && $nv!=='' && is_numeric($ov) && is_numeric($nv) && (float)$ov===(float)$nv) continue;
+    $changed[]=$k;
+  }
+  $msg="Edited $resource ".($bizRef?:"#$id");
+  if($changed) $msg.=' — changed '.count($changed).' field'.(count($changed)>1?'s':'').': '.implode(', ',array_slice($changed,0,8)).(count($changed)>8?' +'.(count($changed)-8).' more':'');
+  audit('update',$resource,$bizRef?:$id,$msg,$before,$b);
   out(['ok'=>true]);
 }
 
@@ -1430,7 +1444,10 @@ if ($method==='DELETE') {
       if($n->rowCount()) audit('update','geographies',$before['project_id'],"Unlinked ".$n->rowCount()." geographies (places kept) because project ".$before['project_id']." was deleted");
     }}catch(Exception $e){}
   }
-  audit('delete',$resource,$id,"Deleted $resource #$id",$before,null);
+  // Forensic audit message — the deleted record's business ID (its full data is stored alongside)
+  $bizRef=null;
+  if(isset($ID_GEN[$resource]) && is_array($before)){ $bc=$ID_GEN[$resource][0]; if(!empty($before[$bc])) $bizRef=$before[$bc]; }
+  audit('delete',$resource,$bizRef?:$id,"Deleted $resource ".($bizRef?:"#$id"),$before,null);
   out(['ok'=>true]);
 }
 

@@ -371,9 +371,16 @@ Visible only to root administrators, on any user's form: a switch that grants **
 
 ## 13. The Audit Trail
 
-The system's memory. Every meaningful event writes a line: record created / changed / deleted (with what it looked like before), sign-ins and sign-outs, failed login lockouts, imports, permission changes, password resets — each with **who, when (IST), from which address and device**.
+The system's memory — at full detail. Every meaningful event writes a line: record created / changed / deleted, sign-ins and sign-outs, failed logins and lockouts, imports, permission changes, password resets — each with **who, when (IST), from which address, device and browser tab**.
 
-**How to read a line:** the coloured badge is the action (green create, amber update, red delete…), then the plain-language message, then the person, role, time and device. The filter box narrows thousands of lines to what you need ("delete", a username, a record ID).
+**How to read a line:** the person appears first as a **coloured name chip** (each user keeps their own colour, so one glance shows who did what), then the action badge (green create, amber edit, red delete…), the section, the record's ID and the plain-language message — edits even *say* which fields changed, right in the message.
+
+**The full story of any event is one click away.** Events with data carry an expandable panel:
+- an **edit** opens a *Before → After* table listing **every single field that changed**, old value struck through in red, new value in green — IDs shown with their real names (project, donor, place…);
+- a **create** lists every value the record was born with;
+- a **delete** lists everything the record contained at the moment it was removed — nothing disappears without a trace.
+
+**Finding things fast:** the search box scans messages, names and IDs; the three dropdowns narrow by **action**, **user** and **section**; summary chips on top count events per action live. Days are grouped (Today / Yesterday / date) so scanning a week takes seconds. **⬇ Excel** downloads the filtered view — including the field-by-field changes — as a formatted sheet for management or donors.
 
 **What you will never find here:** passwords or security tokens — they are scrubbed before logging, always.
 
