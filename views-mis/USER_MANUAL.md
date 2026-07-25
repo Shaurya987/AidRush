@@ -264,7 +264,7 @@ Master Data is set up early and touched rarely — but understanding it explains
 
 **Donor Mappings** — the ledger of who-funds-what, with the funded component, budget head, and approved amount. Mostly it maintains itself (created automatically when projects are made); you come here to fix ⚠-flagged projects or to record funding details. In its project picker, unlinked projects are marked **"⚠ needs donor"** so they leap out.
 
-**Geography** — your places: Country → State → District → Block → Gram Panchayat → Village/Ward. Country pre-fills as *India*; the form remembers the last State/District/Block you typed, so adding all villages of one block is quick. Every beneficiary, SHG and record points into this tree — which is what makes district-wise and village-wise reports possible.
+**Geography** — your places: Country → State → District → Block → Gram Panchayat → Village/Ward. Country pre-fills as *India*; the form remembers the last State/District you used, and the golden **🌍 ＋ Add another place** button adds row after row (Block · GP · Village) that all save together in ONE go — ten blocks of a district in a single Save, each auto-linked to the project. Every beneficiary, SHG and record points into this tree — which is what makes district-wise and village-wise reports possible.
 
 **Village Demographics** — the profile of each village: households, population, categories, the contact person. Recording total households is what lets the system compute **Coverage %** — how much of a village your project actually reaches — a number donors love.
 
@@ -279,12 +279,18 @@ Master Data is set up early and touched rarely — but understanding it explains
 - **Contact number** — must be a real 10-digit Indian mobile; +91 or a leading 0 are accepted and cleaned automatically.
 - **Geography** — pick the village; district/block/GP fill themselves.
 - **Land & livelihood** — landholding and income source classifications. **Total Land (acres) adds itself up** from the paddy/millet/vegetable areas you type in the baseline section (you can still overtype it if the household holds other land).
-- **Baseline income breakdown** — income at the time of registration, split by source (paddy, millet, vegetables, mushroom, goat, poultry, micro-enterprise) with a total that adds itself up. **Take two extra minutes here** — this baseline is the "before" in every Before-vs-After income chart and in the Avg. Income Change headline. Without it, impact cannot be shown for this person.
+- **Baseline income breakdown** — income at the time of registration, split by source: **crops with their land area** (paddy, millet, vegetable, tuber crop, pulses, oilseeds) and **other livelihoods** (mushroom, goat, poultry, micro-enterprise, other income) — every one optional, with a total that adds itself up and must equal the Annual Income at Registration. All sources flow into the income views, the dashboard Before-vs-After chart and the Income Impact report. **Take two extra minutes here** — this baseline is the "before" in every Before-vs-After income chart and in the Avg. Income Change headline. Without it, impact cannot be shown for this person.
 - Each beneficiary row later offers an **income view** — their baseline vs current income and a year-by-year trend.
 
 **Production & Output Progress** — the actuals against HQ's output targets: any intervention output (a harvest, a livelihoods batch, a health camp result…). Pick the beneficiary (the picker can be narrowed by village) and their context fills in; then record the intervention, season/year, quantity, income and net profit (a loss — negative profit — is allowed, because a loss is real data). These records feed the income trend and the outputs sheets of every report.
 
+Two things make this list donor-proof:
+- **A Crop/Intervention or Season filter is required before anything displays.** One beneficiary legitimately has several production rows (Paddy · Kharif, Millet · Rabi…) — the filter shows each person once per view, so nobody ever *looks* duplicated. The records themselves stay together as one person's story; this is display only, and reports are unaffected. The crop & season filters combine with the thematic/project/donor chain like every other filter.
+- **An Income Change column** (₹ and %) sits beside Net Profit: the beneficiary's cumulative production income across ALL their records versus their total baseline — the same honest figure on every row of that person, and in the section's Excel export too.
+
 **Activity Progress** — delivery tracked year by year in one compact table. Set the activity's total target, then fill each year's row: its target and the **Q1–Q4** achievements (or flip the switch to **Monthly** and type the 12 months — they roll up into the quarters automatically). **＋ Add Year** extends the table up to six years. Each year's achievement and the cumulative total **calculate themselves**, and a live progress bar shows the % achieved against the total target — always arithmetic, never opinion. From the field-office page, the *Activity Progress* card opens this full section (filters, search, **✎ Update progress** on each row, and ＋ New activity) so progress is updated on the existing activity rather than re-created. **The target boxes — and adding or deleting activities — need the 🎯 Targets right (§12):** without it the plan is read-only 🔒 and only the achievements can be typed.
+
+On the list, the **Year / Quarter switcher** in the filter bar changes what the columns show: the overview shows Year 1; pick *Year 3* and the table shows Y3's target and achievement; add *Q2* and that quarter's figure appears too — every year you entered is one click away, with no blank Y2–Y6 columns cluttering the default view (the quarter picker unlocks only after a year is chosen).
 
 ---
 
@@ -310,7 +316,7 @@ Repayment status appears as a colour badge in the table, and loans-by-financial-
 - **The indicator list shows only the chosen project's indicators.** You cannot accidentally report against another project's indicator — the chain protecting data quality again.
 - **🗓 Data entry frequency** — choose Monthly or Quarterly. Pick the month (or quarter + year) and the **Reporting Period writes itself** — everyone's periods are worded identically, so grouped reports group correctly.
 - **Reporting Year** accepts `2025` or the Indian financial year form `2025-26` — nothing else, so "25" vs "2025" chaos cannot enter the data.
-- **Pick the indicator and everything else fills itself** — its thematic area, project *and* donor (through the project's funding link).
+- **Pick the indicator and everything else fills itself** — its thematic area, project *and* donor (through the project's funding link). A banner on the form shows the **indicator's total target** (set once, in the Indicators section — the single source of truth) and what earlier periods already achieved; the list measures every row's status against that same target.
 - Enter only the achievement for the period. **Cumulative and Variance calculate themselves**: cumulative adds every earlier period logged for that indicator, and variance compares the cumulative against the indicator's total project target (negative = behind plan — that is information, not an error). Neither can be typed, so the running totals can never drift.
 
 ---

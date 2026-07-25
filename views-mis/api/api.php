@@ -856,26 +856,37 @@ if ($action==='dashboard') {
   // Baseline comes from the beneficiary's registration breakdown when present, else the
   // legacy registration annual income. All of this respects the dashboard filters.
   $benCols = table_columns('beneficiaries');
+  // Every baseline source THIS database has (older DBs simply have fewer — nothing breaks)
+  $blActCols = [ 'paddy'=>'bl_paddy_income','millet'=>'bl_millet_income','vegetable'=>'bl_vegetable_income',
+                 'tuber'=>'bl_tuber_income','pulses'=>'bl_pulses_income','oilseed'=>'bl_oilseed_income',
+                 'mushroom'=>'bl_mushroom_income','goat'=>'bl_goat_income','poultry'=>'bl_poultry_income',
+                 'micro'=>'bl_micro_enterprise_income','other'=>'bl_other_income' ];
+  $blActCols = array_filter($blActCols, fn($c)=>in_array($c,$benCols));
   $hasBL   = in_array('bl_paddy_income', $benCols);
   [$wB,$vB] = $whereFor('beneficiaries');
   [$wC,$vC] = $whereFor('crops');
-  $acts = ['paddy','millet','vegetable','mushroom','goat','poultry','micro'];
+  $acts = array_keys($blActCols); if(!$acts) $acts=['paddy','millet','vegetable','mushroom','goat','poultry','micro'];
   $blByAct = array_fill_keys($acts, 0.0);
   if($hasBL){
-    $blExpr = "(COALESCE(bl_paddy_income,0)+COALESCE(bl_millet_income,0)+COALESCE(bl_vegetable_income,0)+COALESCE(bl_mushroom_income,0)+COALESCE(bl_goat_income,0)+COALESCE(bl_poultry_income,0)+COALESCE(bl_micro_enterprise_income,0))";
+    $blExpr = '('.implode('+',array_map(fn($c)=>"COALESCE($c,0)",array_values($blActCols))).')';
     $stB = $pdo->prepare("SELECT COALESCE(SUM(CASE WHEN $blExpr>0 THEN $blExpr ELSE COALESCE(current_income_per_annum_inr,0) END),0) s FROM beneficiaries$wB");
     $stB->execute($vB); $kpi['baseline_income'] = (float)$stB->fetch()['s'];
-    $stBA = $pdo->prepare("SELECT COALESCE(SUM(bl_paddy_income),0) paddy, COALESCE(SUM(bl_millet_income),0) millet, COALESCE(SUM(bl_vegetable_income),0) vegetable, COALESCE(SUM(bl_mushroom_income),0) mushroom, COALESCE(SUM(bl_goat_income),0) goat, COALESCE(SUM(bl_poultry_income),0) poultry, COALESCE(SUM(bl_micro_enterprise_income),0) micro FROM beneficiaries$wB");
+    $sel=[]; foreach($blActCols as $a=>$c){ $sel[]="COALESCE(SUM($c),0) `$a`"; }
+    $stBA = $pdo->prepare("SELECT ".implode(', ',$sel)." FROM beneficiaries$wB");
     $stBA->execute($vB); $r = $stBA->fetch();
-    foreach($acts as $a){ $blByAct[$a] = (float)$r[$a]; }
+    foreach($acts as $a){ $blByAct[$a] = (float)($r[$a]??0); }
   } else {
     $stB = $pdo->prepare("SELECT COALESCE(SUM(COALESCE(current_income_per_annum_inr,0)),0) s FROM beneficiaries$wB");
     $stB->execute($vB); $kpi['baseline_income'] = (float)$stB->fetch()['s'];
   }
   $stCA = $pdo->prepare("SELECT
+      COALESCE(SUM(income_inr),0) total,
       COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='paddy' THEN income_inr ELSE 0 END),0) paddy,
       COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='millet' THEN income_inr ELSE 0 END),0) millet,
       COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='vegetable' THEN income_inr ELSE 0 END),0) vegetable,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop)) IN ('tuber crop','tuber') THEN income_inr ELSE 0 END),0) tuber,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='pulses' THEN income_inr ELSE 0 END),0) pulses,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop)) IN ('oilseeds','oilseed') THEN income_inr ELSE 0 END),0) oilseed,
       COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('mushroom','mushroom cultivation') OR LOWER(TRIM(crop))='mushroom' THEN income_inr ELSE 0 END),0) mushroom,
       COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('goatery','goat','goat rearing') THEN income_inr ELSE 0 END),0) goat,
       COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('poultry','backyard poultry') THEN income_inr ELSE 0 END),0) poultry,
@@ -883,7 +894,12 @@ if ($action==='dashboard') {
     FROM crops$wC");
   $stCA->execute($vC); $cur = $stCA->fetch();
   $curByAct = array_fill_keys($acts, 0.0);
-  foreach($acts as $a){ $curByAct[$a] = (float)$cur[$a]; }
+  foreach($acts as $a){ if($a!=='other') $curByAct[$a] = (float)($cur[$a]??0); }
+  // "Other" current income = everything not captured by a named bucket above
+  if(array_key_exists('other',$curByAct)){
+    $known=0.0; foreach($curByAct as $a=>$v){ if($a!=='other') $known+=$v; }
+    $curByAct['other']=max(0.0,(float)($cur['total']??0)-$known);
+  }
   $income_compare = ['baseline'=>$blByAct, 'current'=>$curByAct];
 
   // ── Matched-pairs income — compare ONLY beneficiaries whose current (production)
@@ -1191,10 +1207,15 @@ if ($method==='GET') {
     if(in_array($k,$cols) && $v!==''){ $where[]="`$k`=?"; $params[]=$v; }
   }
   if(!empty($_GET['q'])){
-    $q='%'.$_GET['q'].'%';
-    $textCols=array_slice($cols,0,12);
-    $ors=[]; foreach($textCols as $c){ $ors[]="`$c` LIKE ?"; $params[]=$q; }
-    if($ors) $where[]='('.implode(' OR ',$ors).')';
+    // SMART search — every word must match somewhere, and EVERY column is searched
+    // (was: first 12 columns only, which silently missed villages, remarks, phones…)
+    $terms=array_slice(array_values(array_filter(preg_split('/\s+/', trim((string)$_GET['q'])))),0,5);
+    $searchCols=array_slice($cols,0,48);
+    foreach($terms as $t){
+      $like='%'.$t.'%';
+      $ors=[]; foreach($searchCols as $c){ $ors[]="`$c` LIKE ?"; $params[]=$like; }
+      if($ors) $where[]='('.implode(' OR ',$ors).')';
+    }
   }
   $w = $where? ' WHERE '.implode(' AND ',$where) : '';
   if ($id) {
@@ -1218,6 +1239,42 @@ if ($method==='GET') {
     try{ foreach(db()->query("SELECT donor_id, COUNT(*) c FROM beneficiaries GROUP BY donor_id")->fetchAll() as $r2){ $bc[$r2['donor_id']]=(int)$r2['c']; } }catch(Exception $e){}
     try{ foreach(db()->query("SELECT donor_id, COUNT(DISTINCT project_id) c FROM donor_mappings GROUP BY donor_id")->fetchAll() as $r2){ $pc[$r2['donor_id']]=(int)$r2['c']; } }catch(Exception $e){}
     foreach($rows as &$r){ $r['_beneficiaries']=$bc[$r['donor_id']]??0; $r['_projects']=$pc[$r['donor_id']]??0; } unset($r);
+  }
+  // Production rows: attach each beneficiary's income context — total BASELINE income
+  // (all sources, else the registration annual income) and CUMULATIVE production income
+  // across EVERY record they have — so the list shows their income change till now.
+  if($resource==='crops' && $rows){
+    $bids=[]; foreach($rows as $r){ if(!empty($r['beneficiary_id'])) $bids[$r['beneficiary_id']]=1; }
+    $bids=array_keys($bids);
+    if($bids){
+      $bl=[]; $cum=[];
+      try{
+        $ph=implode(',',array_fill(0,count($bids),'?'));
+        $benCols=table_columns('beneficiaries');
+        $blCands=['bl_paddy_income','bl_millet_income','bl_vegetable_income','bl_tuber_income','bl_pulses_income','bl_oilseed_income','bl_mushroom_income','bl_goat_income','bl_poultry_income','bl_micro_enterprise_income','bl_other_income'];
+        $have=array_values(array_intersect($blCands,$benCols));
+        $blExpr=$have? ('('.implode('+',array_map(fn($c)=>"COALESCE($c,0)",$have)).')') : '0';
+        $stb=db()->prepare("SELECT beneficiary_id bid, CASE WHEN $blExpr>0 THEN $blExpr ELSE COALESCE(current_income_per_annum_inr,0) END bl FROM beneficiaries WHERE beneficiary_id IN ($ph)");
+        $stb->execute($bids); foreach($stb->fetchAll() as $r2){ $bl[$r2['bid']]=(float)$r2['bl']; }
+        $stc=db()->prepare("SELECT beneficiary_id bid, COALESCE(SUM(income_inr),0) s FROM crops WHERE beneficiary_id IN ($ph) GROUP BY beneficiary_id");
+        $stc->execute($bids); foreach($stc->fetchAll() as $r2){ $cum[$r2['bid']]=(float)$r2['s']; }
+      }catch(Exception $e){}
+      foreach($rows as &$r){ $bid=$r['beneficiary_id']??''; $r['_bl_total']=$bl[$bid]??null; $r['_cum_income']=$cum[$bid]??null; } unset($r);
+    }
+  }
+  // Indicator-progress rows: attach the indicator's TOTAL project target — progress is
+  // always measured against the target set in the Indicators section (single source of truth)
+  if($resource==='progress' && $rows){
+    $iids=[]; foreach($rows as $r){ if(!empty($r['indicator_id'])) $iids[$r['indicator_id']]=1; }
+    $iids=array_keys($iids);
+    if($iids){
+      try{
+        $ph=implode(',',array_fill(0,count($iids),'?'));
+        $sti=db()->prepare("SELECT indicator_id, project_target FROM indicators WHERE indicator_id IN ($ph)");
+        $sti->execute($iids); $tg=[]; foreach($sti->fetchAll() as $r2){ $tg[$r2['indicator_id']]=$r2['project_target']; }
+        foreach($rows as &$r){ $r['_ind_target']=$tg[$r['indicator_id']]??null; } unset($r);
+      }catch(Exception $e){}
+    }
   }
   // Programmes: attach an objective count so each row shows "🎯 N" live
   if($resource==='programmes' && $rows){
