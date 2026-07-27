@@ -70,7 +70,13 @@ select.r-inp{padding-right:32px}
 .pobj-x{width:28px;height:28px;border:none;border-radius:7px;background:var(--bg-soft);color:var(--t3);cursor:pointer;font-size:13px;flex-shrink:0}
 .pobj-x:hover{background:var(--bad-soft);color:var(--bad)}
 .pobj-hint{font-size:11.5px;color:var(--t4);margin-top:6px}
+/* Geography — extra places, INSIDE the form grid (each row = its own record) */
+.geo-more-cell{border-top:1px dashed var(--border-2);padding-top:12px;margin-top:2px}
 .geo-more-row input{flex:1;min-width:0;width:auto}
+.geo-more-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:2px}
+.geo-more-add{width:auto;display:inline-flex;padding:9px 20px;font-size:13px;border-radius:8px;flex-shrink:0}
+.geo-more-note{font-size:11.5px;color:var(--t4);line-height:1.5;flex:1;min-width:220px}
+.geo-more-note b{color:var(--brand)}
 /* Activity Progress — year × quarter/month plan table */
 .act-plan{margin-top:16px;border:1.5px solid var(--border);border-radius:13px;padding:15px 16px;background:linear-gradient(135deg,#fffdf6,#fff)}
 .act-plan-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:11px}
@@ -719,7 +725,7 @@ const RES={
   geographies:{label:'Geography',sub:'Country → State → District → Block → GP → Village hierarchy',icon:'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
     cols:[['state','State'],['district','District'],['block','Block'],['gram_panchayat','GP'],['village_or_ward','Village/Ward'],['project_id','Project'],['responsible_staff','Staff']],
     filters:['programme_id','project_id'],
-    fields:[['geography_id','Geography ID',1],['country','Country'],['state','State'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village_or_ward','Village / Ward'],['programme_id','Thematic Area (auto from project)','ref','programmes'],['project_id','Project — required, links this place to it','ref','projects'],['responsible_staff','Responsible Staff'],['remarks','Remarks']]},
+    fields:[['geography_id','Geography ID',1],['country','Country'],['state','State'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village_or_ward','Village / Ward'],['__geo_more','','geomore'],['programme_id','Thematic Area (auto from project)','ref','programmes'],['project_id','Project — required, links this place to it','ref','projects'],['responsible_staff','Responsible Staff'],['remarks','Remarks']]},
   villages:{label:'Village Demographics',sub:'Total HHs, project coverage & social-order breakdown',icon:'M3 21h18M5 21V9l7-6 7 6v12M9 21v-7h6v7',
     cols:[['district','District'],['block','Block'],['village','Village'],['total_hhs','Total HHs','num'],['hhs_covered_under_project','Covered','num'],['sc_hhs','SC','num'],['st_hhs','ST','num'],['obc_hhs','OBC','num'],['general_hhs','Gen','num']],
     filters:['programme_id','donor_id','project_id'],
@@ -1223,28 +1229,28 @@ function geoPrefillSticky(){
    sharing the main form's State, District, Project & Thematic Area. */
 let __GEO_MORE=[];
 function geoMoreInit(){
-  const form=$('entry-form'); if(!form||$('geo-more')) return;
+  const host=$('geo-more'); if(!host) return;   // the cell is part of the form grid (new records only)
   __GEO_MORE=[];   // fresh form starts empty (a nested ＋New hop restores via the snapshot)
-  const div=document.createElement('div'); div.id='geo-more';
-  div.style.cssText='margin:4px 0 12px;border:1.5px dashed var(--border-2);border-radius:12px;padding:13px 15px;background:linear-gradient(135deg,#fffdf6,#fff)';
-  const fg=form.querySelector('.fg'); if(!fg) return;
-  fg.parentNode.insertBefore(div, fg.nextSibling);
   geoMoreRender();
 }
 function geoMoreRender(){
   const host=$('geo-more'); if(!host) return;
+  const n=(__GEO_MORE||[]).length;
   const rows=(__GEO_MORE||[]).map((r,i)=>`
     <div class="pobj-row geo-more-row">
-      <span class="pobj-n">${i+2}</span>
-      <input placeholder="Block" list="dl-geo-block" value="${esc(r.block||'')}" oninput="__GEO_MORE[${i}].block=this.value">
+      <span class="pobj-n" title="Saves as its own geography record">${i+2}</span>
+      <input placeholder="Block — pick existing or type new" list="dl-geo-block" value="${esc(r.block||'')}" oninput="__GEO_MORE[${i}].block=this.value">
       <input placeholder="Gram Panchayat" list="dl-geo-gram_panchayat" value="${esc(r.gram_panchayat||'')}" oninput="__GEO_MORE[${i}].gram_panchayat=this.value">
       <input placeholder="Village / Ward (optional)" value="${esc(r.village_or_ward||'')}" oninput="__GEO_MORE[${i}].village_or_ward=this.value">
       <button type="button" class="pobj-x" title="Remove this place" onclick="geoMoreRemove(${i})">✕</button>
     </div>`).join('');
-  host.innerHTML=`<div style="font-size:12.5px;font-weight:800;color:var(--brand);margin-bottom:8px">🌍 Add MANY places in one go — same State · District · Project as above</div>
-    ${rows}
-    <button type="button" class="btn-gold" onclick="geoMoreAdd()">🌍 ＋ Add another place (same district)</button>
-    <div class="pobj-hint">Ten blocks? Ten GPs? One Save creates them ALL — each row becomes its own geography record, auto-linked to the project. Fill any of Block / GP / Village per row; the dropdowns suggest what already exists.</div>`;
+  host.innerHTML=`${rows}
+    <div class="geo-more-foot">
+      <button type="button" class="btn-gold geo-more-add" onclick="geoMoreAdd()">🌍 ＋ Add another place in this district</button>
+      <span class="geo-more-note">${n
+        ? `<b>${n+1} separate geography records</b> will be created on Save — same State · District · Project, each place its own entry.`
+        : 'Adding several blocks / GPs / villages? Each one saves as its <b>own</b> geography record — one Save creates them all.'}</span>
+    </div>`;
 }
 function geoMoreAdd(){ (__GEO_MORE=__GEO_MORE||[]).push({block:'',gram_panchayat:'',village_or_ward:''}); geoMoreRender();
   const ins=document.querySelectorAll('#geo-more .pobj-row input'); const f=ins[ins.length-3]; if(f) f.focus(); }
@@ -2037,6 +2043,7 @@ async function openForm(key,id){
     }
     if(type==='group') return `<div class="f" style="grid-column:1/-1;margin:8px 0 2px"><div style="font-family:'Plus Jakarta Sans';font-weight:700;font-size:12.5px;color:var(--brand);border-top:1px dashed var(--border-2);padding-top:13px">${esc(l)}</div></div>`;
     if(type==='pobj') return `<div class="f"><label>${esc(l)}</label><div id="pobj-inline"></div></div>`;   // objectives editor lives where the old Objective box was
+    if(type==='geomore') return id?'':`<div class="f geo-more-cell" style="grid-column:1/-1" id="geo-more"></div>`;   // extra-places rows live INSIDE the form grid, right under Block/GP/Village
     if(type==='bltotal'){ const _blt=BL_INCOME_KEYS.reduce((s,kk)=>s+(+row[kk]||0),0); return `<div class="f" style="grid-column:1/-1"><label>${esc(l)}</label><input id="bl-total-display" type="number" readonly value="${_blt?_blt.toFixed(2):''}" style="background:var(--brand-soft);color:var(--brand);font-weight:800;font-family:'JetBrains Mono'"></div>`; }
     let inp;
     if(type==='area')inp=`<textarea id="ff-${k}" rows="3">${esc(v)}</textarea>`;
