@@ -30,6 +30,7 @@
 14. [Getting data out — every export explained](#14-getting-data-out)
 15. [Why the system sometimes stops you (and why that's good)](#15-why-the-system-sometimes-stops-you)
 16. [Everyday questions](#16-everyday-questions)
+17. [Messages and errors you may see](#17-messages-and-errors-you-may-see)
 
 ---
 
@@ -510,3 +511,95 @@ Download the failed-rows file the import screen offers — every row carries a p
 ---
 
 *VIEWS MIS — built from the ground up for your programme. Keep this guide beside the system; it describes exactly what every screen does and why.*
+
+---
+
+## 17. Messages and errors you may see
+
+Every message the system can show is listed here with its meaning and what to do. Most of them are the system protecting your data rather than something being broken.
+
+### Signing in
+
+| Message | What it means and what to do |
+|---|---|
+| Invalid username or password | The details do not match. Check spelling and keyboard case. If it still fails, ask your administrator to reset the password. |
+| Too many failed attempts, account locked | The account was protected after several wrong passwords. Wait a few minutes, or ask your administrator to reset it. |
+| Session expired, please sign in again | You were idle for a long time, or the same account signed in elsewhere. Sign in again. Unsaved typing must be re-entered. |
+| Login failed, please run the upgrade file | The database has not been upgraded for this version. The administrator runs the files in the sql folder once in phpMyAdmin. |
+
+### Connection and server
+
+| Message | What it means and what to do |
+|---|---|
+| Could not reach the server | Your device could not contact the server, almost always the internet connection. Check it and try again. Reads are retried automatically first. |
+| The server took too long to respond | The request was abandoned after thirty seconds. Try again. If it repeats, the connection is very slow or the server is busy. |
+| Bad server response | The server replied with something unreadable. Try again, and inform your administrator if it repeats. |
+| Save failed | The record could not be written. Nothing was saved, so no partial record exists. Try again and inform your administrator if it repeats. |
+| Could not load a list | A reference list such as projects or donors did not load. The system retries on your next action. Refresh the page if dropdowns stay empty. |
+| Some lists failed to load, retrying on your next click | A temporary connection problem. Avoid saving until the dropdowns fill, so the correct links are recorded. |
+| A required table or column is missing | The database is behind this version of the application. The administrator runs the sql upgrade files once. No data is lost by running them. |
+
+### Permissions
+
+| Message | What it means and what to do |
+|---|---|
+| You do not have permission to view this section | Ask your administrator to tick the View box for it in Users and Access. |
+| You do not have permission to add, edit or delete records | You can see the section but not change it. Ask for the Edit or Delete box on that row. |
+| You are assigned to specific projects | Your account is limited to certain projects, and this record belongs to another one. Choose one of your projects or ask for wider access. |
+| This record belongs to a project you are not assigned to | The same restriction, seen when editing or deleting. |
+| Targets are locked, only target setters can change them | Targets are set by head office. You may record achievements. Ask for the Targets permission if you need to change targets. |
+| New activities and their targets are set by head office | Creating an activity creates targets, so it needs the Targets permission. You can still update existing activities. |
+| Only an admin can create, edit or delete admin accounts | Administrator accounts are managed only by another administrator. |
+| Only a root admin can modify a root protected account | Reserved for the most senior administrators. |
+| The root admin cannot be deleted | The system always keeps at least one root administrator so the organisation cannot lock itself out. |
+| You cannot delete yourself | Ask another administrator to remove your account. |
+
+### Required fields and validation
+
+| Message | What it means and what to do |
+|---|---|
+| Select the Donor funding this project | A project cannot exist without naming who pays for it. Choose the donor, or create the donor first. |
+| Select the Project this record belongs to | The record needs a project to reach the dashboard and reports. |
+| Please answer Organic Farming, Yes or No | Required, because it produces the organic farming indicator. |
+| Baseline income total must equal Annual Income at Registration | The baseline rows and the annual income figure disagree. Correct one of them. |
+| Expenditure looks far larger than its income | Usually an extra zero. Check the figure. |
+| Age must be between 0 and 120 | Check the age entered. |
+| Contact number must be a valid ten digit Indian mobile | Ten digits beginning with 6, 7, 8 or 9. A leading zero or country code is removed automatically. |
+| End Date cannot be before Start Date | Check the two dates. |
+| A date cannot be in the future | Registration, joining and loan dates must be today or earlier, otherwise the record would vanish from period reports. |
+| Reporting Year should be like 2025 or 2025-26 | Only a four digit year or the Indian financial year format is accepted. |
+| Password must be at least six characters, and passwords do not match | Choose a longer password and type the same value twice. |
+
+### Duplicates and data integrity
+
+| Message | What it means and what to do |
+|---|---|
+| Duplicate value, a record with this key already exists | The database refused a second record with the same identity code, protecting reports from double counting. |
+| Possible duplicate, save anyway | A warning, not a block. A very similar record exists. Check it, and continue only if this is genuinely separate. |
+| Duplicate donor identity code | Two donors share one code so their figures would mix. Keep one, move the details across, delete the other, and create it again. |
+| A value was missing or in the wrong format | Usually a number field that received text. Check the highlighted field. |
+
+### Importing from Excel
+
+| Message | What it means and what to do |
+|---|---|
+| The file has no data rows | The sheet has headings but no records. Check that the correct sheet was selected. |
+| Bulk import failed, or some rows were skipped | Rejected rows are listed in a downloadable Excel file with the reason for each. Correct them, delete the reason column, and import again. Accepted rows are already saved. |
+
+### Messages that look like errors but are not
+
+| Message | Why it appears |
+|---|---|
+| Pick a Crop or a Season to display the records | Production records appear only after a crop or season is chosen, so one person is never mistaken for a duplicate. |
+| Waiting for data on an indicator card | The indicator has no source data yet. The card names the field to fill. The system will not invent a number. |
+| Projects or donors not linked in Donor Mapping | Those records cannot appear when filtering from the other side. Select Map now to correct the link. |
+| No geographies assigned to this project yet | The project has no places attached, so district and village lists are empty. Assign them under Projects, then Geographies. |
+| A negative variance, or a fall in income | Under achievement and reduced income are real results. The system reports them honestly. |
+| You have unsaved changes on this form | You tried to leave a form with unsaved typing. Stay and save, or leave and lose those changes. |
+| Excel engine still loading | The spreadsheet component has not finished loading. Wait a moment and select the download again. |
+
+---
+
+**This platform was built by PlanEx Hivers Consulting Private Limited.**
+
+**All rights reserved 2026.**

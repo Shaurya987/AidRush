@@ -121,6 +121,11 @@ select.r-inp{padding-right:32px}
 .man-row:hover{background:var(--gold-soft)}
 .man-btn{width:245px;font-weight:700;color:var(--navy-700);white-space:normal;line-height:1.45}
 .man-desc{color:var(--t2);line-height:1.68}
+.man-credit{margin:26px 0 10px;background:var(--navy-900);border-radius:var(--r-lg);padding:26px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;box-shadow:var(--sh-3);border-bottom:3px solid var(--gold)}
+.man-credit img{width:190px;max-width:70%;height:auto;display:block}
+.man-credit-txt{display:flex;flex-direction:column;gap:4px}
+.man-credit-txt b{color:#fff;font-size:14px;font-weight:800;font-family:'Plus Jakarta Sans';letter-spacing:.2px;line-height:1.5}
+.man-credit-txt b:last-child{color:var(--gold-3);font-size:12.5px;letter-spacing:.6px;text-transform:uppercase}
 @media(max-width:820px){.man-tbl td{display:block;border-bottom:none}.man-btn{width:auto;padding-bottom:2px}.man-desc{padding-top:0;border-bottom:1px solid var(--border);padding-bottom:11px}}
 /* Beneficiary BASELINE — one arranged table instead of 25 scattered boxes */
 .bl-wrap{border:1.5px solid var(--border);border-radius:13px;padding:15px 16px;background:linear-gradient(135deg,#f6fbf7,#fff)}
@@ -5014,7 +5019,53 @@ const MANUAL_BOOK=[
    ['Reset Password','Sets a new password and signs that person out of every device immediately.'],
    ['Audit Trail','Records every sign in, creation, change, deletion, import, permission change and password reset. Each entry shows the person as a coloured name label, the time in Indian Standard Time, the address, the device and the browser tab. Selecting an entry opens a table showing every field that changed, with the old value and the new value side by side. The list can be filtered by action, user and section, and exported to Excel.'],
    ['User Manual','This page. It can be searched, and the labels at the top jump to any section.']]},
- {icon:'16',title:'Practices that keep the data trustworthy',intro:'Small habits with a large effect on the quality of your reporting.',items:[
+ {icon:'16',title:'Messages and errors you may see',intro:'Every message the system can show you is listed here, with its meaning and what to do about it. Most of them are the system protecting your data rather than something being broken.',items:[
+   ['Invalid username or password','The username or the password does not match. Please check the spelling and the keyboard case. If it still fails, ask your administrator to reset the password.'],
+   ['Too many failed attempts, account locked','The account was protected after several wrong passwords. Please wait a few minutes and try again, or ask your administrator to reset the password.'],
+   ['Session expired, please sign in again','You were signed out because the system was idle for a long time, or because the same account signed in somewhere else. Please sign in again. Anything you had typed but not saved will need to be entered again.'],
+   ['Could not reach the server','Your device could not contact the server. This is almost always the internet connection. Please check your connection and try the action again. The system retries a read automatically before showing this.'],
+   ['The server took too long to respond','The request was abandoned after thirty seconds. Please try again. If it repeats, the internet connection is likely very slow or the server is busy.'],
+   ['Bad server response','The server replied with something the application could not read. Please try again. If it repeats, inform your administrator, because the server may need attention.'],
+   ['Save failed','The record could not be written to the database. Nothing was saved, so no partial record exists. Please try again, and if it repeats inform your administrator.'],
+   ['Could not load a list','One of the reference lists, such as projects or donors, did not load. The system will retry on your next action. If dropdowns look empty, please refresh the page.'],
+   ['Some lists failed to load, retrying on your next click','A temporary connection problem. The dropdown lists will fill themselves shortly. Please avoid saving a record until they do, so the correct links are recorded.'],
+   ['A required table or column is missing','The database has not been upgraded to match this version of the application. Your administrator needs to run the upgrade files in the sql folder once, using phpMyAdmin. No data is lost by running them.'],
+   ['Login failed, please run the upgrade file','The same cause as above, seen at the sign in screen. The administrator needs to run the database upgrade once.'],
+   ['You do not have permission to view this section','Your account has not been granted access to that section. Please ask your administrator to tick the View box for it in Users and Access.'],
+   ['You do not have permission to add, edit or delete records','Your account can see the section but not change it. Ask your administrator for the Edit or Delete box on that row.'],
+   ['You are assigned to specific projects, records for other projects are not allowed','Your account is limited to certain projects. The record you tried to save belongs to a different project. Please choose one of your own projects, or ask your administrator to widen your project access.'],
+   ['This record belongs to a project you are not assigned to','You tried to change or delete a record from a project outside your access. Please ask your administrator if you need that project added.'],
+   ['Targets are locked, only target setters can change them','Targets are set by head office. You can record achievements and progress, but not change the target itself. Ask your administrator to tick the Targets row in Users and Access if you need that right.'],
+   ['New activities and their targets are set by head office','Creating an activity also creates its targets, so it needs the Targets permission. You can still update progress on activities that already exist.'],
+   ['Only an admin can create, edit or delete admin accounts','Administrator accounts can only be managed by another administrator. This prevents an ordinary user from raising their own access.'],
+   ['Only a root admin can modify a root protected account','Root protected accounts are reserved for the most senior administrators and can only be changed by another root administrator.'],
+   ['The root admin cannot be deleted, and root protection cannot be removed from the last one','The system always keeps at least one root administrator, so the organisation can never lock itself out.'],
+   ['You cannot delete yourself','A signed in user cannot remove their own account. Ask another administrator to do it.'],
+   ['Select the Donor funding this project','A project cannot be saved without naming who pays for it. This is the rule that lets every later record find its donor. Please choose the donor, or create the donor first.'],
+   ['Select the Project this record belongs to','The record needs a project so it can reach the dashboard and the reports. Please choose the project.'],
+   ['Please answer Organic Farming, Yes or No','This answer is required because it produces the organic farming indicator. Please choose Yes or No.'],
+   ['Baseline income total must equal Annual Income at Registration','The sum of the baseline income rows does not match the annual income you entered above. Please correct one of the two figures so they agree.'],
+   ['Expenditure looks far larger than its income','A likely typing mistake, for example an extra zero. Please check the figure. If it is genuinely correct, reduce it or record the explanation in Remarks.'],
+   ['Age must be between 0 and 120','Please check the age that was entered.'],
+   ['Contact number must be a valid ten digit Indian mobile','The number must have ten digits and begin with 6, 7, 8 or 9. A leading zero or a country code is accepted and removed automatically.'],
+   ['End Date cannot be before Start Date','Please check the two dates.'],
+   ['A date cannot be in the future','Registration dates, joining dates and loan dates must be today or earlier, because future dates would hide the record from period reports.'],
+   ['Reporting Year should be like 2025 or 2025-26','Only a four digit year or the Indian financial year format is accepted, so that grouped reports remain consistent.'],
+   ['Password must be at least six characters, and passwords do not match','Please choose a longer password and type the same value in both boxes.'],
+   ['Duplicate value, a record with this key already exists','The database refused a second record with the same identity code. This protects your reports from double counting. If you are correcting an old duplicate, remove the wrong record first.'],
+   ['Possible duplicate, save anyway','A warning and not a block. A very similar record already exists. Please check it before continuing. Choose to continue only if this is genuinely a separate record.'],
+   ['Duplicate donor identity code','Two donors share one code, so their figures would mix. Keep one, move the details across, delete the other, and create it again so a fresh code is generated.'],
+   ['A value was missing or in the wrong format','The database rejected a value, usually a number field that received text. Please check the highlighted field.'],
+   ['The file has no data rows','The uploaded spreadsheet has headings but no records beneath them. Please check that you selected the correct sheet.'],
+   ['Bulk import failed, or some rows were skipped','Rows that could not be accepted are listed in a downloadable Excel file with the reason against each one. Correct those rows, delete the reason column, and import the file again. Accepted rows are already saved.'],
+   ['You have unsaved changes on this form','You tried to leave a form with typing that was not saved. Choose to stay and save, or to leave and lose those changes.'],
+   ['Pick a Crop or a Season to display the records','Not an error. Production records are only shown once a crop or a season is chosen, so that one person is never mistaken for a duplicate. Please choose one.'],
+   ['Waiting for data on an indicator card','Not an error. The indicator has no source data yet. The card names the field that needs to be filled. The system shows this instead of inventing a number.'],
+   ['Projects or donors not linked in Donor Mapping','A warning shown under filter bars. Those records cannot appear when filtering from the other side. Select Map now to correct the link.'],
+   ['No geographies assigned to this project yet','The project has no places attached, so district and village lists will be empty. Please assign them under Projects, then Geographies.'],
+   ['A negative variance, or a fall in income','Not an error. Under achievement and reduced income are real results. The system reports them honestly rather than hiding them.'],
+   ['Excel engine still loading','The spreadsheet component has not finished loading. Please wait a moment and select the download again.']]},
+ {icon:'17',title:'Practices that keep the data trustworthy',intro:'Small habits with a large effect on the quality of your reporting.',items:[
    ['Complete the baseline properly','Two extra minutes for each beneficiary is what makes every later impact figure possible. Without a baseline there is no before position to compare against.'],
    ['Never leave a project unmapped','A project with no donor cannot be used for data entry and can never appear in a donor report. The banner on the Projects page counts them for you.'],
    ['Watch the Data Completion Status panel','It shows where the gaps are, so they can be corrected before anyone outside the organisation notices them.'],
@@ -5029,7 +5080,11 @@ function renderManualPage(){
       <div class="card man-sec" id="man-sec-${i}">
         <div class="man-head"><span class="man-num">${s.icon}</span><div><div class="man-title">${esc(s.title)}</div><div class="man-intro">${esc(s.intro)}</div></div></div>
         <table class="man-tbl"><tbody>${s.items.map(([b,d])=>`<tr class="man-row"><td class="man-btn">${esc(b)}</td><td class="man-desc">${esc(d)}</td></tr>`).join('')}</tbody></table>
-      </div>`).join('')}</div>`;
+      </div>`).join('')}</div>
+    <div class="man-credit">
+      <img src="planexhivers.png" alt="PlanEx Hivers Consulting Private Limited">
+      <div class="man-credit-txt"><b>This platform was built by PlanEx Hivers Consulting Private Limited.</b><b>All rights reserved 2026.</b></div>
+    </div>`;
 }
 function manualFilter(){
   const q=String((($('man-q')||{}).value)||'').trim().toLowerCase();
