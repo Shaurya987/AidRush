@@ -77,6 +77,27 @@ select.r-inp{padding-right:32px}
 .geo-more-add{width:auto;display:inline-flex;padding:9px 20px;font-size:13px;border-radius:8px;flex-shrink:0}
 .geo-more-note{font-size:11.5px;color:var(--t4);line-height:1.5;flex:1;min-width:220px}
 .geo-more-note b{color:var(--brand)}
+/* Beneficiary BASELINE — one arranged table instead of 25 scattered boxes */
+.bl-wrap{border:1.5px solid var(--border);border-radius:13px;padding:15px 16px;background:linear-gradient(135deg,#f6fbf7,#fff)}
+.bl-head{margin-bottom:11px}
+.bl-title{font-family:'Plus Jakarta Sans';font-weight:800;font-size:15px;color:var(--t1)}
+.bl-sub{font-size:12px;color:var(--t3);margin-top:2px;line-height:1.5}
+.bl-tblwrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:#fff}
+.bl-tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
+.bl-tbl th{background:var(--bg-soft);color:var(--t3);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;padding:8px 6px;text-align:center;white-space:nowrap;border-bottom:1px solid var(--border)}
+.bl-tbl th span{display:block;font-size:9.5px;color:var(--t4);letter-spacing:0;text-transform:none;font-weight:600}
+.bl-tbl td{padding:5px 5px;border-bottom:1px solid var(--border);text-align:center}
+.bl-tbl tbody tr:hover{background:var(--bg-soft)}
+.bl-tbl tfoot td{border-top:2px solid var(--border-2);border-bottom:none;background:var(--bg-soft);font-weight:800}
+.bl-tbl th.bl-src,.bl-tbl td.bl-src{text-align:left;padding-left:12px;font-weight:700;color:var(--t2);white-space:nowrap}
+.bl-in{width:96px;padding:7px 6px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;text-align:right;font-family:'JetBrains Mono';outline:none;background:#fff;transition:border-color .15s,box-shadow .15s}
+.bl-in:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
+.bl-in::-webkit-outer-spin-button,.bl-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.bl-in[type=number]{-moz-appearance:textfield}
+.bl-tot{background:var(--brand-soft);color:var(--brand);font-weight:800;border-color:var(--brand-soft)}
+.bl-na{color:var(--t5)}
+.bl-tbl .bl-net{font-family:'JetBrains Mono';font-weight:700;color:var(--ok);white-space:nowrap;padding-right:12px;text-align:right}
+.bl-tbl th.bl-net{text-align:right;color:var(--t3)}
 /* Activity Progress — year × quarter/month plan table */
 .act-plan{margin-top:16px;border:1.5px solid var(--border);border-radius:13px;padding:15px 16px;background:linear-gradient(135deg,#fffdf6,#fff)}
 .act-plan-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:11px}
@@ -624,7 +645,7 @@ function fmtCr(n){n=Number(n)||0;if(n>=1e7)return '₹'+(n/1e7).toFixed(2)+' Cr'
 /* A real, persistable data field — excludes UI-only pseudo-fields (the 'group'
    section header and the computed 'bltotal' display, and any __-prefixed key).
    Used by the form, the import template, header auto-mapping and the export. */
-function isDataField(f){ return !!(f && f[0] && f[0].slice(0,2)!=='__' && f[2]!=='group' && f[2]!=='bltotal'); }
+function isDataField(f){ return !!(f && f[0] && f[0].slice(0,2)!=='__' && f[2]!=='group' && f[2]!=='bltotal' && f[2]!=='bltable' && f[2]!=='geomore' && f[2]!=='pobj'); }
 function toast(msg,type='t-ok'){const el=$('toast');el.textContent=msg;el.className=type;el.style.display='block';clearTimeout(window._tt);window._tt=setTimeout(()=>el.style.display='none',3800)}
 function titleize(k){return k.replace(/_/g,' ').replace(/\binr\b/gi,'(₹)').replace(/\bid\b/gi,'ID').replace(/\bhhs\b/gi,'HHs').replace(/\b\w/g,c=>c.toUpperCase())}
 function bdgGender(g){const m={Male:'bdg-male',Female:'bdg-female'};return `<span class="bdg ${m[g]||'bdg-other'}">${esc(g||'—')}</span>`}
@@ -733,11 +754,11 @@ const RES={
   beneficiaries:{label:'Beneficiaries',sub:'Farmer & household beneficiaries — full demographic & economic profile',icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',badge:true,
     cols:[['beneficiary_id','ID'],['beneficiary_farmer_name','Name'],['gender','Gender','gender'],['caste','Social Order','caste'],['religion','Religion'],['village','Village'],['block','Block'],['primary_income_source','Income Source'],['current_income_per_annum_inr','Annual Income','inr']],
     filters:['programme_id','project_id','donor_id','caste','gender'],
-    fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['__bl_hdr','Baseline crop income — at registration · area + income per crop (all optional)','group'],['bl_paddy_area','Paddy — Area (acre)','num'],['bl_paddy_income','Paddy — Income (₹)','blinc'],['bl_millet_area','Millet — Area (acre)','num'],['bl_millet_income','Millet — Income (₹)','blinc'],['bl_vegetable_area','Vegetable — Area (acre)','num'],['bl_vegetable_income','Vegetable — Income (₹)','blinc'],['bl_tuber_area','Tuber Crop — Area (acre)','num'],['bl_tuber_income','Tuber Crop — Income (₹)','blinc'],['bl_pulses_area','Pulses — Area (acre)','num'],['bl_pulses_income','Pulses — Income (₹)','blinc'],['bl_oilseed_area','Oilseeds — Area (acre)','num'],['bl_oilseed_income','Oilseeds — Income (₹)','blinc'],['__bl_hdr2','Baseline other livelihood income','group'],['bl_mushroom_income','Mushroom Cultivation — Income (₹)','blinc'],['bl_goat_income','Goat Rearing — Income (₹)','blinc'],['bl_poultry_income','Backyard Poultry — Income (₹)','blinc'],['bl_micro_enterprise_income','Micro Enterprise — Income (₹)','blinc'],['bl_other_income','Other — Income (₹)','blinc'],['__bl_total','Total Baseline Income (auto — must equal the Annual Income above)','bltotal'],['total_land_acre','Total Land (acres) — auto-sums the crop areas','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
+    fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['organic_farming','Organic Farming at registration *','sel',['Yes','No']],['__bl_tbl','Baseline livelihood — at registration','bltable'],['total_land_acre','Total Land (acres) — auto-sums the crop areas','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
   crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — crops, alternative livelihoods, health, road safety, anything',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
     cols:[['beneficiary_id','Beneficiary'],['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['production_kg','Output Qty (kg)','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr'],['_incchg','Income Change — baseline → now','incchg']],
     filters:['programme_id','project_id','donor_id',['project_year','Year',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Crops / Interventions',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
-    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹)','num'],['self_consumption_kg','Self Consumption (kg)','num'],['net_profit_inr','Net Profit (₹)','num'],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
+    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹) — auto: quantity × rate','num'],['net_profit_inr','Net Profit (₹) — auto: income − expenditure','num'],['sold','Produce sold?','sel',['Yes','No']],['organic_farming','Organic Farming *','sel',['Yes','No']],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
   activities:{label:'Activity Progress',sub:'Every activity\'s multi-year targets & quarterly / monthly achievements — totals auto-computed',icon:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
     cols:[['project_activity','Activity'],['unit_of_measurement','Unit'],['total_target','Total Tgt','num'],['target_year_1','Y1 Tgt','num'],['y1_total_achievement','Y1 Ach','num'],['cumulative_achievement','Cum Ach','num']],
     filters:['programme_id','project_id','donor_id',['unit_of_measurement','Units',['Number','Percentage','INR','Event','Acres','Kilograms']]],
@@ -758,7 +779,7 @@ const RES={
     filters:['programme_id','project_id','donor_id'],
     fields:[['shg_id','SHG ID',1],['shg_name','SHG Name',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['date_of_inception','Date of Inception','date'],['no_of_members','No. of Members','num'],['monthly_savings_by_members_inr','Monthly Savings (₹)','num'],['bank_account_no','Bank Account No'],['bank_name','Bank Name'],['branch','Branch'],['ifsc_code','IFSC Code'],['remarks','Remarks']]},
   loans:{label:'SHG Loans',sub:'Loans received by SHGs — source, purpose & repayment status',icon:'M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
-    cols:[['shg_id','SHG'],['financial_year','FY'],['loan_amount_inr','Amount','inr'],['loan_source','Source'],['repayment_status','Status','status']],
+    cols:[['shg_id','SHG'],['_shg_village','Village'],['_shg_block','Block'],['financial_year','FY'],['loan_amount_inr','Amount','inr'],['loan_source','Source'],['repayment_status','Status','status']],
     filters:[['financial_year','FY',['2023-24','2024-25','2025-26','2026-27','2027-28','2028-29','2029-30','2030-31']],['repayment_status','Status',['Ongoing','Repaid','Overdue','Not applicable']],['loan_source','Source',['Bank linkage','Donor','Government scheme','Other']]],
     fields:[['loan_record_id','Loan ID',1],['shg_id','SHG — search by name','ref','shgs'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['financial_year','Financial Year','sel',['2023-24','2024-25','2025-26','2026-27','2027-28','2028-29','2029-30','2030-31']],['loan_receiving_date','Loan Date','date'],['loan_amount_inr','Loan Amount (₹)','num'],['loan_source','Loan Source','sel',['Bank linkage','Donor','Government scheme','Other']],['purpose_of_loan','Purpose'],['repayment_status','Repayment Status','sel',['Ongoing','Repaid','Overdue','Not applicable']],['remarks','Remarks']]},
   indicators:{label:'Indicators',sub:'Add UNLIMITED indicators for ANY sector — Output / Outcome / Process / Financial',icon:'M22 12h-4l-3 9L9 3l-3 9H2',
@@ -987,19 +1008,86 @@ function onProgrammeChange(){
 }
 /* Baseline livelihood income — live-sum the 7 activity incomes into the
    read-only "Total Baseline Income" box on the beneficiary form. */
-/* ONE canonical list of baseline income sources & crop areas — every total,
-   validation, export and chart derives from these (no drifting enumerations). */
-const BL_INCOME_KEYS=['bl_paddy_income','bl_millet_income','bl_vegetable_income','bl_tuber_income','bl_pulses_income','bl_oilseed_income','bl_mushroom_income','bl_goat_income','bl_poultry_income','bl_micro_enterprise_income','bl_other_income'];
-const BL_AREA_KEYS=['bl_paddy_area','bl_millet_area','bl_vegetable_area','bl_tuber_area','bl_pulses_area','bl_oilseed_area'];
+/* ════════ ONE canonical definition of the baseline livelihood sources ════════
+   [key, label, hasLand] — every total, validation, export, chart and report
+   derives from this single list, so the enumerations can never drift apart.
+   Per source we capture: Area (crops) · Production kg (crops) · Income ·
+   Expenditure — and NET (income − expenditure) is always COMPUTED, never
+   stored, so the two can never disagree. */
+const BL_SOURCES=[
+  ['paddy','Paddy',1],['millet','Millet',1],['vegetable','Vegetable',1],
+  ['tuber','Tuber Crop',1],['pulses','Pulses',1],['oilseed','Oilseeds',1],
+  ['mushroom','Mushroom Cultivation',0],['goat','Goat Rearing',0],
+  ['poultry','Backyard Poultry',0],['micro_enterprise','Micro Enterprise',0],['other','Other',0],
+];
+const BL_INCOME_KEYS=BL_SOURCES.map(s=>'bl_'+s[0]+'_income');
+const BL_EXP_KEYS   =BL_SOURCES.map(s=>'bl_'+s[0]+'_expenditure');
+const BL_AREA_KEYS  =BL_SOURCES.filter(s=>s[2]).map(s=>'bl_'+s[0]+'_area');
+const BL_KG_KEYS    =BL_SOURCES.filter(s=>s[2]).map(s=>'bl_'+s[0]+'_kg');
+/* Every baseline field the form owns — used by the form builder & the exports */
+const BL_ALL_KEYS=[].concat(BL_AREA_KEYS,BL_KG_KEYS,BL_INCOME_KEYS,BL_EXP_KEYS);
+const blSum=keys=>keys.reduce((s,k)=>{ const e=$('ff-'+k); return s+(e?(+e.value||0):0); },0);
+/* Baseline table → live totals. Gross income, expenditure and NET all update as
+   you type, and each row shows its own net. */
 function recalcBaselineTotal(){
-  let s=0; for(const k of BL_INCOME_KEYS){ const e=$('ff-'+k); if(e) s+=(+e.value||0); }
-  const t=$('bl-total-display'); if(t) t.value = s ? s.toFixed(2) : '';
+  let gTot=0,eTot=0;
+  for(const [k] of BL_SOURCES){
+    const inc=+((($('ff-bl_'+k+'_income')||{}).value)||0);
+    const exp=+((($('ff-bl_'+k+'_expenditure')||{}).value)||0);
+    gTot+=inc; eTot+=exp;
+    const cell=$('bl-net-'+k);
+    if(cell){ const n=inc-exp;
+      cell.textContent=(inc||exp)?fmtINR(n):'—';
+      cell.style.color=(inc||exp)?(n>=0?'var(--ok)':'var(--bad)'):'var(--t5)'; }
+  }
+  const g=$('bl-total-display'); if(g) g.value = gTot ? gTot.toFixed(2) : '';
+  const e2=$('bl-exp-display');  if(e2) e2.textContent = eTot ? fmtINR(eTot) : '—';
+  const n2=$('bl-net-display');
+  if(n2){ const net=gTot-eTot; n2.textContent=(gTot||eTot)?fmtINR(net):'—'; n2.style.color=net>=0?'var(--ok)':'var(--bad)'; }
+  const land=$('ff-total_land_acre');
+  if(land && land.dataset.auto==='1'){ const s=blSum(BL_AREA_KEYS); land.value=s?+s.toFixed(2):''; }
+}
+/* The whole baseline as ONE arranged table — replaces 25+ scattered boxes. */
+function blTableHTML(row){
+  const v=k=>{ const x=row[k]; return (x==null||x==='')?'':esc(x); };
+  const cell=(k,ph)=>`<td><input class="bl-in" id="ff-${k}" type="number" step="any" min="0" value="${v(k)}" placeholder="${ph||''}" oninput="recalcBaselineTotal()"></td>`;
+  const rows=BL_SOURCES.map(([k,label,land])=>`
+    <tr>
+      <td class="bl-src">${esc(label)}</td>
+      ${land?cell('bl_'+k+'_area'):'<td class="bl-na">—</td>'}
+      ${land?cell('bl_'+k+'_kg'):'<td class="bl-na">—</td>'}
+      ${cell('bl_'+k+'_income')}
+      ${cell('bl_'+k+'_expenditure')}
+      <td class="bl-net" id="bl-net-${k}">—</td>
+    </tr>`).join('');
+  return `<div class="f" style="grid-column:1/-1">
+    <div class="bl-wrap">
+      <div class="bl-head">
+        <div><div class="bl-title">🌱 Baseline livelihood — at registration</div>
+          <div class="bl-sub">Fill only what the household actually had. <b>Net</b> is calculated for you (income − expenditure); the Total must match the Annual Income above.</div></div>
+      </div>
+      <div class="bl-tblwrap"><table class="bl-tbl">
+        <thead><tr><th class="bl-src">Source</th><th>Area<span>acre</span></th><th>Production<span>kg</span></th><th>Income<span>₹ / year</span></th><th>Expenditure<span>₹ / year</span></th><th class="bl-net">Net<span>auto</span></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr>
+          <td class="bl-src">TOTAL</td><td class="bl-na">—</td><td class="bl-na">—</td>
+          <td><input class="bl-in bl-tot" id="bl-total-display" type="number" readonly title="Total baseline income — must equal the Annual Income at Registration"></td>
+          <td class="bl-net" id="bl-exp-display">—</td>
+          <td class="bl-net" id="bl-net-display">—</td>
+        </tr></tfoot>
+      </table></div>
+    </div></div>`;
 }
 /* ════════ Searchable combobox (typeahead) for ref dropdowns ════════
    A hidden #ff-<key> holds the chosen id, so saveForm & import stay unchanged. */
 const __COMBO={};
 /* Projects that are linked to a donor (donor_mappings) — the linkage that powers every
    auto-fill and every donor report. Unmapped projects are a broken chain. */
+/* SINGLE THEMATIC AREA — when the organisation runs just one (e.g. Livelihood),
+   asking for it on every form and filter is pure noise. If exactly one exists it is
+   selected automatically and its picker is hidden. Nothing is deleted: add a second
+   thematic area and every picker comes straight back. */
+function soleProgramme(){ const l=LOOKUPS.programmes||[]; return l.length===1 ? l[0].id : ''; }
 function mappedProjects(){ const m=LOOKUPS.project_donor||{}; return (LOOKUPS.projects||[]).filter(p=>m[p.id]); }
 function unmappedProjects(){ const m=LOOKUPS.project_donor||{}; return (LOOKUPS.projects||[]).filter(p=>!m[p.id]); }
 function projectListFor(pid){
@@ -1856,7 +1944,7 @@ function clearResFilter(key,fn){ if(fn==='__q'){ const s=$('res-search'); if(s)s
   PAGE.offset=0; reloadResource(key); if(key==='crops'||key==='beneficiaries') renderIncomeBanner(key); }
 function filterSelect(key,f){
   const onch=`onchange="applyFilter('${key}')"`;
-  if(f==='programme_id') return _sel('programme_id',onch,'All Thematic Areas',(LOOKUPS.programmes||[]).map(o=>[o.id,o.label]));
+  if(f==='programme_id'){ if(soleProgramme()) return ''; return _sel('programme_id',onch,'All Thematic Areas',(LOOKUPS.programmes||[]).map(o=>[o.id,o.label])); }
   if(f==='project_id')   return _sel('project_id',onch,'All Projects',(LOOKUPS.projects||[]).map(o=>[o.id,o.label]));
   if(f==='donor_id')     return _sel('donor_id',onch,'All Donors',(LOOKUPS.donors||[]).map(o=>[o.id,o.label]));
   if(f==='indicator_id') return _sel('indicator_id',onch,'All Indicators',(LOOKUPS.indicators||[]).map(o=>[o.id,o.label]));
@@ -2093,7 +2181,7 @@ async function openForm(key,id){
     if(type==='group') return `<div class="f" style="grid-column:1/-1;margin:8px 0 2px"><div style="font-family:'Plus Jakarta Sans';font-weight:700;font-size:12.5px;color:var(--brand);border-top:1px dashed var(--border-2);padding-top:13px">${esc(l)}</div></div>`;
     if(type==='pobj') return `<div class="f"><label>${esc(l)}</label><div id="pobj-inline"></div></div>`;   // objectives editor lives where the old Objective box was
     if(type==='geomore') return id?'':`<div class="f geo-more-cell" style="grid-column:1/-1" id="geo-more"></div>`;   // extra-places rows live INSIDE the form grid, right under Block/GP/Village
-    if(type==='bltotal'){ const _blt=BL_INCOME_KEYS.reduce((s,kk)=>s+(+row[kk]||0),0); return `<div class="f" style="grid-column:1/-1"><label>${esc(l)}</label><input id="bl-total-display" type="number" readonly value="${_blt?_blt.toFixed(2):''}" style="background:var(--brand-soft);color:var(--brand);font-weight:800;font-family:'JetBrains Mono'"></div>`; }
+    if(type==='bltable') return blTableHTML(row);   // the whole baseline as one arranged table
     let inp;
     if(type==='area')inp=`<textarea id="ff-${k}" rows="3">${esc(v)}</textarea>`;
     else if(type==='num')inp=`<input id="ff-${k}" type="number" step="any" value="${esc(v)}">`;
@@ -2168,8 +2256,15 @@ async function openForm(key,id){
       const e=$('ff-'+k); if(e){ e.readOnly=true; e.style.background='var(--bg-soft)'; e.title='🔒 Set by HQ — needs the 🎯 Targets right in Users & Access'; }
     });
   }
-  if(key==='beneficiaries') wireLandTotal();            // Total Land auto-sums the crop areas
+  if(key==='beneficiaries'){ wireLandTotal(); recalcBaselineTotal(); }   // land auto-sum + baseline table totals
   if(key==='crops') wireCropTotals();                   // Income = qty × rate · Net Profit = income − expenditure
+  // Only one thematic area? Fill it in and hide the picker — it is the same answer every time.
+  { const sp=soleProgramme();
+    if(sp && (cfg.fields||[]).some(f=>f[0]==='programme_id')){
+      if(!((($('ff-programme_id')||{}).value)||'')) comboSet('programme_id',sp);
+      if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(sp);
+      foHideField('programme_id');
+    } }
   if(key==='projects') pobjInlineInit(id,row);          // objectives editor inside the form
   if(key==='projects'){ const amt=$('ff-approved_amount_inr'); if(amt) amt.addEventListener('input',()=>{ amt.dataset.auto=''; }); }   // typing your own amount stops the auto-fill
   if(!id&&key==='loans') injectLoanShgFilter();
@@ -2201,6 +2296,7 @@ function formCancel(){
 function captureFormState(){
   const cfg=RES[__formKey]; const snap={};
   for(const f of ((cfg&&cfg.fields)||[])){ const k=f[0]; const e=$('ff-'+k); if(e) snap[k]=e.value; }
+  if(__formKey==='beneficiaries') for(const k of BL_ALL_KEYS){ const e=$('ff-'+k); if(e) snap[k]=e.value; }
   // widgets that live outside plain ff- inputs — captured so a nested "＋ New …" hop keeps them
   if(__formKey==='projects') snap.__objectives=JSON.stringify(__POBJ_DRAFT||[]);
   if(__formKey==='activities'&&ACT) snap.__act=JSON.stringify(ACT);
@@ -2213,6 +2309,7 @@ function restoreFormState(snap){
   for(const k in snap){ if(k==='programme_id'||k.slice(0,2)==='__') continue; const v=snap[k]; if(v===''||v==null) continue; if(__COMBO[k]) comboSet(k,v); else { const e=$('ff-'+k); if(e) e.value=v; } }
   if(snap.__objectives){ try{ __POBJ_DRAFT=JSON.parse(snap.__objectives)||[]; }catch(e){} pobjInlineRender(); }
   if(snap.__geoMore){ try{ __GEO_MORE=JSON.parse(snap.__geoMore)||[]; }catch(e){} geoMoreRender(); }
+  if(__formKey==='beneficiaries') recalcBaselineTotal();   // restored baseline rows → totals & net recompute
   if(snap.__act){ try{ ACT=JSON.parse(snap.__act)||ACT; }catch(e){} actRenderTable(); actSegSync(); actSummary();
     const b=$('act-addyear'); if(b&&ACT){ b.style.display=ACT.years>=ACT_MAX_YEARS?'none':''; b.textContent='＋ Add Year '+(ACT.years+1); } }
 }
@@ -3708,6 +3805,8 @@ async function saveForm(key,id){
   if(__SAVE_BUSY) return;
   const cfg=RES[key]; const payload={}; const idCol=AUTO_ID[key];
   for(const f of cfg.fields){ const el=$('ff-'+f[0]); if(el)payload[f[0]]=el.value; }
+  // Baseline table inputs live in their own grid (not in cfg.fields) — collect them too
+  if(key==='beneficiaries') for(const k of BL_ALL_KEYS){ const el=$('ff-'+k); if(el) payload[k]=el.value; }
   // required check (skip the auto-generated ID field)
   for(const f of cfg.fields){
     if(f[0]===idCol) continue;
@@ -3727,13 +3826,22 @@ async function saveForm(key,id){
   { const vErr=validatePayload(key,payload); if(vErr){ toast('⚠ '+vErr,'t-err'); return; } }
   // Donor↔Project linkage is MANDATORY — without it the project is invisible to Data Entry & donor reports
   if(key==='projects' && !String(payload.donor_id||'').trim()){ toast('⚠ Select the Donor funding this project — the donor↔project link powers Data Entry & every donor report','t-err'); return; }
-  // Baseline income validation — the activity breakdown total must match the registration income
+  // Organic Farming is mandatory on both forms — it is the before/after the indicator counts
+  if((key==='beneficiaries'||key==='crops') && !String(payload.organic_farming||'').trim()){
+    toast('⚠ Please answer Organic Farming (Yes / No) — the organic-farming indicator counts it','t-err'); return;
+  }
+  // Baseline income validation — the source breakdown total must match the registration income
   if(key==='beneficiaries'){
-    let blSum=0; for(const k of BL_INCOME_KEYS){ blSum += (+(payload[k])||0); }
+    let blTot=0; for(const k of BL_INCOME_KEYS){ blTot += (+(payload[k])||0); }
     const annualReg = +(payload.current_income_per_annum_inr)||0;
-    if(blSum>0 && Math.round(blSum)!==Math.round(annualReg)){
-      toast('⚠ Baseline activity total (₹'+Math.round(blSum).toLocaleString('en-IN')+') must equal Annual Income at Registration (₹'+Math.round(annualReg).toLocaleString('en-IN')+'). Please make them match.','t-err');
+    if(blTot>0 && Math.round(blTot)!==Math.round(annualReg)){
+      toast('⚠ Baseline income total (₹'+Math.round(blTot).toLocaleString('en-IN')+') must equal Annual Income at Registration (₹'+Math.round(annualReg).toLocaleString('en-IN')+'). Please make them match.','t-err');
       return;
+    }
+    // Expenditure can never exceed the income it belongs to (that would be a typo, not a loss)
+    for(const [k,label] of BL_SOURCES){
+      const inc=+(payload['bl_'+k+'_income'])||0, exp=+(payload['bl_'+k+'_expenditure'])||0;
+      if(exp>0 && inc>0 && exp>inc*5){ toast('⚠ '+label+': expenditure (₹'+Math.round(exp).toLocaleString('en-IN')+') looks far larger than its income — please check','t-err'); return; }
     }
   }
   // Project status auto-derived from dates (Planned → Ongoing → Completed)
@@ -3968,11 +4076,11 @@ async function renderDashboard(){
       <div class="chart-card"><div class="chart-head"><div class="chart-title">Income Sources</div></div><div class="chart-wrap"><canvas id="ch-income"></canvas></div></div>
       <div class="card" style="margin:0"><div class="card-title">Top Activity Progress</div><div class="card-sub">Top 5 activities · cumulative achievement vs target · follows the dashboard filter</div><div id="prog-list"></div></div>
     </div>
-    <div class="card"><div class="card-title">Projects &amp; their Objectives</div><div class="card-sub">Each project's full list of objectives, target beneficiaries &amp; status — live from the database</div><div id="proj-objectives"></div></div>
-    <div class="card"><div class="card-title">🤝 Donors &amp; the Projects they fund</div><div class="card-sub">Live from Donor Mappings — updates here the moment a mapping is added or changed</div><div id="donor-funded"></div></div>
     <div class="page-head" style="margin:26px 0 16px"><div><div class="page-title" style="font-size:22px">Custom Charts</div><div class="page-sub">Build your own from ANY data — beneficiaries, outputs, SHGs, loans, indicators, anything</div></div>
       <div class="page-actions">${can('write')?`<button class="btn btn-primary btn-sm" onclick="openAddChart()">+ Add Chart</button>`:''}</div></div>
-    <div class="chart-grid-2" id="custom-charts"></div>`;
+    <div class="chart-grid-2" id="custom-charts"></div>
+    <div class="card" style="margin-top:18px"><div class="card-title">Projects &amp; their Objectives</div><div class="card-sub">Each project's full list of objectives, target beneficiaries &amp; status — live from the database</div><div id="proj-objectives"></div></div>
+    <div class="card"><div class="card-title">🤝 Donors &amp; the Projects they fund</div><div class="card-sub">Live from Donor Mappings — follows the filters above</div><div id="donor-funded"></div></div>`;
   loadDash(); loadCharts();
 }
 function clearDash(){['d-prg','d-prj','d-don'].forEach(i=>{const e=$(i);if(e)e.value='';});onDashFilterChange();}
@@ -4668,6 +4776,14 @@ const HEADER_SYN = {
   bl_oilseed_area:         ['oilseed area','oilseeds area','baseline oilseed area','area oilseed'],
   bl_oilseed_income:       ['oilseed','oilseeds','oilseed income','oilseeds income','baseline oilseed'],
   bl_other_income:         ['other income','other baseline income','baseline other','misc income','miscellaneous income'],
+  organic_farming:         ['organic','organic farming','organic farmer','is organic','organic yes no'],
+  sold:                    ['sold','produce sold','sold produce','was it sold','sale'],
+  ...Object.fromEntries(BL_SOURCES.flatMap(([k,label,land])=>{
+    const L=label.toLowerCase();
+    const e=[['bl_'+k+'_expenditure',[L+' expenditure',L+' cost',L+' expense','baseline '+L+' expenditure','expenditure '+L]]];
+    if(land) e.push(['bl_'+k+'_kg',[L+' production',L+' kg',L+' quantity','baseline '+L+' production',L+' output']]);
+    return e;
+  })),
 };
 
 // ── Value normalization dictionaries ──
@@ -6030,8 +6146,28 @@ async function exportReportsView(){
       {Metric:'Approved budget (₹)', Value:N(k.budget)},{Metric:'Loan amount (₹)', Value:N(k.loan_total)},
       {Metric:'Beneficiary annual income — total (₹)', Value:N((r.beneficiaries||{}).income_total)},
       {Metric:'Total land (acre)', Value:N((r.beneficiaries||{}).land_total)},
+      ...(()=>{ const o=r.organic||{}; const bY=N(o.before_yes), bT=N(o.before_total), nY=N(o.now_yes), nT=N(o.now_total);
+        if(!bT && !nT) return [];
+        return [
+          {Metric:'Organic farming — BEFORE (at registration)', Value:bY},
+          {Metric:'Organic farming — BEFORE %', Value:bT?Math.round(1000*bY/bT)/10:0},
+          {Metric:'Organic farming — NOW (in production records)', Value:nY},
+          {Metric:'Organic farming — NOW %', Value:nT?Math.round(1000*nY/nT)/10:0},
+          {Metric:'Organic farming — newly adopted', Value:Math.max(0,nY-bY)},
+        ]; })(),
     ],
     cols:[{key:'Metric',label:'Metric',type:'text'},{key:'Value',label:'Value',type:'num'}] });
+  // 1b) Organic farming — before vs now, its own sheet so the donor sees the shift at a glance
+  { const o=r.organic||{}; const bY=N(o.before_yes),bN=N(o.before_no),bT=N(o.before_total),nY=N(o.now_yes),nT=N(o.now_total);
+    if(bT||nT) sheets.push({ name:'Organic Farming', title:'Organic farming — before vs now',
+      subtitle:'BEFORE = answer recorded at registration · NOW = beneficiaries with at least one organic production record · '+nowIST(),
+      rows:[
+        {Stage:'Before — practising organic', Beneficiaries:bY, 'Of total':bT, 'Share %':bT?Math.round(1000*bY/bT)/10:0},
+        {Stage:'Before — not practising',      Beneficiaries:bN, 'Of total':bT, 'Share %':bT?Math.round(1000*bN/bT)/10:0},
+        {Stage:'Now — practising organic',     Beneficiaries:nY, 'Of total':nT, 'Share %':nT?Math.round(1000*nY/nT)/10:0},
+        {Stage:'Newly adopted (now − before)', Beneficiaries:Math.max(0,nY-bY), 'Of total':nT, 'Share %':nT?Math.round(1000*Math.max(0,nY-bY)/nT)/10:0},
+      ],
+      cols:[{key:'Stage',label:'Stage',type:'text'},{key:'Beneficiaries',label:'Beneficiaries',type:'num'},{key:'Of total',label:'Of total',type:'num'},{key:'Share %',label:'Share %',type:'pct'}] }); }
   // 2) Activity performance (quarterly, from the report action)
   if((r.activities||[]).length) sheets.push({name:'Activities', title:'Activity performance', subtitle:nowIST(),
     rows: r.activities.map(a=>({Activity:a.nm, Unit:a.unit, 'Total Target':N(a.total_target),
@@ -6761,7 +6897,7 @@ async function generateDonorReport(){
         'Project Year':c.project_year, 'Season':c.season, 'Area / Scale':c.area_acre,
         'Expenditure (₹)':c.total_expenditure_inr,
         'Output Qty':c.production_kg, 'Rate (₹)':c.rate_inr_per_kg,
-        'Income (₹)':c.income_inr, 'Self Consumption':c.self_consumption_kg,
+        'Income (₹)':c.income_inr, 'Sold?':c.sold, 'Organic Farming':c.organic_farming,
         'Net Profit (₹)':c.net_profit_inr, 'Data Source':c.data_source,
       })),
       cols:[
@@ -6776,7 +6912,8 @@ async function generateDonorReport(){
         {key:'Output Qty',label:'Output Qty',type:'num'},
         {key:'Rate (₹)',label:'Rate (₹)',type:'inr'},
         {key:'Income (₹)',label:'Income (₹)',type:'inr'},
-        {key:'Self Consumption',label:'Self Consumption',type:'num'},
+        {key:'Sold?',label:'Sold?',type:'text'},
+        {key:'Organic Farming',label:'Organic Farming',type:'text'},
         {key:'Net Profit (₹)',label:'Net Profit (₹)',type:'inr'},
         {key:'Data Source',label:'Data Source',type:'text'},
       ],
@@ -7144,6 +7281,14 @@ function prettyCols(key, sample){
     return {key: (f[0].endsWith('_id') && f[0]!==AUTO_ID[key]) ? f[0]+'__name' : f[0],
             label: f[1], type: (t==='num'||t==='inr'||t==='date')? t : (t==='blinc'?'num':'text')};
   });
+  // Beneficiaries: the baseline table's own columns (area · kg · income · expenditure · net)
+  if(key==='beneficiaries') for(const [k,label,land] of BL_SOURCES){
+    if(land){ out.push({key:'bl_'+k+'_area',label:'Baseline · '+label+' Area (acre)',type:'num'},
+                       {key:'bl_'+k+'_kg',label:'Baseline · '+label+' Production (kg)',type:'num'}); }
+    out.push({key:'bl_'+k+'_income',label:'Baseline · '+label+' Income (₹)',type:'inr'},
+             {key:'bl_'+k+'_expenditure',label:'Baseline · '+label+' Expenditure (₹)',type:'inr'},
+             {key:'bl_'+k+'_net',label:'Baseline · '+label+' NET (₹)',type:'inr'});
+  }
   // Production export: the beneficiary's income change (baseline → all productions) rides along
   if(key==='crops') out.push({key:'_incchg_amt',label:'Income Change (₹) — baseline → till now',type:'inr'},
                              {key:'_incchg_pct',label:'Income Change (%)',type:'num'});
@@ -7156,6 +7301,12 @@ function prettyRow(row, key){
     const k = f[0], label=f[1];
     if(k.endsWith('_id') && k!==AUTO_ID[key] && row[k+'__name']!=null) o[k+'__name'] = row[k+'__name'];
     else o[k] = row[k];
+  }
+  if(key==='beneficiaries') for(const [k,,land] of BL_SOURCES){
+    if(land){ o['bl_'+k+'_area']=row['bl_'+k+'_area']; o['bl_'+k+'_kg']=row['bl_'+k+'_kg']; }
+    const inc=+row['bl_'+k+'_income']||0, exp=+row['bl_'+k+'_expenditure']||0;
+    o['bl_'+k+'_income']=row['bl_'+k+'_income']; o['bl_'+k+'_expenditure']=row['bl_'+k+'_expenditure'];
+    o['bl_'+k+'_net']=(inc||exp)? +(inc-exp).toFixed(2) : '';
   }
   if(key==='crops'){
     const bl=+row._bl_total||0, tot=+row._cum_income||0, ny=Math.max(1,+row._years_n||1);

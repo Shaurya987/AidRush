@@ -711,7 +711,14 @@ if ($action==='dashboard') {
     'loan_total'=>$sum('loans','loan_amount_inr'),
     'ach'=>$sum('activities','cumulative_achievement'),
     'tgt'=>$sum('activities','total_target'),
-    'crop_income'=>$sum('crops','income_inr'),
+    // NET is what a household actually keeps, so every income comparison uses it.
+    // Rows entered before Net Profit existed fall back to their gross income.
+    'crop_income'=>(function() use($pdo,$whereFor){
+      [$w,$v]=$whereFor('crops');
+      $st=$pdo->prepare("SELECT COALESCE(SUM(COALESCE(net_profit_inr,income_inr)),0) s FROM crops$w"); $st->execute($v);
+      return (float)$st->fetch()['s'];
+    })(),
+    'crop_income_gross'=>$sum('crops','income_inr'),
   ];
   // Distinct Districts & Blocks from the Geography master (filter-aware).
   // Built explicitly (NOT via whereFor): a chosen Project WINS over the auto-selected
@@ -872,16 +879,24 @@ if ($action==='dashboard') {
                  'mushroom'=>'bl_mushroom_income','goat'=>'bl_goat_income','poultry'=>'bl_poultry_income',
                  'micro'=>'bl_micro_enterprise_income','other'=>'bl_other_income' ];
   $blActCols = array_filter($blActCols, fn($c)=>in_array($c,$benCols));
+  // Baseline NET = income − expenditure per source (expenditure columns arrive with
+  // upgrade13; where a database or a row has none, net simply equals gross income).
+  $blExpCols = [];
+  foreach($blActCols as $a=>$c){ $ec=str_replace('_income','_expenditure',$c); if(in_array($ec,$benCols)) $blExpCols[$a]=$ec; }
+  $blNetOf = function($a) use($blActCols,$blExpCols){
+    $inc="COALESCE({$blActCols[$a]},0)";
+    return isset($blExpCols[$a]) ? "($inc-COALESCE({$blExpCols[$a]},0))" : $inc;
+  };
   $hasBL   = in_array('bl_paddy_income', $benCols);
   [$wB,$vB] = $whereFor('beneficiaries');
   [$wC,$vC] = $whereFor('crops');
   $acts = array_keys($blActCols); if(!$acts) $acts=['paddy','millet','vegetable','mushroom','goat','poultry','micro'];
   $blByAct = array_fill_keys($acts, 0.0);
   if($hasBL){
-    $blExpr = '('.implode('+',array_map(fn($c)=>"COALESCE($c,0)",array_values($blActCols))).')';
+    $blExpr = '('.implode('+',array_map($blNetOf,$acts)).')';
     $stB = $pdo->prepare("SELECT COALESCE(SUM(CASE WHEN $blExpr>0 THEN $blExpr ELSE COALESCE(current_income_per_annum_inr,0) END),0) s FROM beneficiaries$wB");
     $stB->execute($vB); $kpi['baseline_income'] = (float)$stB->fetch()['s'];
-    $sel=[]; foreach($blActCols as $a=>$c){ $sel[]="COALESCE(SUM($c),0) `$a`"; }
+    $sel=[]; foreach($acts as $a){ $sel[]="COALESCE(SUM(".$blNetOf($a)."),0) `$a`"; }
     $stBA = $pdo->prepare("SELECT ".implode(', ',$sel)." FROM beneficiaries$wB");
     $stBA->execute($vB); $r = $stBA->fetch();
     foreach($acts as $a){ $blByAct[$a] = (float)($r[$a]??0); }
@@ -889,18 +904,20 @@ if ($action==='dashboard') {
     $stB = $pdo->prepare("SELECT COALESCE(SUM(COALESCE(current_income_per_annum_inr,0)),0) s FROM beneficiaries$wB");
     $stB->execute($vB); $kpi['baseline_income'] = (float)$stB->fetch()['s'];
   }
+  // Current side also uses NET (falling back to gross for rows entered before Net Profit)
+  $NP="COALESCE(net_profit_inr,income_inr)";
   $stCA = $pdo->prepare("SELECT
-      COALESCE(SUM(income_inr),0) total,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='paddy' THEN income_inr ELSE 0 END),0) paddy,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='millet' THEN income_inr ELSE 0 END),0) millet,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='vegetable' THEN income_inr ELSE 0 END),0) vegetable,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop)) IN ('tuber crop','tuber') THEN income_inr ELSE 0 END),0) tuber,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='pulses' THEN income_inr ELSE 0 END),0) pulses,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop)) IN ('oilseeds','oilseed') THEN income_inr ELSE 0 END),0) oilseed,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('mushroom','mushroom cultivation') OR LOWER(TRIM(crop))='mushroom' THEN income_inr ELSE 0 END),0) mushroom,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('goatery','goat','goat rearing') THEN income_inr ELSE 0 END),0) goat,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('poultry','backyard poultry') THEN income_inr ELSE 0 END),0) poultry,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('micro enterprise','petty shop','tailoring','dairy','bee keeping') THEN income_inr ELSE 0 END),0) micro
+      COALESCE(SUM($NP),0) total,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='paddy' THEN $NP ELSE 0 END),0) paddy,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='millet' THEN $NP ELSE 0 END),0) millet,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='vegetable' THEN $NP ELSE 0 END),0) vegetable,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop)) IN ('tuber crop','tuber') THEN $NP ELSE 0 END),0) tuber,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='pulses' THEN $NP ELSE 0 END),0) pulses,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop)) IN ('oilseeds','oilseed') THEN $NP ELSE 0 END),0) oilseed,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('mushroom','mushroom cultivation') OR LOWER(TRIM(crop))='mushroom' THEN $NP ELSE 0 END),0) mushroom,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('goatery','goat','goat rearing') THEN $NP ELSE 0 END),0) goat,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('poultry','backyard poultry') THEN $NP ELSE 0 END),0) poultry,
+      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('micro enterprise','petty shop','tailoring','dairy','bee keeping') THEN $NP ELSE 0 END),0) micro
     FROM crops$wC");
   $stCA->execute($vC); $cur = $stCA->fetch();
   $curByAct = array_fill_keys($acts, 0.0);
@@ -918,7 +935,7 @@ if ($action==='dashboard') {
   $income_pairs=['n'=>0,'baseline'=>0.0,'current'=>0.0];
   try{
     $wCp0 = $wC ? ($wC.' AND ') : ' WHERE ';
-    $stPB=$pdo->prepare("SELECT beneficiary_id bid, COALESCE(SUM(income_inr),0) cur FROM crops".$wCp0." beneficiary_id IS NOT NULL AND TRIM(beneficiary_id)<>'' GROUP BY beneficiary_id");
+    $stPB=$pdo->prepare("SELECT beneficiary_id bid, COALESCE(SUM(COALESCE(net_profit_inr,income_inr)),0) cur FROM crops".$wCp0." beneficiary_id IS NOT NULL AND TRIM(beneficiary_id)<>'' GROUP BY beneficiary_id");
     $stPB->execute($vC);
     $curBy=[]; foreach($stPB->fetchAll() as $r){ $curBy[$r['bid']]=(float)$r['cur']; }
     if($curBy){
@@ -948,7 +965,7 @@ if ($action==='dashboard') {
   // ── Income over time — current income per project year (trend), filter-aware ──
   $income_by_year=[];
   try{
-    $stY=$pdo->prepare("SELECT COALESCE(NULLIF(TRIM(project_year),''),'Unspecified') y, COALESCE(SUM(income_inr),0) s FROM crops$wC GROUP BY y ORDER BY y");
+    $stY=$pdo->prepare("SELECT COALESCE(NULLIF(TRIM(project_year),''),'Unspecified') y, COALESCE(SUM(COALESCE(net_profit_inr,income_inr)),0) s FROM crops$wC GROUP BY y ORDER BY y");
     $stY->execute($vC);
     foreach($stY->fetchAll() as $r){ $income_by_year[]=['year'=>$r['y'],'income'=>(float)$r['s']]; }
   }catch(Exception $e){}
@@ -1126,10 +1143,34 @@ if ($action==='report') {
     $st->execute([$donor]); $donorRows=$st->fetchAll();
   }
 
+  /* ── ORGANIC FARMING — before (at registration) vs now (from production records) ──
+     "How many practised it before, and how many practise it now" is a headline the
+     donor asks for, so it is counted here, filter-aware, in one place.            */
+  $organic=['before_yes'=>0,'before_no'=>0,'before_total'=>0,'now_yes'=>0,'now_total'=>0];
+  try{
+    if(in_array('organic_farming',table_columns('beneficiaries'))){
+      $stO=$pdo->prepare("SELECT COALESCE(NULLIF(TRIM(organic_farming),''),'—') k, COUNT(*) c FROM `beneficiaries`$wB GROUP BY k");
+      $stO->execute($pB);
+      foreach($stO->fetchAll() as $r){
+        $organic['before_total']+=(int)$r['c'];
+        if(strcasecmp($r['k'],'Yes')===0) $organic['before_yes']=(int)$r['c'];
+        elseif(strcasecmp($r['k'],'No')===0) $organic['before_no']=(int)$r['c'];
+      }
+    }
+    if(in_array('organic_farming',table_columns('crops'))){
+      $wCo = $wC ? ($wC.' AND ') : ' WHERE ';
+      $stN=$pdo->prepare("SELECT COUNT(DISTINCT beneficiary_id) c FROM `crops`".$wCo."LOWER(TRIM(organic_farming))='yes'");
+      $stN->execute($pC); $organic['now_yes']=(int)$stN->fetch()['c'];
+      $stT=$pdo->prepare("SELECT COUNT(DISTINCT beneficiary_id) c FROM `crops`".$wCo."beneficiary_id IS NOT NULL AND TRIM(beneficiary_id)<>''");
+      $stT->execute($pC); $organic['now_total']=(int)$stT->fetch()['c'];
+    }
+  }catch(Exception $e){}
+
   out([
     'period'=>$period,
     'filters'=>['donor_id'=>$donor,'programme_id'=>$prog,'project_id'=>$proj,'from'=>$from,'to'=>$to],
     'generated_at'=>ist_now().' IST',
+    'organic'=>$organic,
     'beneficiaries'=>['total'=>(int)$bn['c'],'income_total'=>(float)$bn['inc'],'land_total'=>(float)$bn['land']],
     'by_caste'=>$byCaste,'by_gender'=>$byGender,'by_block'=>$byBlock,
     'activities'=>$acts,
@@ -1297,10 +1338,24 @@ if ($method==='GET') {
         $stb->execute($bids); foreach($stb->fetchAll() as $r2){ $bl[$r2['bid']]=(float)$r2['bl']; }
         // total income AND how many distinct project years it spans — the baseline is an
         // ANNUAL figure, so the honest comparison is income PER YEAR, not the running sum
-        $stc=db()->prepare("SELECT beneficiary_id bid, COALESCE(SUM(income_inr),0) s, COUNT(DISTINCT NULLIF(TRIM(project_year),'')) ny FROM crops WHERE beneficiary_id IN ($ph) GROUP BY beneficiary_id");
+        $stc=db()->prepare("SELECT beneficiary_id bid, COALESCE(SUM(COALESCE(net_profit_inr,income_inr)),0) s, COUNT(DISTINCT NULLIF(TRIM(project_year),'')) ny FROM crops WHERE beneficiary_id IN ($ph) GROUP BY beneficiary_id");
         $stc->execute($bids); foreach($stc->fetchAll() as $r2){ $cum[$r2['bid']]=(float)$r2['s']; $yrs[$r2['bid']]=max(1,(int)$r2['ny']); }
       }catch(Exception $e){}
       foreach($rows as &$r){ $bid=$r['beneficiary_id']??''; $r['_bl_total']=$bl[$bid]??null; $r['_cum_income']=$cum[$bid]??null; $r['_years_n']=$yrs[$bid]??1; } unset($r);
+    }
+  }
+  // SHG Loan rows: attach the SHG's village & block, so a loan is placeable at a glance
+  if($resource==='loans' && $rows){
+    $sids=[]; foreach($rows as $r){ if(!empty($r['shg_id'])) $sids[$r['shg_id']]=1; }
+    $sids=array_keys($sids);
+    if($sids){
+      try{
+        $ph=implode(',',array_fill(0,count($sids),'?'));
+        $sts=db()->prepare("SELECT shg_id, village, block FROM shgs WHERE shg_id IN ($ph)");
+        $sts->execute($sids); $sm=[];
+        foreach($sts->fetchAll() as $r2){ $sm[$r2['shg_id']]=$r2; }
+        foreach($rows as &$r){ $s=$sm[$r['shg_id']??'']??null; $r['_shg_village']=$s['village']??null; $r['_shg_block']=$s['block']??null; } unset($r);
+      }catch(Exception $e){}
     }
   }
   // Indicator-progress rows: attach the indicator's TOTAL project target — progress is

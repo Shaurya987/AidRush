@@ -254,6 +254,8 @@ Master Data is set up early and touched rarely — but understanding it explains
 
 **Thematic Areas** — your programme themes (livelihoods, health…). Each carries its objectives with status, which feed the Dashboard's objectives panel. Everything else files itself under a thematic area through the project.
 
+> **Running just one thematic area?** If exactly one exists, the system stops asking: it is selected automatically on every form and its filter disappears, because the answer is always the same. Add a second and every picker comes straight back — nothing is deleted or hidden permanently.
+
 **Donors** — every funder, shown as cards: type badge (CSR / Foundation / Government…), contact person, email/phone, **approved budget**, and live counts of funded projects and reached beneficiaries. A card showing **"⚠ Not funding any project yet"** means this donor exists in the address book but the chain hasn't been connected — until it is, nothing can appear in that donor's reports. The card links you straight to the fix.
 
 **Projects** — your delivery units. Key points:
@@ -279,10 +281,18 @@ Master Data is set up early and touched rarely — but understanding it explains
 - **Contact number** — must be a real 10-digit Indian mobile; +91 or a leading 0 are accepted and cleaned automatically.
 - **Geography** — pick the village; district/block/GP fill themselves.
 - **Land & livelihood** — landholding and income source classifications. **Total Land (acres) adds itself up** from the paddy/millet/vegetable areas you type in the baseline section (you can still overtype it if the household holds other land).
-- **Baseline income breakdown** — income at the time of registration, split by source: **crops with their land area** (paddy, millet, vegetable, tuber crop, pulses, oilseeds) and **other livelihoods** (mushroom, goat, poultry, micro-enterprise, other income) — every one optional, with a total that adds itself up and must equal the Annual Income at Registration. All sources flow into the income views, the dashboard Before-vs-After chart and the Income Impact report. **Take two extra minutes here** — this baseline is the "before" in every Before-vs-After income chart and in the Avg. Income Change headline. Without it, impact cannot be shown for this person.
+- **Organic Farming (Yes / No)** — required. This is the "before" half of the organic-farming indicator; the "after" comes from the production records.
+- **Baseline livelihood — one table, not a wall of boxes.** Every income source is a row: **crops** (paddy, millet, vegetable, tuber crop, pulses, oilseeds) with *Area · Production kg · Income · Expenditure*, then **other livelihoods** (mushroom, goat, poultry, micro-enterprise, other) with *Income · Expenditure*. Fill only what the household actually had.
+  - **Net is calculated for you** on every row and in the TOTAL line (income − expenditure) — it is never typed and never stored, so the two figures can never disagree.
+  - The **Total income must equal the Annual Income at Registration**, and Total Land fills itself from the crop areas.
+  - Every source flows into the income views, the dashboard Before-vs-After chart and the Income Impact report. **Take two extra minutes here** — this baseline is the "before" in every Before-vs-After income chart and in the Avg. Income Change headline. Without it, impact cannot be shown for this person.
 - Each beneficiary row later offers an **income view** — their baseline vs current income and a year-by-year trend.
 
 **Production & Output Progress** — the actuals against HQ's output targets: any intervention output (a harvest, a livelihoods batch, a health camp result…). Pick the beneficiary (the picker can be narrowed by village) and their context fills in; then record the intervention, season/year, quantity, income and net profit (a loss — negative profit — is allowed, because a loss is real data). These records feed the income trend and the outputs sheets of every report.
+
+On the form, **Income = Output Quantity × Rate** and **Net Profit = Income − Expenditure** fill in automatically as you type (type your own figure in either and that box stops auto-filling — a health camp has no kg × rate). **Produce sold? (Yes/No)** replaces the old self-consumption quantity, and **Organic Farming (Yes/No)** is required — it is the "after" half of the organic indicator.
+
+> **Income figures are NET everywhere.** Every comparison — dashboard, banners, the income view, reports — uses what the household actually keeps (income − expenditure), on both the baseline and the production side. Records entered before Net Profit existed fall back to their gross income, so nothing breaks.
 
 Two things make this list donor-proof:
 - **A Crop/Intervention or Season filter is required before anything displays.** One beneficiary legitimately has several production rows (Paddy · Kharif, Millet · Rabi…) — the filter shows each person once per view, so nobody ever *looks* duplicated. The records themselves stay together as one person's story; this is display only, and reports are unaffected. The crop & season filters combine with the thematic/project/donor chain like every other filter.
@@ -298,7 +308,7 @@ On the list, the **Year / Quarter switcher** in the filter bar changes what the 
 
 **Self-Help Groups** — each SHG with its village, project (and through it, donor and thematic area), members, roles and savings. The membership and savings figures roll up into the Dashboard and reports.
 
-**SHG Loans** — recording a loan takes seconds *because of the chain*:
+**SHG Loans** — the list shows each loan's **Village and Block** (pulled from its SHG), so a loan is placeable at a glance. Recording one takes seconds *because of the chain*:
 1. Optionally narrow with **🔎 Find SHG by Thematic Area / Project**.
 2. **Pick the SHG.** That's it — the loan inherits the SHG's donor, thematic area and project silently (you won't even see those fields; there is nothing to get wrong).
 3. Enter the loan's own facts: financial year, amount, source (bank linkage…), purpose, date received (never in the future), repayment status.
