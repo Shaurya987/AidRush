@@ -29,8 +29,11 @@ if(window.top!==window.self){ try{ window.top.location=window.location; }catch(e
      highlight (logo mark, accent bars, the "add another" actions).
      Semantic colours below (ok / warn / bad) and the chart palette are intentionally
      LEFT ALONE — a warning must stay a warning, and chart series must stay tellable apart. */
-  --brand:#13425C;--brand-2:#1C5A7A;--brand-soft:#eaf1f6;--brand-glow:rgba(19,66,92,.18);
-  --gold:#E2A107;--gold-2:#F0B429;--gold-soft:#fdf6e6;--gold-ink:#6b4a02;
+  /* NAVY — depth: sidebar, headers, primary actions, titles. Never blended with gold. */
+  --navy-900:#0B2C41;--navy-800:#103B55;--navy-700:#14496A;
+  --brand:#14547A;--brand-2:#1B6B94;--brand-soft:#e8f1f7;--brand-glow:rgba(20,84,122,.20);
+  /* GOLD — the single highlight: logo, active state, key numbers, "add" actions. */
+  --gold:#E2A107;--gold-2:#F5B92A;--gold-3:#FFD469;--gold-soft:#fdf5e3;--gold-ink:#5C3F02;--gold-glow:rgba(226,161,7,.30);
   --accent:#0891b2;--accent-2:#06b6d4;--accent-soft:#ecfeff;
   --ok:#059669;--ok-2:#10b981;--ok-soft:#ecfdf5;
   --warn:#d97706;--warn-2:#f59e0b;--warn-soft:#fffbeb;
@@ -84,19 +87,24 @@ select.r-inp{padding-right:32px}
 .geo-more-add{width:auto;display:inline-flex;padding:9px 20px;font-size:13px;border-radius:8px;flex-shrink:0}
 .geo-more-note{font-size:11.5px;color:var(--t4);line-height:1.5;flex:1;min-width:220px}
 .geo-more-note b{color:var(--brand)}
+/* Local Governance — one section, two record types as tabs */
+.lg-tabs{display:inline-flex;background:#fff;border:1px solid var(--border);border-radius:11px;padding:4px;gap:4px;margin-bottom:16px;box-shadow:var(--sh-1)}
+.lg-tab{border:none;background:transparent;padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:700;color:var(--t3);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.lg-tab:hover{color:var(--navy-800);background:var(--bg-soft)}
+.lg-tab.on{background:var(--navy-800);color:#fff;box-shadow:0 3px 10px rgba(11,44,65,.22)}
 /* Logged Indicators — computed M&E cards */
 .li10-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
-.li10-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:var(--sh-1);position:relative;overflow:hidden;transition:all .2s}
-.li10-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--brand))}
-.li10-card:hover{transform:translateY(-2px);box-shadow:var(--sh-3)}
+.li10-card{background:linear-gradient(170deg,var(--gold-soft),#fff 62%);border:1px solid #f0dfb4;border-radius:14px;padding:17px 19px 15px;box-shadow:var(--sh-1);position:relative;overflow:hidden;transition:all .2s}
+.li10-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--gold)}
+.li10-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(226,161,7,.20);border-color:var(--gold-2)}
 .li10-wait{opacity:.72}
 .li10-top{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px}
-.li10-n{width:26px;height:26px;border-radius:8px;background:var(--accent-soft,var(--brand-soft));color:var(--accent,var(--brand));font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.li10-name{font-family:'Plus Jakarta Sans';font-weight:700;font-size:13.5px;color:var(--t1);line-height:1.4}
+.li10-n{width:28px;height:28px;border-radius:9px;background:var(--gold);color:var(--navy-900);font-weight:800;font-size:13.5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px var(--gold-glow)}
+.li10-name{font-family:'Plus Jakarta Sans';font-weight:700;font-size:13.5px;color:var(--navy-800);line-height:1.4}
 .li10-val{font-family:'JetBrains Mono';font-weight:800;font-size:26px;letter-spacing:-.5px;display:flex;align-items:baseline;gap:10px}
-.li10-nodata{font-size:11px;color:var(--t4);font-family:'Inter',sans-serif;font-weight:600;background:var(--bg-soft);border-radius:999px;padding:3px 10px}
+.li10-nodata{font-size:11px;color:var(--gold-ink);font-family:'Inter',sans-serif;font-weight:700;background:rgba(226,161,7,.16);border-radius:999px;padding:3px 10px}
 .li10-detail{font-size:12.5px;color:var(--t2);margin-top:8px;line-height:1.55}
-.li10-formula{font-size:11px;color:var(--t4);margin-top:9px;border-top:1px dashed var(--border);padding-top:8px;font-family:'JetBrains Mono'}
+.li10-formula{font-size:11px;color:var(--gold-ink);opacity:.75;margin-top:10px;border-top:1px dashed #e6cf9d;padding-top:8px;font-family:'JetBrains Mono'}
 /* In-app User Manual */
 .man-tbl{width:100%;border-collapse:collapse;font-size:13px}
 .man-tbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
@@ -259,34 +267,38 @@ a{color:inherit;text-decoration:none}
 .demo-hint strong{color:var(--brand);font-weight:600;display:block;margin-bottom:8px}
 .demo-acct{display:block;padding:7px 11px;margin:5px 0;background:#fff;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .12s;font-size:12px;color:var(--t2)}
 .demo-acct:hover{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);transform:translateX(2px)}
-.btn-login{width:100%;background:linear-gradient(135deg,var(--brand) 0%,var(--brand-2) 60%,var(--gold) 140%);color:#fff;border:none;border-radius:11px;padding:14px;font-size:16px;font-weight:700;font-family:'Plus Jakarta Sans';letter-spacing:.2px;transition:all .18s;box-shadow:var(--sh-glow)}
-.btn-login:hover{transform:translateY(-1px);box-shadow:0 12px 36px rgba(79,70,229,.28)}
+.btn-login{width:100%;background:var(--navy-800);color:#fff;border:none;border-radius:11px;padding:14px;font-size:16px;font-weight:700;font-family:'Plus Jakarta Sans';letter-spacing:.2px;transition:all .18s;box-shadow:0 6px 20px rgba(11,44,65,.28);position:relative;overflow:hidden}
+.btn-login::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--gold)}
+.btn-login:hover{background:var(--navy-700);transform:translateY(-1px);box-shadow:0 12px 32px rgba(11,44,65,.34)}
 .login-error{display:none;background:var(--bad-soft);color:var(--bad);font-size:12.5px;padding:10px 14px;border-radius:10px;margin-top:12px;border:1px solid #fecaca;font-weight:500}
 #app{display:none;min-height:100vh}
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sb-w);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;box-shadow:var(--sh-2)}
-.sb-head{padding:22px 20px 16px;border-bottom:1px solid var(--border)}
-.sb-brand{display:flex;align-items:center;gap:11px}
-.sb-mark{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--gold));color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans';font-weight:800;font-size:16px;box-shadow:var(--sh-glow)}
-.sb-name{font-family:'Plus Jakarta Sans';font-size:17px;font-weight:800;letter-spacing:-.2px;color:var(--t1)}
-.sb-sub{font-size:11.5px;color:var(--t3);font-weight:500;margin-top:1px;letter-spacing:.2px}
-.sb-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:11px}
-.sb-meta span{font-size:10.5px;font-family:'JetBrains Mono';font-weight:500;color:var(--t3);background:var(--bg-soft);padding:3px 7px;border-radius:5px;letter-spacing:.3px}
+/* ═══ SIDEBAR — solid NAVY. Gold is the only accent on it, used alone. ═══ */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sb-w);background:var(--navy-900);display:flex;flex-direction:column;z-index:50;box-shadow:4px 0 24px rgba(11,44,65,.18)}
+.sb-head{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.09);position:relative}
+.sb-head::after{content:'';position:absolute;left:20px;bottom:-1px;width:46px;height:2px;background:var(--gold);border-radius:2px}
+.sb-brand{display:flex;align-items:center;gap:12px}
+.sb-mark{width:42px;height:42px;border-radius:12px;background:var(--gold);color:var(--navy-900);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans';font-weight:800;font-size:17px;box-shadow:0 4px 14px var(--gold-glow);overflow:hidden}
+.sb-name{font-family:'Plus Jakarta Sans';font-size:17px;font-weight:800;letter-spacing:-.2px;color:#fff}
+.sb-sub{font-size:11.5px;color:var(--gold-3);font-weight:600;margin-top:2px;letter-spacing:.3px}
 .sb-nav{flex:1;padding:14px 12px;overflow-y:auto}
-.nav-section{font-size:11px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:1px;padding:14px 10px 7px;margin-top:4px}
+.sb-nav::-webkit-scrollbar{width:6px}
+.sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:99px}
+.nav-section{font-size:10.5px;font-weight:800;color:rgba(255,255,255,.42);text-transform:uppercase;letter-spacing:1.2px;padding:15px 10px 7px;margin-top:4px}
 .nav-section:first-child{margin-top:0}
-.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;color:var(--t2);font-size:14.5px;font-weight:500;cursor:pointer;transition:all .12s;margin-bottom:1px;position:relative}
-.nav-item:hover{background:var(--bg-soft);color:var(--t1)}
-.nav-item.active{background:linear-gradient(135deg,var(--brand-soft),rgba(226,161,7,.10));color:var(--brand);font-weight:700}
-.nav-item.active::before{content:'';position:absolute;left:-12px;top:6px;bottom:6px;width:3px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,var(--brand),var(--gold))}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;color:rgba(255,255,255,.80);font-size:14.5px;font-weight:500;cursor:pointer;transition:all .14s;margin-bottom:2px;position:relative}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(226,161,7,.16);color:var(--gold-3);font-weight:700}
+.nav-item.active::before{content:'';position:absolute;left:-12px;top:5px;bottom:5px;width:3px;border-radius:0 4px 4px 0;background:var(--gold)}
+.nav-item.active svg{color:var(--gold)}
 .nav-item svg{width:18px;height:18px;flex-shrink:0}
-.nav-badge{margin-left:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;letter-spacing:.4px;background:var(--brand-soft);color:var(--brand)}
-.sb-foot{padding:14px;border-top:1px solid var(--border)}
-.sb-user{display:flex;align-items:center;gap:11px;padding:9px;border-radius:10px;background:var(--bg-soft)}
-.sb-avatar{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
-.sb-uname{font-size:14px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-urole{font-size:11.5px;color:var(--t3);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-logout{margin-top:10px;width:100%;padding:9px;background:var(--bg-soft);color:var(--t2);border:1px solid var(--border);border-radius:9px;font-size:13.5px;font-weight:600;transition:all .12s}
-.sb-logout:hover{background:var(--bad-soft);color:var(--bad);border-color:#fecaca}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;letter-spacing:.4px;background:var(--gold);color:var(--navy-900)}
+.sb-foot{padding:14px;border-top:1px solid rgba(255,255,255,.09)}
+.sb-user{display:flex;align-items:center;gap:11px;padding:9px;border-radius:10px;background:rgba(255,255,255,.07)}
+.sb-avatar{width:36px;height:36px;border-radius:9px;background:var(--gold);color:var(--navy-900);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.sb-uname{font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-urole{font-size:11.5px;color:rgba(255,255,255,.55);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-logout{margin-top:10px;width:100%;padding:9px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.13);border-radius:9px;font-size:13.5px;font-weight:600;transition:all .14s}
+.sb-logout:hover{background:rgba(239,68,68,.18);color:#fecaca;border-color:rgba(239,68,68,.35)}
 .main{margin-left:var(--sb-w);min-height:100vh;padding:26px 32px}
 .page{display:none;animation:fadeIn .25s}
 .page.active{display:block}
@@ -294,7 +306,7 @@ a{color:inherit;text-decoration:none}
 /* position+z-index lift the page-head's stacking context above sticky table headers —
    without it the entry animation (fill-mode:both) traps the Export ▾ menu UNDER the thead */
 .page-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:24px;position:relative;z-index:30}
-.page-title{font-family:'Plus Jakarta Sans';font-size:30px;font-weight:800;letter-spacing:-.6px;color:var(--t1);line-height:1.15}
+.page-title{font-family:'Plus Jakarta Sans';font-size:30px;font-weight:800;letter-spacing:-.6px;color:var(--navy-800);line-height:1.15}
 .page-sub{color:var(--t3);font-size:14.5px;margin-top:5px;max-width:680px}
 .page-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12.5px;font-weight:600;font-family:'JetBrains Mono'}
@@ -445,7 +457,7 @@ tbody tr:last-child td{border-bottom:none}
 .print-only{display:none}
 #print-header .ph-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
 #print-header .ph-brand{display:flex;align-items:center;gap:12px}
-#print-header .ph-mark{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--gold));color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans';font-weight:800;font-size:18px}
+#print-header .ph-mark{width:42px;height:42px;border-radius:11px;background:var(--gold);color:var(--navy-900);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans';font-weight:800;font-size:18px}
 #print-header .ph-org{font-family:'Plus Jakarta Sans';font-size:19px;font-weight:800;color:#0b1220;letter-spacing:-.3px}
 #print-header .ph-org-sub{font-size:11.5px;color:#5b6a85;margin-top:1px}
 #print-header .ph-meta{text-align:right}
@@ -505,7 +517,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .empty-title{font-family:'Plus Jakarta Sans';font-weight:700;font-size:16px;color:var(--t1)}
 .empty-sub{font-size:13px;color:var(--t4);margin-top:4px}
 /* Per-section accent on the page header */
-.page-head[data-accent]{border-left:4px solid var(--sec-accent,var(--brand));padding-left:15px}
+.page-head[data-accent]{border-left:4px solid var(--sec-accent,var(--gold));padding-left:15px}
 /* During a silent 25s live refresh, suppress all entry animations so the update is invisible */
 body.silent .page-head,body.silent .kpi,body.silent .chart-card,body.silent .card{animation:none!important}
 /* Segmented toggle (Bar / Line on the income chart, and reusable elsewhere) */
@@ -750,15 +762,15 @@ const RES={
     fields:[['programme_id','Thematic Area ID',1],['programme_name','Thematic Area Name',1],['programme_objective','Objective','area'],['programme_status','Status','sel',SEL_STATUS],['programme_manager','Thematic Area Manager'],['programme_start_date','Start Date','date'],['programme_end_date','End Date','date'],['remarks','Remarks']]},
   objectives:{label:'Thematic Area Objectives',sub:'Each programme can have many objectives — add as many as you need',icon:'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
     cols:[['programme_id','Thematic Area'],['objective','Objective'],['status','Status','status']],
-    filters:['programme_id',['status','Status',['Planned','Ongoing','Completed','On Hold']]],
+    filters:[['status','Status',['Planned','Ongoing','Completed','On Hold']]],
     fields:[['objective_id','Objective ID',1],['programme_id','Thematic Area','ref','programmes'],['objective','Objective',1],['status','Status','sel',['Planned','Ongoing','Completed','On Hold']],['remarks','Remarks']]},
   project_objectives:{label:'Project Objectives',sub:'Each project can have many objectives — add as many as you need',icon:'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
     cols:[['programme_id','Thematic Area'],['project_id','Project'],['objective','Objective'],['target_beneficiaries','Target'],['status','Status','status']],
-    filters:['programme_id','project_id',['status','Status',['Planned','Ongoing','Completed','On Hold']]],
+    filters:['project_id',['status','Status',['Planned','Ongoing','Completed','On Hold']]],
     fields:[['objective_id','Objective ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['objective','Objective',1,'area'],['target_beneficiaries','Target Beneficiaries'],['status','Status','sel',['Planned','Ongoing','Completed','On Hold']],['remarks','Remarks']]},
   projects:{label:'Projects',sub:'Implementation projects linked to programmes',icon:'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
     cols:[['project_name','Name'],['programme_id','Thematic Area'],['_donor','Donor / Funding','maplink'],['project_status','Status','status']],
-    filters:['programme_id',['project_status','Status',['Planned','Ongoing','Completed','On Hold']]],
+    filters:[['project_status','Status',['Planned','Ongoing','Completed','On Hold']]],
     fields:[['project_id','Project ID',1],['programme_id','Thematic Area','ref','programmes'],['donor_id','Funded by — Donor (required: creates the donor↔project link)','ref','donors'],['approved_amount_inr','Approved Amount from Donor (₹)','num'],['project_name','Project Name',1],['__objectives','Objectives — add one or many','pobj'],['project_status','Status','sel',SEL_STATUS],['target_beneficiaries','Total Target Beneficiaries (in numbers)','num'],['implementation_partner','Implementation Partner'],['project_start_date','Start Date','date'],['project_end_date','End Date','date'],['remarks','Remarks']]},
   donors:{label:'Donors',sub:'Funding agencies, CSR partners, foundations & government schemes',icon:'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
     view:'cards',
@@ -767,27 +779,27 @@ const RES={
     fields:[['donor_id','Donor ID',1],['donor_name','Donor Name',1],['donor_type','Type','sel',['CSR','Foundation','Government','FCRA','Local','Individual','Other']],['contact_person','Contact Person'],['designation','Designation'],['email','Email'],['phone_number','Phone'],['total_approved_budget_inr','Approved Budget (₹)','num'],['funding_start_date','Funding Start','date'],['funding_end_date','Funding End','date'],['reporting_frequency','Reporting Frequency','sel',['Monthly','Quarterly','Half-yearly','Annual']],['dashboard_access_required','Dashboard Access','sel',['Yes','No']],['remarks','Remarks']]},
   mappings:{label:'Donor Mappings',sub:'Which donor funds which project, component & activity',icon:'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71',
     cols:[['donor_id','Donor'],['project_id','Project'],['donor_funded_component','Component'],['approved_amount_inr','Amount','inr']],
-    filters:['donor_id','project_id','programme_id'],
+    filters:['donor_id','project_id'],
     fields:[['mapping_id','Mapping ID',1],['donor_id','Donor','ref','donors'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_funded_component','Funded Component'],['funded_activity','Funded Activity'],['budget_head','Budget Head'],['approved_amount_inr','Approved Amount (₹)','num'],['donor_specific_indicator','Donor Indicator'],['reporting_requirement','Reporting Requirement'],['remarks','Remarks']]},
   geographies:{label:'Geography',sub:'Country → State → District → Block → GP → Village hierarchy',icon:'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
     cols:[['state','State'],['district','District'],['block','Block'],['gram_panchayat','GP'],['village_or_ward','Village/Ward'],['project_id','Project'],['responsible_staff','Staff']],
-    filters:['programme_id','project_id'],
+    filters:['project_id'],
     fields:[['geography_id','Geography ID',1],['country','Country'],['state','State'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village_or_ward','Village / Ward'],['__geo_more','','geomore'],['programme_id','Thematic Area (auto from project)','ref','programmes'],['project_id','Project — required, links this place to it','ref','projects'],['responsible_staff','Responsible Staff'],['remarks','Remarks']]},
   villages:{label:'Village Demographics',sub:'Total HHs, project coverage & social-order breakdown',icon:'M3 21h18M5 21V9l7-6 7 6v12M9 21v-7h6v7',
     cols:[['district','District'],['block','Block'],['village','Village'],['total_hhs','Total HHs','num'],['hhs_covered_under_project','Covered','num'],['sc_hhs','SC','num'],['st_hhs','ST','num'],['obc_hhs','OBC','num'],['general_hhs','Gen','num']],
-    filters:['programme_id','donor_id','project_id'],
+    filters:['donor_id','project_id'],
     fields:[['demographic_id','Demographic ID',1],['geography_id','Geography','ref','geographies'],['district','District',1],['block','Block',1],['gram_panchayat','Gram Panchayat'],['village','Village',1],['total_hhs','Total HHs','num'],['hhs_covered_under_project','HHs Covered','num'],['sc_hhs','SC HHs','num'],['st_hhs','ST HHs','num'],['obc_hhs','OBC HHs','num'],['general_hhs','General HHs','num'],['village_contact_person','Contact Person'],['village_contact_person_cell_no','Contact Phone'],['responsible_staff','Responsible Staff'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['remarks','Remarks']]},
   beneficiaries:{label:'Beneficiaries',sub:'Farmer & household beneficiaries — full demographic & economic profile',icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',badge:true,
     cols:[['beneficiary_id','ID'],['beneficiary_farmer_name','Name'],['gender','Gender','gender'],['caste','Social Order','caste'],['religion','Religion'],['village','Village'],['block','Block'],['primary_income_source','Income Source'],['current_income_per_annum_inr','Annual Income','inr']],
-    filters:['programme_id','project_id','donor_id','caste','gender'],
+    filters:['project_id','donor_id','caste','gender'],
     fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['organic_farming','Organic Farming at registration *','sel',['Yes','No']],['__bl_tbl','Baseline livelihood — at registration','bltable'],['total_land_acre','Total Land (acres) — auto-sums the crop areas','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
   crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — crops, alternative livelihoods, health, road safety, anything',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
     cols:[['beneficiary_id','Beneficiary'],['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['production_kg','Output Qty (kg)','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr'],['_incchg','Income Change — baseline → now','incchg']],
-    filters:['programme_id','project_id','donor_id',['project_year','Year',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Crops / Interventions',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
+    filters:['project_id','donor_id',['project_year','Year',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Crops / Interventions',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
     fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹) — auto: quantity × rate','num'],['net_profit_inr','Net Profit (₹) — auto: income − expenditure','num'],['sold','Produce sold?','sel',['Yes','No']],['organic_farming','Organic Farming *','sel',['Yes','No']],['food_security','Food security throughout the year?','sel',['Yes','No']],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
   activities:{label:'Activity Progress',sub:'Every activity\'s multi-year targets & quarterly / monthly achievements — totals auto-computed',icon:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
     cols:[['project_activity','Activity'],['unit_of_measurement','Unit'],['total_target','Total Tgt','num'],['target_year_1','Y1 Tgt','num'],['y1_total_achievement','Y1 Ach','num'],['cumulative_achievement','Cum Ach','num']],
-    filters:['programme_id','project_id','donor_id',['unit_of_measurement','Units',['Number','Percentage','INR','Event','Acres','Kilograms']]],
+    filters:['project_id','donor_id',['unit_of_measurement','Units',['Number','Percentage','INR','Event','Acres','Kilograms']]],
     fields:[['activity_id','Activity ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['project_activity','Project Activity',1],['unit_of_measurement','Unit','sel',['Number','Percentage','INR','Event','Acres','Kilograms']],['total_target','Total Target','num'],
       ['target_year_1','Y1 Target','num'],['y1_q1','Y1 Q1 (Apr-Jun)','num'],['y1_q2','Y1 Q2 (Jul-Sep)','num'],['y1_q3','Y1 Q3 (Oct-Dec)','num'],['y1_q4','Y1 Q4 (Jan-Mar)','num'],['y1_total_achievement','Y1 Achievement','num'],
       ['target_year_2','Y2 Target','num'],['y2_q1','Y2 Q1 (Apr-Jun)','num'],['y2_q2','Y2 Q2 (Jul-Sep)','num'],['y2_q3','Y2 Q3 (Oct-Dec)','num'],['y2_q4','Y2 Q4 (Jan-Mar)','num'],['y2_total_achievement','Y2 Achievement','num'],
@@ -802,7 +814,7 @@ const RES={
     fields:[['member_id','Member ID',1],['shg_id','SHG','ref','shgs'],['member_name','Member Name',1],['father_or_spouse_name','Father / Spouse Name'],['role','Role','sel',['Member','President','Secretary','Treasurer','Vice-President']],['gender','Gender','sel',['Male','Female','Other']],['age','Age','num'],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['contact_number','Contact Number'],['savings_contribution_inr','Savings Contribution (₹)','num'],['date_joined','Date Joined','date'],['status','Status','sel',['Active','Inactive','Left']],['remarks','Remarks']]},
   shgs:{label:'Self-Help Groups',sub:'Group savings, membership & banking — links to loan tracking',icon:'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M16 3.13a4 4 0 0 1 0 7.75M21 21v-2a4 4 0 0 0-3-3.87',
     cols:[['shg_name','Name'],['village','Village'],['block','Block'],['no_of_members','Members','num'],['monthly_savings_by_members_inr','Monthly Sav.','inr'],['bank_name','Bank']],
-    filters:['programme_id','project_id','donor_id'],
+    filters:['project_id','donor_id'],
     fields:[['shg_id','SHG ID',1],['shg_name','SHG Name',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['date_of_inception','Date of Inception','date'],['no_of_members','No. of Members','num'],['monthly_savings_by_members_inr','Monthly Savings (₹)','num'],['bank_account_no','Bank Account No'],['bank_name','Bank Name'],['branch','Branch'],['ifsc_code','IFSC Code'],['remarks','Remarks']]},
   loans:{label:'SHG Loans',sub:'Loans received by SHGs — source, purpose & repayment status',icon:'M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
     cols:[['shg_id','SHG'],['_shg_village','Village'],['_shg_block','Block'],['financial_year','FY'],['loan_amount_inr','Amount','inr'],['loan_source','Source'],['repayment_status','Status','status']],
@@ -810,19 +822,19 @@ const RES={
     fields:[['loan_record_id','Loan ID',1],['shg_id','SHG — search by name','ref','shgs'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['financial_year','Financial Year','sel',['2023-24','2024-25','2025-26','2026-27','2027-28','2028-29','2029-30','2030-31']],['loan_receiving_date','Loan Date','date'],['loan_amount_inr','Loan Amount (₹)','num'],['loan_source','Loan Source','sel',['Bank linkage','Donor','Government scheme','Other']],['purpose_of_loan','Purpose'],['repayment_status','Repayment Status','sel',['Ongoing','Repaid','Overdue','Not applicable']],['remarks','Remarks']]},
   gramsabha:{label:'Gram Sabha / VDC',sub:'Village Development Committee & Gram Sabha participation — who attended, and was the VDP submitted',icon:'M3 21h18M5 21V9l7-6 7 6v12M9 21v-6h6v6',
     cols:[['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['vdc_name','VDC Name'],['total_participants','Total Participants','num'],['male_participants','Male','num'],['female_participants','Female','num'],['vdp_submitted','VDP Submitted','status']],
-    filters:['programme_id','project_id','donor_id',['vdp_submitted','VDP',['Yes','No']]],
+    filters:['project_id','donor_id',['vdp_submitted','VDP',['Yes','No']]],
     fields:[['gramsabha_id','Record ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography — pick the village','ref','geographies'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['vdc_name','VDC Name',1],['meeting_date','Gram Sabha Date','date'],['male_participants','Male Participants','num'],['female_participants','Female Participants','num'],['total_participants','Total Participants — auto: male + female','num'],['vdp_submitted','VDP submitted at Gram Sabha?','sel',['Yes','No']],['remarks','Remarks']]},
   convergence:{label:'Convergence — Govt Schemes',sub:'Government schemes leveraged — department, scheme, households benefited & amount mobilised',icon:'M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
     cols:[['district','District'],['block','Block'],['village','Village'],['department','Department'],['scheme_name','Scheme'],['work_type','Type of Work'],['hh_benefited','HHs Benefited','num'],['amount_mobilised','Amount Mobilised','inr']],
-    filters:['programme_id','project_id','donor_id',['department','Departments',['Agriculture & Farmers\' Empowerment','Electronics & Information Technology','Co-operation','Energy','Excise','Finance','Fisheries & Animal Resources Development','Food Supplies & Consumer Welfare','Forest, Environment and Climate Change Department','Handlooms, Textiles & Handicrafts','Health & Family Welfare','Housing & Urban Development','Micro, Small & Medium Enterprise','Odia Language Literature & Culture Department','Panchayati Raj & Drinking Water','Planning & Convergence','Public Enterprises','Revenue & Disaster Management','Rural Development','Skill Development & Technical Education','Science & Technology','Social Security & Empowerment of Persons with Disabilities','ST & SC Development, Minorities & Backward Classes Welfare','Tourism','Water Resources','Women & Child Development','Works','Mission Shakti']]],
+    filters:['project_id','donor_id',['department','Departments',['Agriculture & Farmers\' Empowerment','Electronics & Information Technology','Co-operation','Energy','Excise','Finance','Fisheries & Animal Resources Development','Food Supplies & Consumer Welfare','Forest, Environment and Climate Change Department','Handlooms, Textiles & Handicrafts','Health & Family Welfare','Housing & Urban Development','Micro, Small & Medium Enterprise','Odia Language Literature & Culture Department','Panchayati Raj & Drinking Water','Planning & Convergence','Public Enterprises','Revenue & Disaster Management','Rural Development','Skill Development & Technical Education','Science & Technology','Social Security & Empowerment of Persons with Disabilities','ST & SC Development, Minorities & Backward Classes Welfare','Tourism','Water Resources','Women & Child Development','Works','Mission Shakti']]],
     fields:[['convergence_id','Record ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography — pick the village','ref','geographies'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['department','Name of the Department','sel',['Agriculture & Farmers\' Empowerment','Electronics & Information Technology','Co-operation','Energy','Excise','Finance','Fisheries & Animal Resources Development','Food Supplies & Consumer Welfare','Forest, Environment and Climate Change Department','Handlooms, Textiles & Handicrafts','Health & Family Welfare','Housing & Urban Development','Micro, Small & Medium Enterprise','Odia Language Literature & Culture Department','Panchayati Raj & Drinking Water','Planning & Convergence','Public Enterprises','Revenue & Disaster Management','Rural Development','Skill Development & Technical Education','Science & Technology','Social Security & Empowerment of Persons with Disabilities','ST & SC Development, Minorities & Backward Classes Welfare','Tourism','Water Resources','Women & Child Development','Works','Mission Shakti']],['scheme_name','Name of the Government Scheme',1],['work_type','Type of Work'],['hh_benefited','Number of HHs Benefited','num'],['amount_mobilised','Amount Mobilised (₹)','num'],['remarks','Remarks']]},
   indicators:{label:'Indicators',sub:'Add UNLIMITED indicators for ANY sector — Output / Outcome / Process / Financial',icon:'M22 12h-4l-3 9L9 3l-3 9H2',
     cols:[['indicator_name','Name'],['indicator_type','Type'],['unit','Unit'],['baseline_value','Baseline','num'],['project_target','Target','num']],
-    filters:[['indicator_type','Types',['Output','Outcome','Process','Financial']],'programme_id','project_id','donor_id'],
+    filters:[['indicator_type','Types',['Output','Outcome','Process','Financial']],'project_id','donor_id'],
     fields:[['indicator_id','Indicator ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['indicator_name','Indicator Name',1],['indicator_type','Type','sel',['Output','Outcome','Process','Financial']],['unit','Unit'],['baseline_value','Baseline Value','num'],['project_target','Project Target','num'],['data_source','Data Source'],['reporting_frequency','Reporting Frequency','sel',['Monthly','Quarterly','Half-yearly','Annual']],['remarks','Remarks']]},
   progress:{label:'Indicator Progress',sub:'Period-wise achievement, cumulative progress & variance',icon:'M18 20V10M12 20V4M6 20v-6',
     cols:[['indicator_id','Indicator'],['reporting_period','Period'],['achievement_for_period','Achieved','num'],['cumulative_achievement','Cumulative','num'],['_ind_target','Indicator Target','num'],['variance','Variance vs target','num'],['_status','Status','achv']],
-    filters:['programme_id','project_id','indicator_id',['quarter','Quarter',['Q1','Q2','Q3','Q4']]],
+    filters:['project_id','indicator_id',['quarter','Quarter',['Q1','Q2','Q3','Q4']]],
     fields:[['progress_id','Progress ID',1],['indicator_id','Indicator — search by name','ref','indicators'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['reporting_period','Reporting Period'],['reporting_year','Reporting Year'],['quarter','Quarter','sel',['Q1','Q2','Q3','Q4']],['achievement_for_period','Achievement','num'],['cumulative_achievement','Cumulative — auto (all periods of this indicator)','num'],['variance','Variance vs indicator target — auto','num'],['verification_source','Verification Source'],['remarks','Remarks']]},
   users:{label:'Users & Access',sub:'Admin-only: create users, set per-section permissions, reset passwords. Sessions are tab-bound and audit-logged.',icon:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 11h-6M19 8v6',
     cols:[['username','Username'],['user_name','Full Name'],['role','Role','status'],['email','Email'],['last_login','Last Login','datetime'],['is_root','Root','flag']],
@@ -831,10 +843,10 @@ const RES={
 
 const SECTIONS=[
   ['Overview',[['dash','Dashboard','M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z'],['reports','Reports & Analytics','M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6'],['dataentry','Data Entry','M12 5v14M5 12h14']]],
-  ['Master Data',[['mappings'],['donors'],['programmes'],['projects'],['geographies'],['villages']]],
+  ['Master Data',[['mappings'],['donors'],['projects'],['geographies'],['villages']]],
   ['Field Data',[['beneficiaries'],['crops'],['activities']]],
   ['SHG & Finance',[['shgs'],['loans']]],
-  ['Local Governance',[['gramsabha'],['convergence']]],
+  ['Local Governance',[['gramsabha','Local Governance','M3 21h18M5 21V9l7-6 7 6v12M9 21v-6h6v6']]],
   ['Monitoring and Evaluation (MNE)',[['indicators10','Logged Indicators','M22 12h-4l-3 9L9 3l-3 9H2']]],
   ['Admin',[['misstatus','MIS Status','M2 3h20v14H2zM8 21h8M12 17v4'],['users'],['manual','User Manual','M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z'],['audit','Audit Trail','M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11']]],
 ];
@@ -971,7 +983,9 @@ function buildNav(){
   $('sb-nav').innerHTML=html;
 }
 function setActiveNav(key){
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.getAttribute('data-page')===key));
+  // Local Governance is one nav entry with two tabs — both keep it highlighted
+  const k = (key==='convergence') ? 'gramsabha' : key;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.getAttribute('data-page')===k));
 }
 let __NAV_FROM_HASH=false;
 function goPage(key){
@@ -989,6 +1003,9 @@ function goPage(key){
   // The free-form indicator sections are retired — any old link or bookmark lands
   // on the 11 computed Logged Indicators instead.
   if(key==='indicators'||key==='progress')return renderIndicators10();
+  // One thematic area (Livelihood) — its section and objectives are retired; an old
+  // link lands on Projects, where the real planning lives.
+  if(key==='programmes'||key==='objectives'){ CP='projects'; setActiveNav('projects'); return renderResource('projects'); }
   if(key==='indicators10')return renderIndicators10();
   if(key==='manual')return renderManualPage();
   renderResource(key);
@@ -1058,7 +1075,7 @@ function onProgrammeChange(){
 const BL_SOURCES=[
   ['paddy','Paddy',1],['millet','Millet',1],['vegetable','Vegetable',1],
   ['tuber','Tuber Crop',1],['pulses','Pulses',1],['oilseed','Oilseeds',1],
-  ['mushroom','Mushroom Cultivation',0],['goat','Goat Rearing',0],
+  ['mushroom','Mushroom Cultivation',1],['goat','Goat Rearing',0],
   ['poultry','Backyard Poultry',0],['micro_enterprise','Micro Enterprise',0],['other','Other',0],
 ];
 const BL_INCOME_KEYS=BL_SOURCES.map(s=>'bl_'+s[0]+'_income');
@@ -1128,7 +1145,15 @@ const __COMBO={};
    asking for it on every form and filter is pure noise. If exactly one exists it is
    selected automatically and its picker is hidden. Nothing is deleted: add a second
    thematic area and every picker comes straight back. */
-function soleProgramme(){ const l=LOOKUPS.programmes||[]; return l.length===1 ? l[0].id : ''; }
+/* The organisation runs ONE thematic area (Livelihood), so it is never asked for:
+   every form fills it silently — from the chosen Project when there is one (the
+   project pins its theme), otherwise from this single thematic area. If a database
+   still holds older extra themes, the Livelihood one is preferred. */
+function soleProgramme(){
+  const l=LOOKUPS.programmes||[]; if(!l.length) return '';
+  if(l.length===1) return l[0].id;
+  const liv=l.find(x=>/livelihood/i.test(x.label||'')); return (liv||l[0]).id;
+}
 function mappedProjects(){ const m=LOOKUPS.project_donor||{}; return (LOOKUPS.projects||[]).filter(p=>m[p.id]); }
 function unmappedProjects(){ const m=LOOKUPS.project_donor||{}; return (LOOKUPS.projects||[]).filter(p=>!m[p.id]); }
 function projectListFor(pid){
@@ -1805,6 +1830,12 @@ async function renderResource(key){
   const cfg=RES[key]; if(!cfg)return;
   const canW=can(key==='users'?'users':'write');
   if(key==='activities') RES.activities.cols=actColsFor('','');   // fresh entry always starts on the Y1 overview
+  // Local Governance is ONE section with two record types — a tab bar, not two menu items
+  const LG=['gramsabha','convergence'];
+  const lgTabs = LG.includes(key) ? `<div class="lg-tabs">${
+    [['gramsabha','🏛 Gram Sabha / VDC'],['convergence','💰 Convergence — Govt Schemes']]
+      .map(([k,l])=>`<button type="button" class="lg-tab${k===key?' on':''}" onclick="goPage('${k}')">${l}</button>`).join('')
+  }</div>` : '';
   let filterBar='';
   if(cfg.filters){
     let fhtml='<div class="filter-bar"><label>Filter</label>';
@@ -1832,7 +1863,7 @@ async function renderResource(key){
     if(dupIds.length) linkBanner=`<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:11px;padding:11px 15px;margin-bottom:14px;font-size:13px;color:var(--t1)">⚠ <b>Duplicate donor ID${dupIds.length>1?'s':''}:</b> ${dupIds.map(id=>`<b>${esc(id)}</b> is shared by ${esc(dup[id].join(' and '))}`).join('; ')}. Their reports and auto-fills get mixed together. Fix: keep one, move its details across, delete the duplicate entry, and re-create it fresh (a unique ID is generated automatically) — then re-point its Donor Mappings.</div>`;
   }
   $('main').innerHTML=`
-    <div class="page-head" data-accent style="--sec-accent:var(${SECTION_ACCENT[key]||'--brand'})"><div><div class="page-title">${esc(cfg.label)}</div></div>
+    <div class="page-head" data-accent style="--sec-accent:var(${SECTION_ACCENT[key]||'--gold'})"><div><div class="page-title">${esc(LG.includes(key)?'Local Governance':cfg.label)}</div></div>
       <div class="page-actions">
         <span class="pill pill-cyan" id="res-count">…</span>
         <div class="x-menu-wrap">
@@ -1843,6 +1874,7 @@ async function renderResource(key){
           ? (canW&&canTargets()?`<button class="btn btn-primary btn-sm" onclick="openForm('activities')">+ New activity</button>`:'')
           : (canW?`<button class="btn btn-primary btn-sm" onclick="openForm('${key}')">+ New</button>`:'')}
       </div></div>
+    ${lgTabs}
     ${linkBanner}
     ${filterBar}
     ${cfg.filters?`<div id="res-chips" class="fchips"></div>`:''}
@@ -2003,7 +2035,7 @@ function clearResFilter(key,fn){ if(fn==='__q'){ const s=$('res-search'); if(s)s
   PAGE.offset=0; reloadResource(key); if(key==='crops'||key==='beneficiaries') renderIncomeBanner(key); }
 function filterSelect(key,f){
   const onch=`onchange="applyFilter('${key}')"`;
-  if(f==='programme_id'){ if(soleProgramme()) return ''; return _sel('programme_id',onch,'All Thematic Areas',(LOOKUPS.programmes||[]).map(o=>[o.id,o.label])); }
+  if(f==='programme_id') return '';   // one thematic area — never a filter
   if(f==='project_id')   return _sel('project_id',onch,'All Projects',(LOOKUPS.projects||[]).map(o=>[o.id,o.label]));
   if(f==='donor_id')     return _sel('donor_id',onch,'All Donors',(LOOKUPS.donors||[]).map(o=>[o.id,o.label]));
   if(f==='indicator_id') return _sel('indicator_id',onch,'All Indicators',(LOOKUPS.indicators||[]).map(o=>[o.id,o.label]));
@@ -2319,12 +2351,13 @@ async function openForm(key,id){
   if(key==='crops') wireCropTotals();                   // Income = qty × rate · Net Profit = income − expenditure
   if(key==='gramsabha') wireGSTotal();                  // Total participants = Male + Female (auto)
   // Only one thematic area? Fill it in and hide the picker — it is the same answer every time.
-  { const sp=soleProgramme();
-    if(sp && (cfg.fields||[]).some(f=>f[0]==='programme_id')){
-      if(!((($('ff-programme_id')||{}).value)||'')) comboSet('programme_id',sp);
-      if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(sp);
-      foHideField('programme_id');
-    } }
+  // The single thematic area is filled silently and never shown — the Project pins
+  // the real theme, and this is only the fallback for records without one.
+  if((cfg.fields||[]).some(f=>f[0]==='programme_id')){
+    const sp=soleProgramme();
+    if(sp && !((($('ff-programme_id')||{}).value)||'')) comboSet('programme_id',sp);
+    foHideField('programme_id');
+  }
   if(key==='projects') pobjInlineInit(id,row);          // objectives editor inside the form
   if(key==='projects'){ const amt=$('ff-approved_amount_inr'); if(amt) amt.addEventListener('input',()=>{ amt.dataset.auto=''; }); }   // typing your own amount stops the auto-fill
   if(!id&&key==='loans') injectLoanShgFilter();
@@ -3210,9 +3243,7 @@ const PERMISSION_SECTIONS = [
   ['misstatus','MIS Status — every officer\'s workspaces (sensitive)','page'],
   ['audit','Audit Trail (sensitive)','page'],
   ['users','Users & Access — manage logins & permissions (sensitive)','page'],
-  ['programmes','Thematic Areas',null,'Master data — records this user can view / edit / delete'],
-  ['objectives','Thematic Area Objectives'],
-  ['projects','Projects'],['project_objectives','Project Objectives'],
+  ['projects','Projects',null,'Master data — records this user can view / edit / delete'],['project_objectives','Project Objectives'],
   ['donors','Donors'],['mappings','Donor Mappings'],
   ['geographies','Geography'],['villages','Village Demographics'],
   ['beneficiaries','Beneficiaries',null,'Field data'],
@@ -4119,7 +4150,6 @@ async function renderDashboard(){
         <button class="btn btn-ghost btn-sm" onclick="printDashboard()" title="Print the dashboard — or save it as a PDF — exactly as filtered, with a branded report header">🖨 Print</button>
         </div></div>
     <div class="filter-bar"><label>Filter:</label>
-      <select id="d-prg" onchange="onDashFilterChange()"><option value="">All Thematic Areas</option>${(LOOKUPS.programmes||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
       <select id="d-prj" onchange="onDashFilterChange()"><option value="">All Projects</option>${(LOOKUPS.projects||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
       <select id="d-don" onchange="onDashFilterChange()"><option value="">All Donors</option>${(LOOKUPS.donors||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
       <button class="btn btn-ghost btn-sm" onclick="clearDash()">Clear</button>
@@ -4160,20 +4190,20 @@ async function renderDashboard(){
     <div class="card"><div class="card-title">🤝 Donors &amp; the Projects they fund</div><div class="card-sub">Live from Donor Mappings — follows the filters above</div><div id="donor-funded"></div></div>`;
   loadDash(); loadCharts();
 }
-function clearDash(){['d-prg','d-prj','d-don'].forEach(i=>{const e=$(i);if(e)e.value='';});onDashFilterChange();}
+function clearDash(){['d-prj','d-don'].forEach(i=>{const e=$(i);if(e)e.value='';});onDashFilterChange();}
 /* Dashboard filters — Project list narrows to the chosen Programme, + active-filter chips. */
 function onDashFilterChange(){
-  smartFilterSync($('d-prg'), $('d-prj'), $('d-don'));
+  smartFilterSync(null, $('d-prj'), $('d-don'));
   loadDash();
 }
-function clearDashFilter(which){ const m={prg:'d-prg',prj:'d-prj',don:'d-don'}; const e=$(m[which]); if(e)e.value='';
+function clearDashFilter(which){ const m={prj:'d-prj',don:'d-don'}; const e=$(m[which]); if(e)e.value='';
   // a chosen Project pins its Thematic & Donor — clearing either of those must release the Project too
   if(which!=='prj'){ const je=$('d-prj'); if(je&&je.value) je.value=''; }
   onDashFilterChange(); }
 function renderDashChips(){
   const box=$('dash-chips'); if(!box) return;
   const lbl=(arr,id)=>{ const o=(arr||[]).find(x=>String(x.id)===String(id)); return o?o.label:id; };
-  const pe=$('d-prg'),je=$('d-prj'),de=$('d-don'); const out=[];
+  const pe=null,je=$('d-prj'),de=$('d-don'); const out=[];
   if(pe&&pe.value) out.push(['Thematic Area',lbl(LOOKUPS.programmes,pe.value),'prg']);
   if(je&&je.value) out.push(['Project',lbl(LOOKUPS.projects,je.value),'prj']);
   if(de&&de.value) out.push(['Donor',lbl(LOOKUPS.donors,de.value),'don']);
@@ -4191,7 +4221,6 @@ function printDashboard(){
   // 1 · capture the active filter context so the printout states what it shows
   const pick=id=>{ const e=$(id); if(!e||!e.value) return ''; const o=e.options&&e.options[e.selectedIndex]; return o?o.text:e.value; };
   const fp=[];
-  const pg=pick('d-prg'); if(pg) fp.push('Thematic Area: '+pg);
   const pj=pick('d-prj'); if(pj) fp.push('Project: '+pj);
   const dn=pick('d-don'); if(dn) fp.push('Donor: '+dn);
   const filterTxt = fp.length ? fp.join('   ·   ') : 'All data — no filter applied';
@@ -4231,9 +4260,8 @@ function toggleDashExport(ev){
   ev && ev.stopPropagation();
   const m = $('xmenu-dash'); if(!m) return;
   if(m.classList.contains('show')){ m.classList.remove('show'); return; }
-  const prog=$('d-prg').value, proj=$('d-prj').value, donor=$('d-don').value;
+  const proj=$('d-prj').value, donor=$('d-don').value;
   const labels=[];
-  if(prog)  labels.push('Thematic Area: '+((LOOKUPS.programmes||[]).find(o=>o.id==prog)||{}).label);
   if(proj)  labels.push('Project: '+((LOOKUPS.projects||[]).find(o=>o.id==proj)||{}).label);
   if(donor) labels.push('Donor: '+((LOOKUPS.donors||[]).find(o=>o.id==donor)||{}).label);
   const fLabel = labels.length ? labels.join(' · ') : 'no filter (all data)';
@@ -4248,17 +4276,15 @@ function toggleDashExport(ev){
 }
 async function exportDashboardView(){
   if(typeof XLSX==='undefined'){toast('Excel engine still loading…','t-warn');return;}
-  const prog=$('d-prg').value, proj=$('d-prj').value, donor=$('d-don').value;
+  const proj=$('d-prj').value, donor=$('d-don').value;
   toast('Building dashboard workbook…');
   let qs='?action=dashboard';
-  if(prog)  qs+='&programme_id='+encodeURIComponent(prog);
   if(proj)  qs+='&project_id='+encodeURIComponent(proj);
   if(donor) qs+='&donor_id='+encodeURIComponent(donor);
   let d; try{ d = await apiGet(qs); }catch(e){ toast('⚠ '+e.message,'t-err'); return; }
   const k = d.kpi || {};
   const overall = k.tgt? Math.round(k.ach/k.tgt*100) : 0;
   const filterPairs = [];
-  if(prog)  filterPairs.push(['Thematic Area', ((LOOKUPS.programmes||[]).find(o=>o.id==prog)||{}).label || prog]);
   if(proj)  filterPairs.push(['Project',   ((LOOKUPS.projects||[]).find(o=>o.id==proj)||{}).label || proj]);
   if(donor) filterPairs.push(['Donor',     ((LOOKUPS.donors||[]).find(o=>o.id==donor)||{}).label || donor]);
   filterPairs.push(['Generated', nowIST()]);
@@ -4346,7 +4372,7 @@ async function exportDashboardView(){
 }
 async function loadDash(){
   let qs='?action=dashboard';
-  const map={programme_id:'d-prg',project_id:'d-prj',donor_id:'d-don'};
+  const map={project_id:'d-prj',donor_id:'d-don'};
   for(const [k,id] of Object.entries(map)){const e=$(id);if(e&&e.value)qs+='&'+k+'='+encodeURIComponent(e.value);}
   let d; try{d=await apiGet(qs);}catch(e){toast('⚠ '+e.message,'t-err');return;}
   // People logged in right now (active, non-expired sessions)
@@ -4366,7 +4392,6 @@ async function loadDash(){
                       : 'no production income logged yet';
   const adn=(k.active_donors==null?k.donors:k.active_donors);
   $('dash-kpi').innerHTML=
-    kpiCard('Thematic Areas',fmt(k.programmes),'Active','--brand','--brand-soft','M3 3h18v18H3zM3 9h18M9 21V9')+
     kpiCard('Active Donors',fmt(adn),fmtCr(k.budget)+' committed','--violet','--violet-soft','M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78z')+
     kpiCard('Projects',fmt(k.projects),'Implementation','--accent','--accent-soft','M9 11l3 3L22 4')+
     kpiCard('Districts',fmt(k.districts),'Geography','--teal','--teal-soft','M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z')+
@@ -4773,11 +4798,9 @@ function audExport(){
 let __LI10=[];
 const LI10_DELTA=new Set([1,3,4,5]);   // these are change-vs-baseline (signed); the rest are shares / amounts
 async function renderIndicators10(){
-  const sp=soleProgramme();
   $('main').innerHTML=`<div class="page-head" data-accent style="--sec-accent:var(--accent)"><div><div class="page-title">Logged Indicators</div></div>
     <div class="page-actions"><span class="pill pill-cyan" id="li10-when">…</span><button class="btn btn-success btn-sm" onclick="li10Export()">⬇ Excel</button></div></div>
     <div class="filter-bar"><label>Filter</label>
-      ${sp?'':`<select id="li10-prg" onchange="li10Sync()"><option value="">All Thematic Areas</option>${(LOOKUPS.programmes||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>`}
       <select id="li10-prj" onchange="li10Sync()"><option value="">All Projects</option>${(LOOKUPS.projects||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
       <select id="li10-don" onchange="li10Sync()"><option value="">All Donors</option>${(LOOKUPS.donors||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
       <button class="btn btn-ghost btn-sm" onclick="li10Clear()">✕ Clear</button></div>
@@ -4785,12 +4808,12 @@ async function renderIndicators10(){
     <div class="li10-grid" id="li10-grid"><div class="empty" style="grid-column:1/-1">Computing…</div></div>`;
   loadIndicators10();
 }
-function li10Sync(){ smartFilterSync($('li10-prg'),$('li10-prj'),$('li10-don')); loadIndicators10(); }
-function li10Clear(){ ['li10-prg','li10-prj','li10-don'].forEach(i=>{ const e=$(i); if(e) e.value=''; }); smartFilterSync($('li10-prg'),$('li10-prj'),$('li10-don')); loadIndicators10(); }
+function li10Sync(){ smartFilterSync(null,$('li10-prj'),$('li10-don')); loadIndicators10(); }
+function li10Clear(){ ['li10-prj','li10-don'].forEach(i=>{ const e=$(i); if(e) e.value=''; }); smartFilterSync(null,$('li10-prj'),$('li10-don')); loadIndicators10(); }
 async function loadIndicators10(){
   const g=$('li10-grid'); if(!g) return;
   let qs='?action=logged_indicators';
-  const prg=soleProgramme()||((($('li10-prg')||{}).value)||''), prj=((($('li10-prj')||{}).value)||''), don=((($('li10-don')||{}).value)||'');
+  const prg=soleProgramme(), prj=((($('li10-prj')||{}).value)||''), don=((($('li10-don')||{}).value)||'');
   if(prg) qs+='&programme_id='+encodeURIComponent(prg);
   if(prj) qs+='&project_id='+encodeURIComponent(prj);
   if(don) qs+='&donor_id='+encodeURIComponent(don);
@@ -4831,62 +4854,137 @@ function li10Export(){
    the features actually in this build.
    ════════════════════════════════════════════════════════════════ */
 const MANUAL_BOOK=[
- {icon:'📊',title:'Dashboard',intro:'The live overview — every number follows the filters at the top and updates the moment data changes.',items:[
-   ['Filter: Thematic Area / Project / Donor','The smart chain: pick a Project and its Thematic Area & Donor select themselves; pick a Donor and the Project list narrows to what that donor funds.'],
-   ['Clear','Resets all dashboard filters back to everything.'],
-   ['⬇ Export ▾','Downloads the dashboard as a formatted Excel workbook — KPIs, breakdowns, income impact, one sheet per topic.'],
-   ['🖨 Print','Prints the dashboard (or saves as PDF) exactly as filtered, with a branded report header.'],
-   ['Income Impact panel','Baseline vs current NET income (avg per year) for beneficiaries who have production logged — honest matched pairs, never a stacked multi-year sum.'],
-   ['+ Add Chart','Builds a custom chart from ANY data (beneficiaries, outputs, SHGs, loans…) — pick source, group-by and measure. Custom charts sit above Projects & their Objectives.']]},
- {icon:'📑',title:'Reports & Analytics',intro:'One-click, donor-ready Excel workbooks for every dimension.',items:[
-   ['Report picker','Choose the lens: Donor-wise, Thematic-wise, Project-wise, District / Block / Village-wise, SHG-wise.'],
-   ['Duration','This Month / Quarter / FY, or a custom From–To range — beneficiary figures follow their registration dates.'],
-   ['Stat strip','Districts · Blocks · Villages · Beneficiaries · SHGs for the current choice — check before downloading.'],
-   ['⬇ Download report','Generates the full workbook: summary metrics, activities, indicators, loans, outputs, Income Impact (all NET), Organic Farming before-vs-now, geographies covered.']]},
- {icon:'＋',title:'Data Entry — two tiers',intro:'HQ plans; the field enters against the plan.',items:[
-   ['HQ Setup tab','Pick a Project → its Donor & Thematic fill in → add each District with its targets (Blocks, Villages, Beneficiaries) and assign an officer. Needs the 🎯 Targets right.'],
-   ['Field-Office Workspaces','Create one workspace per Project · District (Village optional) — the active workspace auto-fills every form. Keep several; switch with one click; ✎ edit or ✕ remove any (records are never touched).'],
-   ['＋ Add another workspace (My assignments)','Starts a new workspace pre-filled from an HQ assignment made for you.'],
-   ['Pause','Enter without any workspace — forms open blank.'],
-   ['Entry cards','New Beneficiary · Production & Output · Activity Progress (opens the full page) · New SHG · New SHG Loan · Gram Sabha / VDC · Convergence. Cards show live record counts.'],
-   ['📥 Import cards','Bulk-upload any section from .xlsx/.csv — fuzzy headers, value cleaning, per-row error workbook for anything skipped.']]},
- {icon:'👥',title:'Beneficiaries',intro:'The people. Full demographic & economic profile, chained to Project → Donor → Thematic → Place.',items:[
-   ['+ New','Registration date pre-fills today; Geography picker fills District/Block/GP/Village; Organic Farming (Yes/No) is required.'],
-   ['Baseline livelihood table','One row per source: Area · Production kg · Income · Expenditure — NET calculates itself; the total must equal Annual Income at Registration; Total Land auto-sums the crop areas.'],
-   ['💰 Income (per row)','That person\'s NET income story: baseline vs current average per year, per-source breakdown, each year on its own with ₹ and % change.'],
-   ['🔒 Lock these fields','Keeps context fields filled on YOUR screen while registering many people.'],
-   ['Search','Finds by anything — name, ID, village, phone. Every column is searched.']]},
- {icon:'🌾',title:'Production & Output Progress',intro:'The actuals: any intervention output, per beneficiary, per season.',items:[
-   ['Crop / Season filters (required)','Pick a Crop/Intervention OR a Season before rows display — one person has many production rows (Paddy·Kharif, Millet·Rabi…), so this guarantees no one ever looks duplicated.'],
-   ['Income & Net Profit (auto)','Income = Output Qty × Rate · Net Profit = Income − Expenditure. Type your own to override either.'],
-   ['Produce sold? / Organic Farming / Food security','Three Yes/No answers — Organic is required; they feed logged indicators 2 and 5.'],
-   ['Income Change column','₹ and % from that person\'s total baseline to their cumulative production NET (expressed per year) — same figure on every row of the same person.'],
-   ['💰 Income (per row)','Opens the same per-beneficiary income view as in Beneficiaries.']]},
- {icon:'📈',title:'Activity Progress',intro:'Delivery, year by year, against HQ-set targets.',items:[
-   ['+ New activity','Target-setters (🎯 right) only. One compact table: per year its Target and Q1–Q4 (or 12 months — they roll up into quarters); ＋ Add Year up to six; achievements & cumulative compute themselves.'],
-   ['✎ Update progress','Everyday field work — quarters/months editable, target cells locked 🔒 unless you hold the 🎯 Targets right.'],
-   ['Year / Quarter switcher','The list shows Y1 by default; pick a year (and quarter) and the columns switch to that year — every year is one click away.']]},
- {icon:'🤝',title:'SHGs & Loans',intro:'Groups, members, savings and credit.',items:[
-   ['SHGs · 👥 Members','Each group with village, project, bank details; the Members button manages names, roles, savings inline.'],
-   ['SHG Loans','Pick the SHG (find it by thematic/project) — the loan inherits its whole context. The list shows each loan\'s Village & Block.']]},
- {icon:'🏛',title:'Local Governance',intro:'Gram Sabha participation and government-scheme convergence.',items:[
-   ['Gram Sabha / VDC','District → Village, VDC name, meeting date, Male + Female participants (Total auto-sums), and "VDP submitted at Gram Sabha?" — feeds the women-in-governance indicator.'],
-   ['Convergence','Department (official list), scheme, type of work, HHs benefited, Amount Mobilised — feeds indicators 10 & 11 (scheme access, amount leveraged).']]},
- {icon:'🎯',title:'Logged Indicators (M&E)',intro:'The 11 fixed indicators — computed automatically; nothing is typed.',items:[
-   ['The cards','Each shows its number, the computed value, the underlying figures, and the exact formula. An indicator without source data says "waiting for data" — a number is never invented.'],
-   ['Filters','Thematic / Project / Donor — the same smart chain as everywhere.'],
-   ['⬇ Excel','The full indicator table with formulas and underlying figures — donor-ready.']]},
+ {icon:'🚀',title:'Start here — how the whole system fits together',intro:'Read this once and everything else makes sense.',items:[
+   ['The chain','Donor → Project → Geography → the record. A Donor funds a Project; a Project is assigned the places it works in; every beneficiary, output, SHG, loan and governance record points at a Project and a Place. Because of this chain, choosing a Project anywhere automatically knows its Donor, and a donor report can find every record it paid for.'],
+   ['One thematic area','The organisation runs a single thematic area (Livelihood), so the system never asks for it — it is filled in silently behind every record.'],
+   ['Two tiers of entry','HQ sets the plan and the targets. Field offices enter what actually happened against that plan. Targets are locked from the field unless an admin grants the 🎯 Targets right.'],
+   ['Nothing is guessed','Every computed figure (income change, achievements, indicators) is arithmetic on data you entered. Where data is missing, the system says so instead of showing a number.'],
+   ['Your workspace','Set a Field-Office Workspace once (Project + District) and every form opens pre-filled — you only type what is new.']]},
+ {icon:'📊',title:'Dashboard — the KPI cards',intro:'Every card follows the filters at the top (Project · Donor). Read them left to right.',items:[
+   ['Beneficiaries','How many people are registered in the current filter. This is the headcount every donor asks for first.'],
+   ['SHGs','Self-Help Groups registered. Members and savings roll up from the SHG records.'],
+   ['Projects','Projects in scope. With a Donor filter on, this counts only that donor\'s funded projects.'],
+   ['Active Donors','Donors who actually fund at least one project — not merely present in the address book. A donor with no mapping is excluded on purpose.'],
+   ['Districts · Blocks · Villages','Your true geographic footprint, counted from the places assigned to projects. These grow by themselves as geography is added.'],
+   ['Activities','Planned activities, with the overall achievement % beneath — cumulative achievement ÷ total target across everything in scope.'],
+   ['Approved Budget','Total approved donor budget in scope.'],
+   ['Loan Amount','Total SHG credit recorded.'],
+   ['Avg. Income Change','The headline impact number: average NET income per year now versus the average NET baseline, for beneficiaries who actually have production logged (matched pairs). It says "based on N of M beneficiaries" so you always know how much of the population it covers.'],
+   ['Active now','People signed in at this moment.']]},
+ {icon:'📈',title:'Dashboard — every chart, and how to read it',intro:'Each chart answers one question. All of them obey the filters.',items:[
+   ['💹 Household Income — Before vs After','Two bars per livelihood source: baseline income at registration versus current income now, both NET. Use the Bar/Line toggle to switch shape. If a source shows a tall "before" and a short "now", production for it simply has not been entered yet — not a collapse in income.'],
+   ['📈 Income Over Time','A line from the baseline through each project year. Each point is that year\'s own income, never a running total — so a dip is a real dip, not an artefact.'],
+   ['By Social Order','Beneficiaries split SC / ST / OBC / General. This is the inclusion evidence most donors require.'],
+   ['By Gender','Male / Female / Other split of beneficiaries.'],
+   ['By Religion','Religious composition of the beneficiary base.'],
+   ['📍 Beneficiaries by District & Block','Where your people actually are — the top areas by headcount. Use it to spot a block with suspiciously few records (usually an entry gap, not reality).'],
+   ['🌾 Farmers by Crop','How many distinct farmers grow each crop. Counts people, not records, so a farmer with three paddy entries is counted once.'],
+   ['Beneficiaries by Project','Which project reaches how many people — the quickest way to see if one project is lagging on registration.'],
+   ['Income Sources','The mix of where current income comes from, by source.'],
+   ['Donor-wise Funding','Approved budget per donor.'],
+   ['Activity Achievement vs Target','Top activities with achievement against target — the delivery picture at a glance.'],
+   ['Top Activity Progress','The five biggest activities as progress bars: cumulative achievement vs total target, with the exact numbers and %.'],
+   ['✅ Data Completion Status','Your data-health panel: how many beneficiaries have a baseline, how many have production logged, how many production rows are missing income. Fix what is red here before a donor reads anything else.'],
+   ['Projects & their Objectives','Each project\'s objectives with target beneficiaries and status — strategy and data on the same page.'],
+   ['🤝 Donors & the Projects they fund','The live funding map from Donor Mappings; it follows the filters.'],
+   ['Custom Charts','Your own charts, built from any data. They sit above Projects & Objectives.'],
+   ['⬇ Export ▾ / 🖨 Print','Export builds a formatted Excel of the dashboard exactly as filtered. Print produces a branded PDF-ready page.']]},
+ {icon:'📑',title:'Reports & Analytics',intro:'Donor-ready workbooks in one click.',items:[
+   ['Report dimension','The lens: Donor-wise · Project-wise · District / Block / Village-wise · SHG-wise.'],
+   ['Duration','This Month / Quarter / Financial Year, or a custom From–To. Beneficiary figures are scoped by registration date, which is why that date matters.'],
+   ['Stat strip','Districts · Blocks · Villages · Beneficiaries · SHGs for the current choice — sanity-check here before downloading.'],
+   ['⬇ Download','The full workbook: summary metrics, activities (all years), loans, outputs by intervention, Income Impact (NET, per source, with Income Enhanced ₹ and %), Organic Farming before-vs-now, geographies covered, and the logged indicators.']]},
+ {icon:'＋',title:'Data Entry — HQ Setup tab',intro:'Where the plan and the targets are set. Needs the 🎯 Targets right.',items:[
+   ['Project','Pick it first — Donor and Thematic Area fill themselves.'],
+   ['Project Geography rows','Add each District with its planned targets: Total Blocks, Total Villages, Total Beneficiaries. The district list only offers places actually assigned to that project.'],
+   ['Assigned to (officer)','Sends this work unit to a named officer — it then appears on their Field-Office page as an assignment.'],
+   ['＋ Add activity & target','Creates a real Activity Progress record with its multi-year targets.'],
+   ['＋ Add output / production','Opens the Production form for HQ-side output targets.'],
+   ['💾 Save HQ Targets','Saves one target row per district. Existing rows are listed below with ✎ edit and 🗑 delete.']]},
+ {icon:'📍',title:'Data Entry — Field-Office tab',intro:'Set your context once; then only type what is new.',items:[
+   ['＋ New workspace','Choose Project → District, then optionally Block → GP → Village. Village is optional — leave it blank to pick the village per record.'],
+   ['⚡ Quick start from an HQ assignment','Pre-fills project and district from work HQ assigned to you.'],
+   ['Workspace pills','Every saved workspace is a pill. Click to switch (one click), ✎ to rename/edit, ✕ to remove. Removing never touches the records you entered with it.'],
+   ['＋ Add another workspace','On My Assignments — starts a new workspace from that assignment.'],
+   ['Pause — enter without a workspace','Forms open blank; useful for one-off records.'],
+   ['🎯 HQ Targets for this workspace','The plan numbers for your project + district, shown so you always know what you are working toward.'],
+   ['Entry cards','New Beneficiary · Production & Output · Activity Progress · New SHG · New SHG Loan · Gram Sabha / VDC · Convergence. Each shows a live record count. They look dimmed until a workspace is active — a nudge, not a block.'],
+   ['📥 Import cards','Bulk-upload a section from .xlsx / .csv. The importer matches your column names even when they differ, resolves names to IDs, cleans numbers and dates, and hands back an Excel of any rejected rows with the reason.']]},
+ {icon:'👥',title:'Beneficiaries',intro:'The people, and the baseline that makes impact provable.',items:[
+   ['+ New','Registration Date pre-fills today and can never be in the future. Pick the Geography and District/Block/GP/Village fill themselves.'],
+   ['Organic Farming (required)','Yes/No at registration — the "before" half of the organic indicator.'],
+   ['Baseline livelihood table','One row per income source. Crops (paddy, millet, vegetable, tuber, pulses, oilseeds, mushroom) take Area · Production kg · Income · Expenditure; other livelihoods (goat, poultry, micro-enterprise, other) take Income · Expenditure.'],
+   ['NET column','Calculated for you on every row and in the TOTAL line (income − expenditure). It is never typed and never stored, so it can never disagree with its parts.'],
+   ['Total must match','The baseline income total must equal Annual Income at Registration — this is what stops half-entered baselines. Total Land auto-sums the crop areas.'],
+   ['💰 Income (per row)','That person\'s full NET income story: baseline vs current average per year, a per-source before/now/change table, and each project year on its own with ₹ and % change vs baseline.'],
+   ['🔒 Lock these fields','Keeps the context fields filled on YOUR screen while registering many people in one village. It affects nobody else.'],
+   ['Search','Finds by name, ID, village, phone — every column is searched, and multiple words all have to match.']]},
+ {icon:'🌾',title:'Production & Output Progress',intro:'What actually happened — per beneficiary, per crop, per season.',items:[
+   ['Crop / Season filter (required)','Nothing displays until you pick a Crop/Intervention or a Season. One person legitimately has several production rows (Paddy·Kharif, Millet·Rabi, a goatery batch) — filtering shows each person once per view so a donor can never mistake them for duplicates. This is display only; reports are unaffected.'],
+   ['Income (auto)','Output Quantity × Rate. Type your own figure to override — some interventions (a health camp, a training) have no kg × rate.'],
+   ['Net Profit (auto)','Income − Expenditure. Also overridable.'],
+   ['Produce sold?','Yes/No — replaces the old self-consumption quantity.'],
+   ['Organic Farming (required)','Yes/No — the "after" half of the organic indicator.'],
+   ['Food security throughout the year?','Yes/No — this single answer drives logged indicator #2.'],
+   ['Income Change column','₹ and % from that person\'s total baseline to their production NET, expressed per year. Every row of the same person shows the same figure, because it is one person\'s one story.'],
+   ['💰 Income','The same per-beneficiary income view as in Beneficiaries.']]},
+ {icon:'📊',title:'Activity Progress',intro:'Delivery year by year against HQ targets.',items:[
+   ['+ New activity','Target-setters only. One table: each year gets its Target and Q1–Q4; ＋ Add Year extends to six years.'],
+   ['Quarterly / Monthly toggle','Monthly swaps the four quarters for twelve months (Apr–Mar). Months roll up into the quarters automatically, so quarterly reports stay correct either way.'],
+   ['Achieved (auto)','Each year\'s achievement sums its quarters (or months); the cumulative total and the %-of-target bar compute themselves.'],
+   ['✎ Update progress','Everyday field work. Quarters and months are editable; the Target cells are locked 🔒 without the 🎯 Targets right.'],
+   ['Year / Quarter switcher','The list shows Year 1 by default. Pick a year and the columns become that year\'s Target and Achievement; add a quarter to see just that quarter. No blank Y2–Y6 columns cluttering the default view.']]},
+ {icon:'🤝',title:'SHGs & SHG Loans',intro:'Groups, members, savings and credit.',items:[
+   ['SHGs','Each group with its village, project, inception date, membership, monthly savings and bank details.'],
+   ['👥 Members','Manages that group\'s members inline — names, roles (President / Secretary / Treasurer / Member), age, social order, savings, join date.'],
+   ['SHG Loans','Optionally narrow by project, then pick the SHG — the loan silently inherits its donor, thematic area and project. Then enter only the loan\'s own facts.'],
+   ['Village & Block columns','Shown on the loan list, pulled from the SHG, so a loan is placeable at a glance.'],
+   ['Repayment status','Shown as a colour badge; loans-by-financial-year is a standard report sheet.']]},
+ {icon:'🏛',title:'Local Governance',intro:'One section, two tabs — participation and convergence.',items:[
+   ['🏛 Gram Sabha / VDC tab','One record per meeting: District → Village, VDC name, meeting date, Male and Female participants, and whether the VDP was submitted at the Gram Sabha.'],
+   ['Total Participants (auto)','Male + Female, filled automatically; type your own figure to override.'],
+   ['Why it matters','Female participation here is exactly what logged indicator #9 (women in local governance) counts.'],
+   ['💰 Convergence tab','Every government scheme leveraged: the Department (official Odisha list), the scheme name, type of work, households benefited and the Amount Mobilised.'],
+   ['Why it matters','These records drive logged indicators #10 (households accessing schemes) and #11 (total amount leveraged).']]},
+ {icon:'🎯',title:'Logged Indicators (M&E)',intro:'The 11 fixed indicators. Nothing here is typed — every value is computed from data already entered.',items:[
+   ['1 · Income increase %','(Average current NET household income per year − average NET baseline) ÷ average baseline × 100, using matched pairs — only beneficiaries who actually have production logged.'],
+   ['2 · Food security %','Households answering YES to "food security throughout the year?" on their production records, over those who answered.'],
+   ['3 · Agricultural productivity %','Current paddy + millet production in kg versus the baseline paddy + millet kg.'],
+   ['4 · Area under improved practices %','Total current cultivated area versus total baseline crop area.'],
+   ['5 · Organic / natural farming %','Households organic now (production records) versus households organic at baseline.'],
+   ['6 · Diversified livelihoods %','Households cultivating three or more different crops, over households with production.'],
+   ['7 · Alternative livelihoods %','Households with an alternative livelihood recorded (goatery, poultry, tailoring…) over all households.'],
+   ['8 · SHG members with formal finance %','Members of SHGs that have received a loan, over all SHG members.'],
+   ['9 · Women in local governance %','Female Gram Sabha participants over total participants.'],
+   ['10 · Households accessing govt schemes %','Households benefited in Convergence, over total households.'],
+   ['11 · Amount leveraged (₹)','The sum of Amount Mobilised across all Convergence records.'],
+   ['"Waiting for data"','If an indicator\'s source data has not been entered, the card says so and names what to fill. It never shows an invented number.'],
+   ['Filters & ⬇ Excel','Project and Donor filters narrow every indicator. Excel exports the table with each formula and the underlying figures — donor-ready.']]},
  {icon:'🗂',title:'Master Data',intro:'Set up once, touched rarely — this is where the chain is forged.',items:[
-   ['Donors','Cards with budget, contacts and live funded-project counts. "⚠ Not funding any project yet" links straight to the fix.'],
-   ['Projects','"Funded by — Donor" is required (forges the chain); objectives are added right on the form (golden 🎯 button); 🌍 Geographies assigns the places that power dashboards & field entry; status derives from dates.'],
-   ['Donor Mappings','The who-funds-what ledger — mostly maintains itself; fix ⚠-flagged projects here.'],
-   ['Geography','State → District → Block → GP → Village. The golden ＋ Add another place creates MANY places in one save, each its own record, auto-linked to the project.'],
-   ['Village Demographics','Households & social-order profile per village — powers Coverage %.']]},
- {icon:'🛡',title:'Admin',intro:'People, permissions, forensics.',items:[
-   ['MIS Status','Who is online, everyone\'s workspaces, 📌 assign a workspace to an officer.'],
-   ['Users & Access','Create users, per-section View/Edit/Delete matrix, presets (Field officer / HQ / Viewer), 🎯 Targets right, 📌 Project access (pin a user to specific projects — server-enforced), 🔑 reset password, 🛡 root protection.'],
-   ['Audit Trail','Every sign-in, create, edit, delete, import, permission change — who, when, from where, and every field that changed (Before → After). Filter by action/user/section; ⬇ Excel.'],
-   ['User Manual','This page — every module and button explained.']]},
+   ['Donors','Cards showing type, contact, approved budget and live counts of funded projects and beneficiaries reached. "⚠ Not funding any project yet" means the chain is broken — the card links to the fix.'],
+   ['Projects — Funded by (required)','You cannot create a project without naming who pays for it. That single rule is why every later record knows its donor.'],
+   ['Projects — 🎯 Objectives','The golden ＋ Add objective button adds a row per objective (with an optional target); add as many as the project has and they save with the project. On an existing project the same button opens the live manager.'],
+   ['Projects — 🌍 Geographies','Assigns the places this project works in. This powers project-filtered dashboards, HQ target districts and the field-office place lists.'],
+   ['Projects — status','Planned / Ongoing / Completed derives from the start and end dates. Nobody can forget to update it.'],
+   ['Donor Mappings','The who-funds-what ledger with funded component and approved amount. It mostly maintains itself; come here to fix ⚠-flagged projects.'],
+   ['Geography','Country → State → District → Block → Gram Panchayat → Village. The golden ＋ Add another place creates MANY places in one save — ten blocks of a district become ten separate records, each auto-linked to the project.'],
+   ['Village Demographics','Households and social-order profile per village. Recording total households is what lets the system compute Coverage %.']]},
+ {icon:'🛡',title:'Admin',intro:'People, permissions and forensics.',items:[
+   ['MIS Status','Who is online, everyone\'s workspaces and last-seen times, and 📌 Assign a workspace to an officer.'],
+   ['Users & Access — matrix','Every module with View / Edit / Delete boxes. View = can open it; Edit = add & change; Delete = remove.'],
+   ['Users & Access — presets','👷 Field officer (field entry, no HQ, no targets) · 🏢 HQ staff (everything but Users & Access, including targets) · 👁 Viewer (sees everything non-sensitive, changes nothing) · ✕ Clear all.'],
+   ['📌 Project access','Tick nothing = all projects. Tick specific projects and that user\'s every list narrows to them, and the server refuses records for any other project — on create, edit, delete and import.'],
+   ['🎯 Targets','The row that protects the plan. Without it, target boxes are read-only and the user cannot add or delete activities.'],
+   ['🛡 Root protection','Root-only. Full access always, cannot be deleted, and the system always keeps at least one root admin.'],
+   ['🔑 Reset Password','Sets a new password and signs that person out everywhere immediately.'],
+   ['Audit Trail','Every sign-in, create, edit, delete, import, permission change and password reset — who (coloured name chip), when in IST, from which IP, device and browser tab. Click any event to see a Before → After table of every field that changed. Filter by action / user / section; ⬇ Excel exports it all.'],
+   ['User Manual','This page. Search it, or use the chips at the top to jump.']]},
+ {icon:'💡',title:'Habits that keep the data trustworthy',intro:'Small disciplines with big payoffs.',items:[
+   ['Fill the baseline properly','Two extra minutes per beneficiary is what makes every impact number possible later. Without a baseline there is no "before".'],
+   ['Never leave a project unmapped','An unmapped project is invisible to Data Entry and can never reach a donor report. The Projects page banner counts them for you.'],
+   ['Watch Data Completion Status','It tells you where the gaps are before a donor finds them.'],
+   ['Let the auto-fields be auto','Income, Net Profit, NET baseline, cumulative achievements and the indicators are all arithmetic. Overriding them by hand is how numbers start disagreeing.'],
+   ['Warnings are information','A negative variance or a fall in income is real data, not an error. The system records it honestly rather than hiding it.']]},
 ];
 function renderManualPage(){
   $('main').innerHTML=`<div class="page-head"><div><div class="page-title">User Manual</div></div>
@@ -5898,7 +5996,6 @@ function renderDataEntry(){
 
   // Import section
   const importTargets = [
-    ['programmes','Thematic Areas'],['objectives','Thematic Area Objectives'],
     ['projects','Projects'],['project_objectives','Project Objectives'],
     ['donors','Donors'],['mappings','Donor Mappings'],
     ['geographies','Geography'],['villages','Village Demographics'],
@@ -6147,7 +6244,6 @@ async function renderReports(){
     <div class="filter-bar"><label>Report:</label>
       <select id="r-type" onchange="loadReport()">
         <option value="donor">Donor-wise</option>
-        <option value="programme">Thematic Area-wise</option>
         <option value="project">Project-wise</option>
         <option value="district">District-wise</option>
         <option value="block">Block-wise</option>

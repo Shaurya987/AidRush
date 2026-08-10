@@ -21,7 +21,7 @@
 7. [The building blocks (Master Data) — and why order matters](#7-the-building-blocks)
 8. [Working with beneficiary and field data](#8-working-with-field-data)
 9. [Self-Help Groups and Loans](#9-self-help-groups-and-loans)
-10. [Indicators and Indicator Progress](#10-indicators-and-indicator-progress)
+10. [Logged Indicators — the 11 computed M&E indicators](#10-logged-indicators-me)
 11. [MIS Status — the supervisor's control room](#11-mis-status)
 12. [Users & Access — deciding who sees and does what](#12-users--access)
 13. [The Audit Trail — the system's memory](#13-the-audit-trail)
@@ -39,12 +39,12 @@ VIEWS India MIS is the single place where your organisation's programme reality 
 
 Everything in this system hangs on one chain:
 
-> **Donor → Thematic Area → Project → the actual work (beneficiaries, outputs, activities, SHGs, loans, indicator progress)**
+> **Donor → Project → Geography → the actual work (beneficiaries, outputs, activities, SHGs, loans, governance records)**
 
 - A **Donor** gives money.
-- That money funds work under a **Thematic Area** (livelihoods, health, education…).
-- The work is organised into **Projects**.
-- Every record you enter — a beneficiary, a harvest, a training, a loan — belongs to a project, and *through the project*, to a thematic area and a donor.
+- That money funds **Projects** (the organisation runs one thematic area — Livelihood — so it is implicit, never asked for).
+- Each project is assigned the **places** it works in.
+- Every record you enter — a beneficiary, a harvest, a training, a loan, a Gram Sabha meeting — belongs to a project and a place, and *through the project*, to a donor.
 
 **Why this matters to you every single day:** when a donor asks *"show me what my money achieved"*, the system walks this chain backwards and gathers everything automatically. If a record is entered without its project connection, it becomes an orphan — real work that no donor report can ever find. That is why the system is strict about the chain (you will see this strictness in action in §15), and why the very first thing done for any new project is naming its funding donor.
 
@@ -79,11 +79,10 @@ Keep these two ideas in mind and every screen in this guide will feel obvious.
 **The left sidebar** is the map of the whole system. You only see what your access allows (§12) — so two colleagues may see different menus, and that is intentional.
 
 - **Overview** — Dashboard · Reports & Analytics · Data Entry (where you will live day-to-day)
-- **Master Data** — Donor Mappings · Donors · Thematic Areas · Projects · Geography · Village Demographics (the building blocks — set up once, touched rarely)
+- **Master Data** — Donor Mappings · Donors · Projects · Geography · Village Demographics (the building blocks — set up once, touched rarely)
 - **Field Data** — Beneficiaries · Production & Output Progress · Activity Progress
 - **SHG & Finance** — Self-Help Groups · SHG Loans
-- **Monitoring and Evaluation (MNE)** — Indicators · Indicator Progress
-- **Local Governance** — Gram Sabha / VDC · Convergence — Govt Schemes
+- **Local Governance** — one section with two tabs: Gram Sabha / VDC and Convergence — Govt Schemes
 - **Monitoring and Evaluation (MNE)** — Logged Indicators (the 11 computed indicators)
 - **Admin** — MIS Status · Users & Access · **User Manual** (this guide, built into the app) · Audit Trail (management and administrators)
 
@@ -103,12 +102,12 @@ The interface carries the organisation's two colours — a deep navy for identit
 
 ## 4. The Dashboard
 
-The Dashboard answers one question: *"How is the programme doing right now?"* Every element on it obeys the filter bar, so it can answer that question for the whole organisation, one thematic area, or one project.
+The Dashboard answers one question: *"How is the programme doing right now?"* Every element on it obeys the filter bar, so it can answer that question for the whole organisation, one donor, or one project.
 
 ### The filter bar
 
-- **Thematic Area** — narrow everything to one theme. The **Project** list then shows only that theme's projects (the chain at work).
-- **Project** — narrow to a single project.
+- **Project** — narrow everything to a single project.
+- **Donor** — narrow to one funder; the Project list then shows only what that donor funds (the chain at work).
 - Your active choices appear as small **chips** you can remove one by one; **✕ Clear** resets everything.
 
 *Why filters matter:* the same Dashboard is your all-organisation review AND your single-project review. Before reading any number, glance at the chips to know what you are looking at.
@@ -117,7 +116,6 @@ The Dashboard answers one question: *"How is the programme doing right now?"* Ev
 
 | Card | What it counts | Why you care |
 |---|---|---|
-| **Thematic Areas** | Your programme themes | The breadth of your mission |
 | **Active Donors** | Donors currently funding at least one project | "Active" is the key word — a donor in the address book who funds nothing is not counted here |
 | **Projects** | Implementation projects | Your delivery units |
 | **Districts / Blocks / Villages** | Places where you actually have records | Your true geographic footprint — grows automatically as data is entered |
@@ -145,7 +143,7 @@ If the Dashboard is "how are we doing", Reports is **"give me the report by ___"
 
 ### The report bar — four choices, one perfect report
 
-1. **Report:** the *dimension* — Donor-wise · Thematic Area-wise · Project-wise · District-wise · Block-wise · Village/Ward-wise · SHG-wise. This decides the lens.
+1. **Report:** the *dimension* — Donor-wise · Project-wise · District-wise · Block-wise · Village/Ward-wise · SHG-wise. This decides the lens.
 2. **The second dropdown** — the specific donor / district / project… or **All**.
 3. **⏱ Duration** — *All time*, *Monthly* (current month), *Quarterly* (current quarter), *Annually* (current Indian financial year, April–March), or **Custom range…** which opens **From / To** calendars for any period a donor asks about. The duration filters beneficiaries by their registration date — which is why the system never allows a blank registration date (§15).
 4. **⬇ Download this report (Excel)** — the one-click deliverable. It builds a complete, formatted workbook for exactly your three choices above: a summary page, activity performance by quarter, indicator progress, demographic and geographic breakdowns, production outputs, SHG summary, loans by financial year, and donor budget — with all achievement percentages traffic-light coloured. **This is the button to press when someone says "send me the report".**
@@ -179,7 +177,7 @@ This is where a manager translates a funded project into concrete, measurable ex
 
 **Step by step:**
 
-1. **Project** — pick the project. **Donor and Thematic Area appear by themselves** — you never type them, because the chain (§1) already knows them. *If a project you expect is missing from this list, it has not been linked to a donor yet — see §15.*
+1. **Project** — pick the project. **The Donor appears by itself** — you never type it, because the chain (§1) already knows it. *If a project you expect is missing from this list, it has not been linked to a donor yet — see §15.*
 2. **District** — pick the district this plan covers.
 3. **Targets** — type the planned numbers: **Total Blocks**, **Total Villages**, **Total Beneficiaries**. These become the yardsticks every field entry is measured against.
 4. **Assigned to (officer)** — choose the field officer responsible. This single dropdown is what makes the work *appear automatically on that officer's screen* (§6.4). Assigning work is literally one click here.
@@ -195,7 +193,7 @@ The small **＋ New project / donor / thematic area / district** buttons exist f
 
 A field officer's day involves entering many records that share the same context: same project, same district, same village. Typing that context again and again is wasted time and invites mistakes. A **workspace** is that context, saved once:
 
-> **Project + District + Block + Gram Panchayat + Village** (Donor and Thematic Area come along automatically — the chain again).
+> **Project + District** (Block, Gram Panchayat and Village optional — the Donor comes along automatically, the chain again).
 
 While a workspace is **active**, every form you open is already filled with this context — those fields do not even appear; a small banner shows the context instead. You type only what is new: the person's name, the harvest quantity, the loan amount.
 
@@ -221,7 +219,7 @@ Every form shares the same conveniences — learn them once, use them everywhere
 
 - **The ID makes itself.** BEN-0001, SHG-014… appear on save. You never invent numbers, and two colleagues saving at the same instant can never collide.
 - **Every dropdown is searchable.** Click and type a few letters — no scrolling through hundreds of names.
-- **Choices fill other fields.** Pick a Project → its Donor and Thematic Area fill in. Pick a Geography → District/Block/GP/Village fill in. Pick a Beneficiary (in Production) → their whole context arrives. This is the chain saving you typing at every step.
+- **Choices fill other fields.** Pick a Project → its Donor fills in. Pick a Geography → District/Block/GP/Village fill in. Pick a Beneficiary (in Production) → their whole context arrives. This is the chain saving you typing at every step.
 - **＋ New under a dropdown** — the thing you need isn't in the list? Add it *right there*: the real form opens, you save, and you are returned to your half-finished entry with the new item already selected. Nothing you typed is lost.
 - **🔒 Lock these fields** — entering twenty records with the same context but no workspace? Lock keeps the context fields filled between saves, on your screen only.
 - **"Add another with same data"** — after saving a Beneficiary or Production record, one click starts the next one with the shared context carried over.
@@ -254,11 +252,9 @@ You have data in spreadsheets — old registers, survey exports. The system take
 
 ## 7. The building blocks
 
-Master Data is set up early and touched rarely — but understanding it explains why the rest of the system behaves as it does. **Set-up order matters** because of the chain: *Thematic Areas → Donors → Projects (naming their donor) → Geography → then daily data.*
+Master Data is set up early and touched rarely — but understanding it explains why the rest of the system behaves as it does. **Set-up order matters** because of the chain: *Donors → Projects (naming their donor) → Geography (assigned to each project) → then daily data.*
 
-**Thematic Areas** — your programme themes (livelihoods, health…). Each carries its objectives with status, which feed the Dashboard's objectives panel. Everything else files itself under a thematic area through the project.
-
-> **Running just one thematic area?** If exactly one exists, the system stops asking: it is selected automatically on every form and its filter disappears, because the answer is always the same. Add a second and every picker comes straight back — nothing is deleted or hidden permanently.
+> **There is ONE thematic area — Livelihood — so the system never asks for it.** It is filled in silently behind every record (from the project, which pins its theme). The Thematic Areas section, its objectives, and every thematic filter and dropdown are gone from the interface; the real planning unit is the **Project**. No data was deleted — existing thematic rows stay in the database and every historical link still resolves.
 
 **Donors** — every funder, shown as cards: type badge (CSR / Foundation / Government…), contact person, email/phone, **approved budget**, and live counts of funded projects and reached beneficiaries. A card showing **"⚠ Not funding any project yet"** means this donor exists in the address book but the chain hasn't been connected — until it is, nothing can appear in that donor's reports. The card links you straight to the fix.
 
@@ -287,6 +283,7 @@ Master Data is set up early and touched rarely — but understanding it explains
 - **Land & livelihood** — landholding and income source classifications. **Total Land (acres) adds itself up** from the paddy/millet/vegetable areas you type in the baseline section (you can still overtype it if the household holds other land).
 - **Organic Farming (Yes / No)** — required. This is the "before" half of the organic-farming indicator; the "after" comes from the production records.
 - **Baseline livelihood — one table, not a wall of boxes.** Every income source is a row: **crops** (paddy, millet, vegetable, tuber crop, pulses, oilseeds) with *Area · Production kg · Income · Expenditure*, then **other livelihoods** (mushroom, goat, poultry, micro-enterprise, other) with *Income · Expenditure*. Fill only what the household actually had.
+  - Mushroom Cultivation counts as a crop row — it carries Area and Production (kg) too.
   - **Net is calculated for you** on every row and in the TOTAL line (income − expenditure) — it is never typed and never stored, so the two figures can never disagree.
   - The **Total income must equal the Annual Income at Registration**, and Total Land fills itself from the crop areas.
   - Every source flows into the income views, the dashboard Before-vs-After chart and the Income Impact report. **Take two extra minutes here** — this baseline is the "before" in every Before-vs-After income chart and in the Avg. Income Change headline. Without it, impact cannot be shown for this person.
@@ -313,7 +310,7 @@ On the list, the **Year / Quarter switcher** in the filter bar changes what the 
 **Self-Help Groups** — each SHG with its village, project (and through it, donor and thematic area), members, roles and savings. The membership and savings figures roll up into the Dashboard and reports.
 
 **SHG Loans** — the list shows each loan's **Village and Block** (pulled from its SHG), so a loan is placeable at a glance. Recording one takes seconds *because of the chain*:
-1. Optionally narrow with **🔎 Find SHG by Thematic Area / Project**.
+1. Optionally narrow with **🔎 Find SHG by Project**.
 2. **Pick the SHG.** That's it — the loan inherits the SHG's donor, thematic area and project silently (you won't even see those fields; there is nothing to get wrong).
 3. Enter the loan's own facts: financial year, amount, source (bank linkage…), purpose, date received (never in the future), repayment status.
 
@@ -325,9 +322,11 @@ Repayment status appears as a colour badge in the table, and loans-by-financial-
 
 Two sections capture the governance side of the work:
 
-**Gram Sabha / VDC** — one record per meeting: District → Village, the VDC name, the date, **Male + Female participants (Total adds itself up)** and whether the **VDP was submitted at the Gram Sabha (Yes/No)**. Female participation feeds the women-in-governance indicator automatically.
+Local Governance is **one section with two tabs**, matching the client's Convergence sheet.
 
-**Convergence — Govt Schemes** — every scheme leveraged: the **Department** (official government list), the scheme's name, type of work, **households benefited** and the **Amount Mobilised (₹)**. These records power two logged indicators: households accessing government schemes, and the total amount leveraged.
+**🏛 Gram Sabha / VDC tab** — one record per meeting: District → Village, the VDC name, the date, **Male + Female participants (Total adds itself up)** and whether the **VDP was submitted at the Gram Sabha (Yes/No)**. Female participation feeds the women-in-governance indicator automatically.
+
+**💰 Convergence — Govt Schemes tab** — every scheme leveraged: the **Department** (official government list), the scheme's name, type of work, **households benefited** and the **Amount Mobilised (₹)**. These records power two logged indicators: households accessing government schemes, and the total amount leveraged.
 
 Both work exactly like every other section — workspace auto-fill, filters, search, Excel export and bulk import.
 
@@ -440,7 +439,7 @@ Everything the system knows can leave it, formatted and presentable. Choosing th
 | You need… | Use |
 |---|---|
 | This section's table, nicely formatted | **Export ▾ → Current view (all rows)** — styled headers, banded rows, frozen header row, filters on, ₹ formats, totals row |
-| The same, one sheet per thematic area / project / donor | **Export ▾ → Split by Thematic Area / Project / Donor** |
+| The same, one sheet per project / donor | **Export ▾ → Split by Project / Donor** |
 | Something to print or PDF | **Export ▾ → HTML print / PDF** |
 | Raw data for another software | **Export ▾ → Plain CSV** |
 | "Send me the district report for April–June" | Reports page → dimension + duration → **⬇ Download this report** (§5) |
