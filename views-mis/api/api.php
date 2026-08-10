@@ -676,7 +676,10 @@ if ($action==='dashboard') {
   // Report/dashboard dimensions — each is applied only to tables that actually
   // have the column (see $whereFor), so passing e.g. district= filters beneficiaries
   // & geography counts but harmlessly skips tables without that column.
-  foreach(['programme_id','project_id','donor_id','geography_id','district','block','shg_id'] as $k){
+  // crop / season / project_year join the list so the Income Impact banner and every
+  // KPI follow those filters too (each is applied ONLY to tables that have the column,
+  // so e.g. season narrows production while leaving the beneficiary counts alone)
+  foreach(['programme_id','project_id','donor_id','geography_id','district','block','shg_id','crop','season','project_year'] as $k){
     if(!empty($_GET[$k])){ $f[]="$k=?"; $p[$k]=$_GET[$k]; }
   }
   $whereFor=function($table) use($f,$p){
@@ -839,9 +842,16 @@ if ($action==='dashboard') {
   $byPrjRaw=$groupCount('beneficiaries','project_id',20);
   $byProject=[]; foreach($byPrjRaw as $r){ $byProject[]=['k'=>($prjName[$r['k']]??$r['k']),'c'=>$r['c']]; }
   // Donor → funded projects panel (live from donor mappings)
+  // Follows the dashboard filters — picking a donor / project / thematic area narrows
+  // this panel to exactly that funding relationship (it used to always show everything).
   $donorFunded=[];
   try{
-    $dm=$pdo->query("SELECT m.donor_id, d.donor_name, m.project_id, p.project_name FROM donor_mappings m LEFT JOIN donors d ON d.donor_id=m.donor_id LEFT JOIN projects p ON p.project_id=m.project_id WHERE m.donor_id IS NOT NULL ORDER BY d.donor_name, p.project_name")->fetchAll();
+    $dmW=["m.donor_id IS NOT NULL"]; $dmP=[];
+    if(!empty($p['donor_id']))   { $dmW[]="m.donor_id=?";     $dmP[]=$p['donor_id']; }
+    if(!empty($p['project_id'])) { $dmW[]="m.project_id=?";   $dmP[]=$p['project_id']; }
+    if(!empty($p['programme_id'])){ $dmW[]="p.programme_id=?"; $dmP[]=$p['programme_id']; }
+    $stDM=$pdo->prepare("SELECT m.donor_id, d.donor_name, m.project_id, p.project_name FROM donor_mappings m LEFT JOIN donors d ON d.donor_id=m.donor_id LEFT JOIN projects p ON p.project_id=m.project_id WHERE ".implode(' AND ',$dmW)." ORDER BY d.donor_name, p.project_name");
+    $stDM->execute($dmP); $dm=$stDM->fetchAll();
     $byDonor=[];
     foreach($dm as $row){ $dn=$row['donor_name']?:$row['donor_id']; if($dn===null||$dn==='') continue; if(!isset($byDonor[$dn])) $byDonor[$dn]=[]; $pn=$row['project_name']?:$row['project_id']; if($pn && !in_array($pn,$byDonor[$dn])) $byDonor[$dn][]=$pn; }
     foreach($byDonor as $dn=>$prjs){ $donorFunded[]=['donor'=>$dn,'projects'=>$prjs]; }
@@ -923,6 +933,16 @@ if ($action==='dashboard') {
         $income_pairs['current']  += $curBy[$r['bid']] ?? 0;
       }
     }
+  }catch(Exception $e){}
+
+  // How many distinct project years the filtered production covers. The baseline is an
+  // ANNUAL income figure, so every "now" comparison divides by this — otherwise Year-3
+  // would read as Y1+Y2+Y3 stacked against a single year's baseline (false growth).
+  $kpi['income_years']=1;
+  try{
+    $wCy = $wC ? ($wC.' AND ') : ' WHERE ';
+    $stNY=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(project_year),'')) n FROM crops".$wCy."income_inr IS NOT NULL");
+    $stNY->execute($vC); $kpi['income_years']=max(1,(int)$stNY->fetch()['n']);
   }catch(Exception $e){}
 
   // ── Income over time — current income per project year (trend), filter-aware ──
@@ -1207,13 +1227,32 @@ if ($method==='GET') {
     if(in_array($k,$cols) && $v!==''){ $where[]="`$k`=?"; $params[]=$v; }
   }
   if(!empty($_GET['q'])){
-    // SMART search — every word must match somewhere, and EVERY column is searched
-    // (was: first 12 columns only, which silently missed villages, remarks, phones…)
+    /* ── SMART SEARCH ──────────────────────────────────────────────
+       Two bugs made search useless before:
+       1) only the FIRST 12 columns were searched — a beneficiary's name is
+          column 13, so searching a person by name NEVER matched anything.
+       2) tables store IDs, not names: the Production list shows "Kuresh" but
+          the row only holds BEN-0042, so searching a person on that page (or
+          an SHG on the Loans page) could never match.
+       Now: EVERY column is searched, AND every linked record is searched by
+       its real name (beneficiary / SHG / project / donor / thematic /
+       indicator), so what you see on screen is what you can search for.
+       Multiple words = all must match somewhere (AND of ORs).            */
     $terms=array_slice(array_values(array_filter(preg_split('/\s+/', trim((string)$_GET['q'])))),0,5);
-    $searchCols=array_slice($cols,0,48);
+    // Secrets are never searchable — matching against them would leak whether a guess
+    // is right, one character at a time.
+    $noSearch=['password_hash','active_session_token','active_tab_id','password','token'];
+    $searchCols=array_values(array_diff($cols,$noSearch));
     foreach($terms as $t){
       $like='%'.$t.'%';
-      $ors=[]; foreach($searchCols as $c){ $ors[]="`$c` LIKE ?"; $params[]=$like; }
+      $ors=[];
+      foreach($searchCols as $c){ $ors[]="`$c` LIKE ?"; $params[]=$like; }
+      foreach($FK_NAMES as $fk=>$info){
+        if(!in_array($fk,$cols)) continue;
+        list($ftbl,$fidc,$fnamec)=$info;
+        $ors[]="`$fk` IN (SELECT `$fidc` FROM `$ftbl` WHERE `$fnamec` LIKE ?)";
+        $params[]=$like;
+      }
       if($ors) $where[]='('.implode(' OR ',$ors).')';
     }
   }
@@ -1247,7 +1286,7 @@ if ($method==='GET') {
     $bids=[]; foreach($rows as $r){ if(!empty($r['beneficiary_id'])) $bids[$r['beneficiary_id']]=1; }
     $bids=array_keys($bids);
     if($bids){
-      $bl=[]; $cum=[];
+      $bl=[]; $cum=[]; $yrs=[];
       try{
         $ph=implode(',',array_fill(0,count($bids),'?'));
         $benCols=table_columns('beneficiaries');
@@ -1256,10 +1295,12 @@ if ($method==='GET') {
         $blExpr=$have? ('('.implode('+',array_map(fn($c)=>"COALESCE($c,0)",$have)).')') : '0';
         $stb=db()->prepare("SELECT beneficiary_id bid, CASE WHEN $blExpr>0 THEN $blExpr ELSE COALESCE(current_income_per_annum_inr,0) END bl FROM beneficiaries WHERE beneficiary_id IN ($ph)");
         $stb->execute($bids); foreach($stb->fetchAll() as $r2){ $bl[$r2['bid']]=(float)$r2['bl']; }
-        $stc=db()->prepare("SELECT beneficiary_id bid, COALESCE(SUM(income_inr),0) s FROM crops WHERE beneficiary_id IN ($ph) GROUP BY beneficiary_id");
-        $stc->execute($bids); foreach($stc->fetchAll() as $r2){ $cum[$r2['bid']]=(float)$r2['s']; }
+        // total income AND how many distinct project years it spans — the baseline is an
+        // ANNUAL figure, so the honest comparison is income PER YEAR, not the running sum
+        $stc=db()->prepare("SELECT beneficiary_id bid, COALESCE(SUM(income_inr),0) s, COUNT(DISTINCT NULLIF(TRIM(project_year),'')) ny FROM crops WHERE beneficiary_id IN ($ph) GROUP BY beneficiary_id");
+        $stc->execute($bids); foreach($stc->fetchAll() as $r2){ $cum[$r2['bid']]=(float)$r2['s']; $yrs[$r2['bid']]=max(1,(int)$r2['ny']); }
       }catch(Exception $e){}
-      foreach($rows as &$r){ $bid=$r['beneficiary_id']??''; $r['_bl_total']=$bl[$bid]??null; $r['_cum_income']=$cum[$bid]??null; } unset($r);
+      foreach($rows as &$r){ $bid=$r['beneficiary_id']??''; $r['_bl_total']=$bl[$bid]??null; $r['_cum_income']=$cum[$bid]??null; $r['_years_n']=$yrs[$bid]??1; } unset($r);
     }
   }
   // Indicator-progress rows: attach the indicator's TOTAL project target — progress is
