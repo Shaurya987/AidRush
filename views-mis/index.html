@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>VIEWS India MIS — Livelihoods Programme</title>
+<title>VIEWS MIS — Livelihoods Programme</title>
 <link rel="icon" type="image/png" href="viewsindialogo.png">
 <link rel="apple-touch-icon" href="viewsindialogo.png">
 <script>/* Clickjacking guard — the app refuses to run inside another site's iframe
@@ -106,11 +106,22 @@ select.r-inp{padding-right:32px}
 .li10-detail{font-size:12.5px;color:var(--t2);margin-top:8px;line-height:1.55}
 .li10-formula{font-size:11px;color:var(--gold-ink);opacity:.75;margin-top:10px;border-top:1px dashed #e6cf9d;padding-top:8px;font-family:'JetBrains Mono'}
 /* In-app User Manual */
+.man-jump{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.man-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 14px 6px 6px;font-size:12.5px;font-weight:600;color:var(--navy-800);cursor:pointer;font-family:inherit;transition:all .14s;box-shadow:var(--sh-1)}
+.man-chip:hover{border-color:var(--gold);box-shadow:0 3px 12px var(--gold-glow);transform:translateY(-1px)}
+.man-chip-n{width:20px;height:20px;border-radius:50%;background:var(--navy-800);color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.man-sec{margin-bottom:16px;border-left:4px solid var(--gold)}
+.man-head{display:flex;gap:13px;align-items:flex-start;padding-bottom:13px;margin-bottom:13px;border-bottom:1px solid var(--border)}
+.man-num{width:32px;height:32px;border-radius:10px;background:var(--navy-800);color:var(--gold-3);font-family:'Plus Jakarta Sans';font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.man-title{font-family:'Plus Jakarta Sans';font-size:18px;font-weight:800;color:var(--navy-800);letter-spacing:-.2px}
+.man-intro{font-size:13px;color:var(--t3);margin-top:3px;line-height:1.55}
 .man-tbl{width:100%;border-collapse:collapse;font-size:13px}
-.man-tbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.man-tbl td{padding:10px 10px;border-bottom:1px solid var(--border);vertical-align:top}
 .man-tbl tr:last-child td{border-bottom:none}
-.man-btn{width:230px;font-weight:700;color:var(--brand);white-space:normal}
-.man-desc{color:var(--t2);line-height:1.6}
+.man-row:hover{background:var(--gold-soft)}
+.man-btn{width:245px;font-weight:700;color:var(--navy-700);white-space:normal;line-height:1.45}
+.man-desc{color:var(--t2);line-height:1.68}
+@media(max-width:820px){.man-tbl td{display:block;border-bottom:none}.man-btn{width:auto;padding-bottom:2px}.man-desc{padding-top:0;border-bottom:1px solid var(--border);padding-bottom:11px}}
 /* Beneficiary BASELINE — one arranged table instead of 25 scattered boxes */
 .bl-wrap{border:1.5px solid var(--border);border-radius:13px;padding:15px 16px;background:linear-gradient(135deg,#f6fbf7,#fff)}
 .bl-head{margin-bottom:11px}
@@ -248,16 +259,17 @@ a{color:inherit;text-decoration:none}
 .mono{font-family:'JetBrains Mono',monospace}
 #login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2f9 0%,#f4f6fb 50%,#e8edf6 100%);overflow:hidden;z-index:100}
 .login-bg{position:absolute;inset:0;opacity:.55}
-.login-bg::before{content:'';position:absolute;top:-200px;right:-200px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.18),transparent 70%);filter:blur(40px)}
-.login-bg::after{content:'';position:absolute;bottom:-200px;left:-200px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(8,145,178,.18),transparent 70%);filter:blur(40px)}
-.login-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(99,102,241,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.04) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%)}
+.login-bg::before{content:'';position:absolute;top:-200px;right:-200px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(20,84,122,.20),transparent 70%);filter:blur(40px)}
+.login-bg::after{content:'';position:absolute;bottom:-200px;left:-200px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(226,161,7,.20),transparent 70%);filter:blur(40px)}
+.login-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(20,84,122,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(20,84,122,.05) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%)}
 .login-card{position:relative;z-index:2;background:rgba(255,255,255,.85);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.8);border-radius:24px;padding:44px 40px;width:480px;box-shadow:0 30px 80px rgba(15,23,42,.10),0 8px 24px rgba(15,23,42,.05)}
-.login-brand{display:flex;align-items:center;gap:13px;margin-bottom:26px}
-.login-mark{width:52px;height:52px;border-radius:14px;background:#fff;border:1px solid rgba(15,23,42,.07);padding:5px;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-glow)}
-.login-mark img{width:100%;height:100%;object-fit:contain;display:block}
-.login-brand h1{font-family:'Plus Jakarta Sans';font-size:22px;font-weight:800;letter-spacing:-.3px;color:var(--t1)}
-.login-brand p{font-size:13px;color:var(--t3);font-weight:500;margin-top:2px}
-.login-title{font-family:'Plus Jakarta Sans';font-weight:800;font-size:28px;letter-spacing:-.4px;color:var(--t1);margin-bottom:6px}
+.login-brand{display:flex;align-items:center;gap:15px;margin-bottom:26px;padding-bottom:18px;border-bottom:1px solid rgba(15,23,42,.08);position:relative}
+.login-brand::after{content:'';position:absolute;left:0;bottom:-1px;width:56px;height:2px;background:var(--gold);border-radius:2px}
+.login-mark{width:126px;flex-shrink:0;border-radius:12px;background:#fff;border:1px solid rgba(15,23,42,.07);padding:8px 10px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(11,44,65,.12)}
+.login-mark img{width:100%;height:auto;display:block}
+.login-brand h1{font-family:'Plus Jakarta Sans';font-size:21px;font-weight:800;letter-spacing:.5px;color:var(--navy-800);text-transform:uppercase}
+.login-brand p{font-size:12px;color:var(--t3);font-weight:600;margin-top:3px;letter-spacing:.2px}
+.login-title{font-family:'Plus Jakarta Sans';font-weight:800;font-size:28px;letter-spacing:-.4px;color:var(--navy-800);margin-bottom:6px}
 .login-sub{font-size:14.5px;color:var(--t3);margin-bottom:24px;line-height:1.55}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:13.5px;font-weight:600;color:var(--t2);margin-bottom:6px;letter-spacing:.1px}
@@ -274,12 +286,14 @@ a{color:inherit;text-decoration:none}
 #app{display:none;min-height:100vh}
 /* ═══ SIDEBAR — solid NAVY. Gold is the only accent on it, used alone. ═══ */
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sb-w);background:var(--navy-900);display:flex;flex-direction:column;z-index:50;box-shadow:4px 0 24px rgba(11,44,65,.18)}
-.sb-head{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.09);position:relative}
-.sb-head::after{content:'';position:absolute;left:20px;bottom:-1px;width:46px;height:2px;background:var(--gold);border-radius:2px}
-.sb-brand{display:flex;align-items:center;gap:12px}
-.sb-mark{width:42px;height:42px;border-radius:12px;background:var(--gold);color:var(--navy-900);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans';font-weight:800;font-size:17px;box-shadow:0 4px 14px var(--gold-glow);overflow:hidden}
-.sb-name{font-family:'Plus Jakarta Sans';font-size:17px;font-weight:800;letter-spacing:-.2px;color:#fff}
-.sb-sub{font-size:11.5px;color:var(--gold-3);font-weight:600;margin-top:2px;letter-spacing:.3px}
+.sb-head{padding:20px 18px 17px;border-bottom:1px solid rgba(255,255,255,.10);position:relative;background:linear-gradient(180deg,rgba(255,255,255,.05),transparent)}
+.sb-head::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--gold) 0%,var(--gold) 34%,transparent 34%)}
+.sb-brand{display:flex;flex-direction:column;gap:11px}
+.sb-logo{background:#fff;border-radius:11px;padding:9px 12px;box-shadow:0 4px 16px rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center}
+.sb-logo img{width:100%;max-width:140px;height:auto;display:block}
+.sb-titles{min-width:0;padding-left:2px}
+.sb-name{font-family:'Plus Jakarta Sans';font-size:16.5px;font-weight:800;letter-spacing:.4px;color:#fff;text-transform:uppercase}
+.sb-sub{font-size:11px;color:var(--gold-3);font-weight:600;margin-top:3px;letter-spacing:.55px;text-transform:uppercase}
 .sb-nav{flex:1;padding:14px 12px;overflow-y:auto}
 .sb-nav::-webkit-scrollbar{width:6px}
 .sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:99px}
@@ -317,16 +331,18 @@ a{color:inherit;text-decoration:none}
 .kpi-grid{display:grid;gap:16px;margin-bottom:24px}
 .kg-4{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .kg-5{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
-.kpi{position:relative;background:linear-gradient(165deg,#fff 52%,var(--c-soft,#f8fafc));border:1px solid var(--border);border-top:3px solid var(--c-accent,var(--brand));border-radius:var(--r-lg);padding:20px;overflow:hidden;transition:all .2s;box-shadow:var(--sh-2)}
+.kpi{position:relative;background:linear-gradient(165deg,#fff 55%,var(--c-soft,#f8fafc));border:1px solid var(--border);border-top:3px solid var(--c-accent,var(--brand));border-radius:var(--r-lg);padding:20px;overflow:hidden;transition:all .2s;box-shadow:var(--sh-2)}
 .kpi:hover{transform:translateY(-2px);box-shadow:var(--sh-3);border-color:var(--border-2)}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c-accent,var(--brand))}
 .kpi-icon{width:38px;height:38px;border-radius:10px;background:var(--c-soft,var(--brand-soft));color:var(--c-accent,var(--brand));display:flex;align-items:center;justify-content:center;margin-bottom:13px}
 .kpi-icon svg{width:20px;height:20px}
-.kpi-label{font-size:12px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px}
-.kpi-value{font-family:'Plus Jakarta Sans';font-size:30px;font-weight:800;color:var(--t1);line-height:1;letter-spacing:-.6px}
+.kpi-label{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.9px;margin-bottom:8px}
+.kpi-value{font-family:'Plus Jakarta Sans';font-size:31px;font-weight:800;color:var(--navy-800);line-height:1;letter-spacing:-.7px}
 .kpi-meta{font-size:12.5px;color:var(--t3);margin-top:9px;font-weight:500}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;box-shadow:var(--sh-2);margin-bottom:18px}
-.card-title{font-family:'Plus Jakarta Sans';font-size:17px;font-weight:700;color:var(--t1);margin-bottom:4px;letter-spacing:-.2px}
+.card>.card-title:first-child{position:relative;padding-bottom:9px;margin-bottom:12px}
+.card>.card-title:first-child::after{content:'';position:absolute;left:0;bottom:0;width:34px;height:2px;background:var(--gold);border-radius:2px}
+.card-title{font-family:'Plus Jakarta Sans';font-size:17px;font-weight:700;color:var(--navy-800);margin-bottom:4px;letter-spacing:-.2px}
 .card-sub{font-size:13.5px;color:var(--t3);margin-bottom:14px}
 .row-flex{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:18px;margin-bottom:18px}
 .chart-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;box-shadow:var(--sh-2)}
@@ -337,15 +353,16 @@ a{color:inherit;text-decoration:none}
 .chart-grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-bottom:18px}
 .chart-grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:18px}
 .table-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-2);overflow:hidden;margin-bottom:18px}
-.table-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--border);gap:14px;flex-wrap:wrap}
+.table-head{display:flex;justify-content:space-between;align-items:center;padding:17px 20px;border-bottom:1px solid var(--border);gap:14px;flex-wrap:wrap;background:linear-gradient(180deg,#fff,#fafbfd)}
 .search-input{padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;width:240px;transition:all .15s;background:#fff}
 .search-input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
 .table-wrap{overflow-x:auto;max-height:620px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
-thead{position:sticky;top:0;background:var(--bg-soft);z-index:1}
-th{text-align:left;padding:12px 14px;font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-2);white-space:nowrap}
+thead{position:sticky;top:0;background:var(--navy-800);z-index:1}
+th{text-align:left;padding:13px 14px;font-size:11px;font-weight:700;color:rgba(255,255,255,.92);text-transform:uppercase;letter-spacing:.7px;border-bottom:2px solid var(--gold);white-space:nowrap}
 td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--t2);vertical-align:middle}
-tbody tr:hover{background:var(--bg-hover)}
+tbody tr:nth-child(even){background:#fbfcfe}
+tbody tr:hover{background:var(--gold-soft)}
 tbody tr:last-child td{border-bottom:none}
 .t-name{font-weight:600;color:var(--t1)}
 .empty{text-align:center;padding:38px 18px;color:var(--t4);font-size:14px}
@@ -397,7 +414,7 @@ tbody tr:last-child td{border-bottom:none}
 .overlay.show{display:flex;animation:fadeIn .2s}
 .modal{background:#fff;border-radius:18px;padding:28px;width:100%;max-width:820px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh-4);border:1px solid var(--border)}
 .modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:14px}
-.modal-title{font-family:'Plus Jakarta Sans';font-weight:800;font-size:22px;color:var(--t1);letter-spacing:-.3px}
+.modal-title{font-family:'Plus Jakarta Sans';font-weight:800;font-size:22px;color:var(--navy-800);letter-spacing:-.3px}
 .modal-close{width:32px;height:32px;border-radius:8px;background:var(--bg-soft);color:var(--t3);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .modal-close:hover{background:var(--bad-soft);color:var(--bad)}
 .activity-list{display:flex;flex-direction:column;gap:10px;max-height:620px;overflow-y:auto}
@@ -429,12 +446,12 @@ tbody tr:last-child td{border-bottom:none}
 .prog-row{margin-bottom:14px}.prog-meta{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
 .prog-name{font-weight:600;color:var(--t1)}.prog-val{font-family:'JetBrains Mono';font-size:12px;font-weight:600;color:var(--t3)}
 .prog-track{height:7px;background:var(--bg-soft);border-radius:99px;overflow:hidden}.prog-fill{height:100%;border-radius:99px}
-.filter-bar{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px;box-shadow:var(--sh-1)}
+.filter-bar{background:#fff;border:1px solid var(--border);border-left:4px solid var(--navy-700);border-radius:12px;padding:14px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px;box-shadow:var(--sh-2)}
 .fchips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-.fchip{display:inline-flex;align-items:center;gap:7px;background:var(--brand-soft);color:var(--brand);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600}
+.fchip{display:inline-flex;align-items:center;gap:7px;background:var(--brand-soft);color:var(--navy-700);border:1px solid #d6e6f0;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600}
 .fchip-x{cursor:pointer;font-weight:800;opacity:.65;line-height:1}
 .fchip-x:hover{opacity:1}
-.filter-bar label{font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.filter-bar label{font-size:11px;font-weight:800;color:var(--navy-700);text-transform:uppercase;letter-spacing:.8px}
 .filter-bar input{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;background:#fff;outline:none}
 .filter-bar select,.filter-bar input{min-width:150px}
 .filter-bar select{max-width:330px;font-size:13.5px;padding-top:8px;padding-bottom:8px}
@@ -517,7 +534,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .empty-title{font-family:'Plus Jakarta Sans';font-weight:700;font-size:16px;color:var(--t1)}
 .empty-sub{font-size:13px;color:var(--t4);margin-top:4px}
 /* Per-section accent on the page header */
-.page-head[data-accent]{border-left:4px solid var(--sec-accent,var(--gold));padding-left:15px}
+.page-head[data-accent]{border-left:5px solid var(--sec-accent,var(--gold));border-radius:3px;padding-left:16px}
 /* During a silent 25s live refresh, suppress all entry animations so the update is invisible */
 body.silent .page-head,body.silent .kpi,body.silent .chart-card,body.silent .card{animation:none!important}
 /* Segmented toggle (Bar / Line on the income chart, and reusable elsewhere) */
@@ -571,7 +588,7 @@ body.silent .page-head,body.silent .kpi,body.silent .chart-card,body.silent .car
 <div id="login">
   <div class="login-bg"></div><div class="login-grid"></div>
   <div class="login-card">
-    <div class="login-brand"><div class="login-mark"><img src="viewsindialogo.png" alt="VIEWS India"></div><div><h1>VIEWS India MIS</h1><p>Livelihoods Programme · Ganjam, Odisha</p></div></div>
+    <div class="login-brand"><div class="login-mark"><img src="viewsindialogo.png" alt="VIEWS"></div><div><h1>VIEWS MIS</h1><p>Livelihoods Programme · Ganjam, Odisha</p></div></div>
     <div class="login-title">Sign in to your dashboard</div>
     <div class="login-sub">Secure, role-based access. Sessions are auto-revoked the moment you close this tab. Only the administrator can issue new accounts or reset passwords.</div>
     <div class="field"><label>Username or Email</label><input id="li-user" type="text" autocomplete="username" placeholder="admin or your.email@org.in"></div>
@@ -598,7 +615,10 @@ body.silent .page-head,body.silent .kpi,body.silent .chart-card,body.silent .car
 <div id="app">
   <aside class="sidebar">
     <div class="sb-head">
-      <div class="sb-brand"><div class="sb-mark">V</div><div style="min-width:0"><div class="sb-name">VIEWS India MIS</div><div class="sb-sub">Livelihoods · Ganjam</div></div></div>
+      <div class="sb-brand">
+        <div class="sb-logo"><img src="viewsindialogo.png" alt="VIEWS"></div>
+        <div class="sb-titles"><div class="sb-name">VIEWS MIS</div><div class="sb-sub">Livelihoods · Ganjam, Odisha</div></div>
+      </div>
       
     </div>
     <nav class="sb-nav" id="sb-nav"></nav>
@@ -4234,7 +4254,7 @@ function printDashboard(){
       <div class="ph-brand">
         <div class="ph-mark">V</div>
         <div>
-          <div class="ph-org">VIEWS India MIS</div>
+          <div class="ph-org">VIEWS MIS</div>
           <div class="ph-org-sub">Livelihoods Programme · Ganjam, Odisha</div>
         </div>
       </div>
@@ -4363,7 +4383,7 @@ async function exportDashboardView(){
       ]});
   }
   XLS.workbook({
-    title:'VIEWS India MIS — Dashboard',
+    title:'VIEWS MIS — Dashboard',
     filters: filterPairs,
     sheets,
     filename:'VIEWS_India_MIS_Dashboard'+(filterPairs.length>1?'_filtered':'')+'_'+todayIST()+'.xlsx',
@@ -4781,7 +4801,7 @@ function audExport(){
       'Section':audEntity(e.entity),'Record':e.entity_id||'','What happened':e.message||'',
       'Field changes':(ch&&ch.rows.length)?ch.rows.map(([k,o,nn])=>audFieldLabel(k)+': '+(ch.mode==='new'?V(nn):(ch.mode==='was'?V(o):(V(o)+' → '+V(nn))))).join(' · '):'',
       'IP':e.ip||'','Device':audDevice(e.user_agent)||''}; });
-  XLS.workbook({ title:'VIEWS India MIS — Audit Trail',
+  XLS.workbook({ title:'VIEWS MIS — Audit Trail',
     filters:[['Generated',nowIST()],['Events',rows.length+''],['Scope','Newest first · every field change included']],
     sheets:[{name:'Audit Trail', title:'Audit Trail — who did what, when, from where & every field that changed', subtitle:rows.length+' events · timestamps in IST', rows,
       cols:[{key:'Time (IST)',label:'Time (IST)',type:'text'},{key:'User',label:'User',type:'text'},{key:'Role',label:'Role',type:'text'},{key:'Action',label:'Action',type:'text'},{key:'Section',label:'Section',type:'text'},{key:'Record',label:'Record',type:'text'},{key:'What happened',label:'What happened',type:'text'},{key:'Field changes',label:'Field changes',type:'text'},{key:'IP',label:'IP',type:'text'},{key:'Device',label:'Device',type:'text'}]}],
@@ -4840,7 +4860,7 @@ function li10Export(){
   const rows=__LI10.map(x=>({'#':x.n,'Indicator':x.name,
     'Value':x.value==null?'—':(x.unit==='₹'?x.value:(x.value+'%')),
     'How it is computed':x.formula||'','Underlying figures':x.detail||''}));
-  XLS.workbook({ title:'VIEWS India MIS — Logged Indicators',
+  XLS.workbook({ title:'VIEWS MIS — Logged Indicators',
     filters:[['Generated',nowIST()],['Basis','Computed automatically from entered data — never typed']],
     sheets:[{name:'Logged Indicators', title:'The 11 logged M&E indicators', subtitle:nowIST(), rows,
       cols:[{key:'#',label:'#',type:'num'},{key:'Indicator',label:'Indicator',type:'text'},{key:'Value',label:'Value',type:'text'},{key:'How it is computed',label:'How it is computed',type:'text'},{key:'Underlying figures',label:'Underlying figures',type:'text'}]}],
@@ -4854,146 +4874,160 @@ function li10Export(){
    the features actually in this build.
    ════════════════════════════════════════════════════════════════ */
 const MANUAL_BOOK=[
- {icon:'🚀',title:'Start here — how the whole system fits together',intro:'Read this once and everything else makes sense.',items:[
-   ['The chain','Donor → Project → Geography → the record. A Donor funds a Project; a Project is assigned the places it works in; every beneficiary, output, SHG, loan and governance record points at a Project and a Place. Because of this chain, choosing a Project anywhere automatically knows its Donor, and a donor report can find every record it paid for.'],
-   ['One thematic area','The organisation runs a single thematic area (Livelihood), so the system never asks for it — it is filled in silently behind every record.'],
-   ['Two tiers of entry','HQ sets the plan and the targets. Field offices enter what actually happened against that plan. Targets are locked from the field unless an admin grants the 🎯 Targets right.'],
-   ['Nothing is guessed','Every computed figure (income change, achievements, indicators) is arithmetic on data you entered. Where data is missing, the system says so instead of showing a number.'],
-   ['Your workspace','Set a Field-Office Workspace once (Project + District) and every form opens pre-filled — you only type what is new.']]},
- {icon:'📊',title:'Dashboard — the KPI cards',intro:'Every card follows the filters at the top (Project · Donor). Read them left to right.',items:[
-   ['Beneficiaries','How many people are registered in the current filter. This is the headcount every donor asks for first.'],
-   ['SHGs','Self-Help Groups registered. Members and savings roll up from the SHG records.'],
-   ['Projects','Projects in scope. With a Donor filter on, this counts only that donor\'s funded projects.'],
-   ['Active Donors','Donors who actually fund at least one project — not merely present in the address book. A donor with no mapping is excluded on purpose.'],
-   ['Districts · Blocks · Villages','Your true geographic footprint, counted from the places assigned to projects. These grow by themselves as geography is added.'],
-   ['Activities','Planned activities, with the overall achievement % beneath — cumulative achievement ÷ total target across everything in scope.'],
-   ['Approved Budget','Total approved donor budget in scope.'],
-   ['Loan Amount','Total SHG credit recorded.'],
-   ['Avg. Income Change','The headline impact number: average NET income per year now versus the average NET baseline, for beneficiaries who actually have production logged (matched pairs). It says "based on N of M beneficiaries" so you always know how much of the population it covers.'],
-   ['Active now','People signed in at this moment.']]},
- {icon:'📈',title:'Dashboard — every chart, and how to read it',intro:'Each chart answers one question. All of them obey the filters.',items:[
-   ['💹 Household Income — Before vs After','Two bars per livelihood source: baseline income at registration versus current income now, both NET. Use the Bar/Line toggle to switch shape. If a source shows a tall "before" and a short "now", production for it simply has not been entered yet — not a collapse in income.'],
-   ['📈 Income Over Time','A line from the baseline through each project year. Each point is that year\'s own income, never a running total — so a dip is a real dip, not an artefact.'],
-   ['By Social Order','Beneficiaries split SC / ST / OBC / General. This is the inclusion evidence most donors require.'],
-   ['By Gender','Male / Female / Other split of beneficiaries.'],
-   ['By Religion','Religious composition of the beneficiary base.'],
-   ['📍 Beneficiaries by District & Block','Where your people actually are — the top areas by headcount. Use it to spot a block with suspiciously few records (usually an entry gap, not reality).'],
-   ['🌾 Farmers by Crop','How many distinct farmers grow each crop. Counts people, not records, so a farmer with three paddy entries is counted once.'],
-   ['Beneficiaries by Project','Which project reaches how many people — the quickest way to see if one project is lagging on registration.'],
-   ['Income Sources','The mix of where current income comes from, by source.'],
-   ['Donor-wise Funding','Approved budget per donor.'],
-   ['Activity Achievement vs Target','Top activities with achievement against target — the delivery picture at a glance.'],
-   ['Top Activity Progress','The five biggest activities as progress bars: cumulative achievement vs total target, with the exact numbers and %.'],
-   ['✅ Data Completion Status','Your data-health panel: how many beneficiaries have a baseline, how many have production logged, how many production rows are missing income. Fix what is red here before a donor reads anything else.'],
-   ['Projects & their Objectives','Each project\'s objectives with target beneficiaries and status — strategy and data on the same page.'],
-   ['🤝 Donors & the Projects they fund','The live funding map from Donor Mappings; it follows the filters.'],
-   ['Custom Charts','Your own charts, built from any data. They sit above Projects & Objectives.'],
-   ['⬇ Export ▾ / 🖨 Print','Export builds a formatted Excel of the dashboard exactly as filtered. Print produces a branded PDF-ready page.']]},
- {icon:'📑',title:'Reports & Analytics',intro:'Donor-ready workbooks in one click.',items:[
-   ['Report dimension','The lens: Donor-wise · Project-wise · District / Block / Village-wise · SHG-wise.'],
-   ['Duration','This Month / Quarter / Financial Year, or a custom From–To. Beneficiary figures are scoped by registration date, which is why that date matters.'],
-   ['Stat strip','Districts · Blocks · Villages · Beneficiaries · SHGs for the current choice — sanity-check here before downloading.'],
-   ['⬇ Download','The full workbook: summary metrics, activities (all years), loans, outputs by intervention, Income Impact (NET, per source, with Income Enhanced ₹ and %), Organic Farming before-vs-now, geographies covered, and the logged indicators.']]},
- {icon:'＋',title:'Data Entry — HQ Setup tab',intro:'Where the plan and the targets are set. Needs the 🎯 Targets right.',items:[
-   ['Project','Pick it first — Donor and Thematic Area fill themselves.'],
-   ['Project Geography rows','Add each District with its planned targets: Total Blocks, Total Villages, Total Beneficiaries. The district list only offers places actually assigned to that project.'],
-   ['Assigned to (officer)','Sends this work unit to a named officer — it then appears on their Field-Office page as an assignment.'],
-   ['＋ Add activity & target','Creates a real Activity Progress record with its multi-year targets.'],
-   ['＋ Add output / production','Opens the Production form for HQ-side output targets.'],
-   ['💾 Save HQ Targets','Saves one target row per district. Existing rows are listed below with ✎ edit and 🗑 delete.']]},
- {icon:'📍',title:'Data Entry — Field-Office tab',intro:'Set your context once; then only type what is new.',items:[
-   ['＋ New workspace','Choose Project → District, then optionally Block → GP → Village. Village is optional — leave it blank to pick the village per record.'],
-   ['⚡ Quick start from an HQ assignment','Pre-fills project and district from work HQ assigned to you.'],
-   ['Workspace pills','Every saved workspace is a pill. Click to switch (one click), ✎ to rename/edit, ✕ to remove. Removing never touches the records you entered with it.'],
-   ['＋ Add another workspace','On My Assignments — starts a new workspace from that assignment.'],
-   ['Pause — enter without a workspace','Forms open blank; useful for one-off records.'],
-   ['🎯 HQ Targets for this workspace','The plan numbers for your project + district, shown so you always know what you are working toward.'],
-   ['Entry cards','New Beneficiary · Production & Output · Activity Progress · New SHG · New SHG Loan · Gram Sabha / VDC · Convergence. Each shows a live record count. They look dimmed until a workspace is active — a nudge, not a block.'],
-   ['📥 Import cards','Bulk-upload a section from .xlsx / .csv. The importer matches your column names even when they differ, resolves names to IDs, cleans numbers and dates, and hands back an Excel of any rejected rows with the reason.']]},
- {icon:'👥',title:'Beneficiaries',intro:'The people, and the baseline that makes impact provable.',items:[
-   ['+ New','Registration Date pre-fills today and can never be in the future. Pick the Geography and District/Block/GP/Village fill themselves.'],
-   ['Organic Farming (required)','Yes/No at registration — the "before" half of the organic indicator.'],
-   ['Baseline livelihood table','One row per income source. Crops (paddy, millet, vegetable, tuber, pulses, oilseeds, mushroom) take Area · Production kg · Income · Expenditure; other livelihoods (goat, poultry, micro-enterprise, other) take Income · Expenditure.'],
-   ['NET column','Calculated for you on every row and in the TOTAL line (income − expenditure). It is never typed and never stored, so it can never disagree with its parts.'],
-   ['Total must match','The baseline income total must equal Annual Income at Registration — this is what stops half-entered baselines. Total Land auto-sums the crop areas.'],
-   ['💰 Income (per row)','That person\'s full NET income story: baseline vs current average per year, a per-source before/now/change table, and each project year on its own with ₹ and % change vs baseline.'],
-   ['🔒 Lock these fields','Keeps the context fields filled on YOUR screen while registering many people in one village. It affects nobody else.'],
-   ['Search','Finds by name, ID, village, phone — every column is searched, and multiple words all have to match.']]},
- {icon:'🌾',title:'Production & Output Progress',intro:'What actually happened — per beneficiary, per crop, per season.',items:[
-   ['Crop / Season filter (required)','Nothing displays until you pick a Crop/Intervention or a Season. One person legitimately has several production rows (Paddy·Kharif, Millet·Rabi, a goatery batch) — filtering shows each person once per view so a donor can never mistake them for duplicates. This is display only; reports are unaffected.'],
-   ['Income (auto)','Output Quantity × Rate. Type your own figure to override — some interventions (a health camp, a training) have no kg × rate.'],
-   ['Net Profit (auto)','Income − Expenditure. Also overridable.'],
-   ['Produce sold?','Yes/No — replaces the old self-consumption quantity.'],
-   ['Organic Farming (required)','Yes/No — the "after" half of the organic indicator.'],
-   ['Food security throughout the year?','Yes/No — this single answer drives logged indicator #2.'],
-   ['Income Change column','₹ and % from that person\'s total baseline to their production NET, expressed per year. Every row of the same person shows the same figure, because it is one person\'s one story.'],
-   ['💰 Income','The same per-beneficiary income view as in Beneficiaries.']]},
- {icon:'📊',title:'Activity Progress',intro:'Delivery year by year against HQ targets.',items:[
-   ['+ New activity','Target-setters only. One table: each year gets its Target and Q1–Q4; ＋ Add Year extends to six years.'],
-   ['Quarterly / Monthly toggle','Monthly swaps the four quarters for twelve months (Apr–Mar). Months roll up into the quarters automatically, so quarterly reports stay correct either way.'],
-   ['Achieved (auto)','Each year\'s achievement sums its quarters (or months); the cumulative total and the %-of-target bar compute themselves.'],
-   ['✎ Update progress','Everyday field work. Quarters and months are editable; the Target cells are locked 🔒 without the 🎯 Targets right.'],
-   ['Year / Quarter switcher','The list shows Year 1 by default. Pick a year and the columns become that year\'s Target and Achievement; add a quarter to see just that quarter. No blank Y2–Y6 columns cluttering the default view.']]},
- {icon:'🤝',title:'SHGs & SHG Loans',intro:'Groups, members, savings and credit.',items:[
-   ['SHGs','Each group with its village, project, inception date, membership, monthly savings and bank details.'],
-   ['👥 Members','Manages that group\'s members inline — names, roles (President / Secretary / Treasurer / Member), age, social order, savings, join date.'],
-   ['SHG Loans','Optionally narrow by project, then pick the SHG — the loan silently inherits its donor, thematic area and project. Then enter only the loan\'s own facts.'],
-   ['Village & Block columns','Shown on the loan list, pulled from the SHG, so a loan is placeable at a glance.'],
-   ['Repayment status','Shown as a colour badge; loans-by-financial-year is a standard report sheet.']]},
- {icon:'🏛',title:'Local Governance',intro:'One section, two tabs — participation and convergence.',items:[
-   ['🏛 Gram Sabha / VDC tab','One record per meeting: District → Village, VDC name, meeting date, Male and Female participants, and whether the VDP was submitted at the Gram Sabha.'],
-   ['Total Participants (auto)','Male + Female, filled automatically; type your own figure to override.'],
-   ['Why it matters','Female participation here is exactly what logged indicator #9 (women in local governance) counts.'],
-   ['💰 Convergence tab','Every government scheme leveraged: the Department (official Odisha list), the scheme name, type of work, households benefited and the Amount Mobilised.'],
-   ['Why it matters','These records drive logged indicators #10 (households accessing schemes) and #11 (total amount leveraged).']]},
- {icon:'🎯',title:'Logged Indicators (M&E)',intro:'The 11 fixed indicators. Nothing here is typed — every value is computed from data already entered.',items:[
-   ['1 · Income increase %','(Average current NET household income per year − average NET baseline) ÷ average baseline × 100, using matched pairs — only beneficiaries who actually have production logged.'],
-   ['2 · Food security %','Households answering YES to "food security throughout the year?" on their production records, over those who answered.'],
-   ['3 · Agricultural productivity %','Current paddy + millet production in kg versus the baseline paddy + millet kg.'],
-   ['4 · Area under improved practices %','Total current cultivated area versus total baseline crop area.'],
-   ['5 · Organic / natural farming %','Households organic now (production records) versus households organic at baseline.'],
-   ['6 · Diversified livelihoods %','Households cultivating three or more different crops, over households with production.'],
-   ['7 · Alternative livelihoods %','Households with an alternative livelihood recorded (goatery, poultry, tailoring…) over all households.'],
-   ['8 · SHG members with formal finance %','Members of SHGs that have received a loan, over all SHG members.'],
-   ['9 · Women in local governance %','Female Gram Sabha participants over total participants.'],
-   ['10 · Households accessing govt schemes %','Households benefited in Convergence, over total households.'],
-   ['11 · Amount leveraged (₹)','The sum of Amount Mobilised across all Convergence records.'],
-   ['"Waiting for data"','If an indicator\'s source data has not been entered, the card says so and names what to fill. It never shows an invented number.'],
-   ['Filters & ⬇ Excel','Project and Donor filters narrow every indicator. Excel exports the table with each formula and the underlying figures — donor-ready.']]},
- {icon:'🗂',title:'Master Data',intro:'Set up once, touched rarely — this is where the chain is forged.',items:[
-   ['Donors','Cards showing type, contact, approved budget and live counts of funded projects and beneficiaries reached. "⚠ Not funding any project yet" means the chain is broken — the card links to the fix.'],
-   ['Projects — Funded by (required)','You cannot create a project without naming who pays for it. That single rule is why every later record knows its donor.'],
-   ['Projects — 🎯 Objectives','The golden ＋ Add objective button adds a row per objective (with an optional target); add as many as the project has and they save with the project. On an existing project the same button opens the live manager.'],
-   ['Projects — 🌍 Geographies','Assigns the places this project works in. This powers project-filtered dashboards, HQ target districts and the field-office place lists.'],
-   ['Projects — status','Planned / Ongoing / Completed derives from the start and end dates. Nobody can forget to update it.'],
-   ['Donor Mappings','The who-funds-what ledger with funded component and approved amount. It mostly maintains itself; come here to fix ⚠-flagged projects.'],
-   ['Geography','Country → State → District → Block → Gram Panchayat → Village. The golden ＋ Add another place creates MANY places in one save — ten blocks of a district become ten separate records, each auto-linked to the project.'],
-   ['Village Demographics','Households and social-order profile per village. Recording total households is what lets the system compute Coverage %.']]},
- {icon:'🛡',title:'Admin',intro:'People, permissions and forensics.',items:[
-   ['MIS Status','Who is online, everyone\'s workspaces and last-seen times, and 📌 Assign a workspace to an officer.'],
-   ['Users & Access — matrix','Every module with View / Edit / Delete boxes. View = can open it; Edit = add & change; Delete = remove.'],
-   ['Users & Access — presets','👷 Field officer (field entry, no HQ, no targets) · 🏢 HQ staff (everything but Users & Access, including targets) · 👁 Viewer (sees everything non-sensitive, changes nothing) · ✕ Clear all.'],
-   ['📌 Project access','Tick nothing = all projects. Tick specific projects and that user\'s every list narrows to them, and the server refuses records for any other project — on create, edit, delete and import.'],
-   ['🎯 Targets','The row that protects the plan. Without it, target boxes are read-only and the user cannot add or delete activities.'],
-   ['🛡 Root protection','Root-only. Full access always, cannot be deleted, and the system always keeps at least one root admin.'],
-   ['🔑 Reset Password','Sets a new password and signs that person out everywhere immediately.'],
-   ['Audit Trail','Every sign-in, create, edit, delete, import, permission change and password reset — who (coloured name chip), when in IST, from which IP, device and browser tab. Click any event to see a Before → After table of every field that changed. Filter by action / user / section; ⬇ Excel exports it all.'],
-   ['User Manual','This page. Search it, or use the chips at the top to jump.']]},
- {icon:'💡',title:'Habits that keep the data trustworthy',intro:'Small disciplines with big payoffs.',items:[
-   ['Fill the baseline properly','Two extra minutes per beneficiary is what makes every impact number possible later. Without a baseline there is no "before".'],
-   ['Never leave a project unmapped','An unmapped project is invisible to Data Entry and can never reach a donor report. The Projects page banner counts them for you.'],
-   ['Watch Data Completion Status','It tells you where the gaps are before a donor finds them.'],
-   ['Let the auto-fields be auto','Income, Net Profit, NET baseline, cumulative achievements and the indicators are all arithmetic. Overriding them by hand is how numbers start disagreeing.'],
-   ['Warnings are information','A negative variance or a fall in income is real data, not an error. The system records it honestly rather than hiding it.']]},
+ {icon:'1',title:'How the system fits together',intro:'Please read this section once. Everything else becomes easy to follow afterwards.',items:[
+   ['The chain of information','A Donor gives money. That money funds a Project. Each Project is assigned the villages and blocks where it works. Every record you enter, whether a beneficiary, a harvest, a loan or a meeting, points to a Project and a place. Because of this chain, the system can always answer the question "what did this donor pay for", without anyone preparing it by hand.'],
+   ['One thematic area','Your organisation works in a single thematic area, which is Livelihood. The system therefore never asks you to choose it. It is recorded automatically behind every record. The Project is the unit you actually work with.'],
+   ['Two levels of data entry','Head office prepares the plan and sets the targets. Field offices record what actually happened against that plan. Targets cannot be changed from the field unless an administrator grants the Targets permission.'],
+   ['Nothing is guessed','Every calculated figure, such as income change, achievement percentage or an indicator value, is arithmetic performed on the data you entered. Where the required data has not been entered, the system says so clearly instead of showing a number.'],
+   ['Your workspace saves time','Set your Field Office Workspace once, by choosing your Project and District. After that every form opens already filled with that information, and you only type what is new.'],
+   ['Colour meaning','Green means on track, amber means needs attention, red means action is required. These three colours mean the same thing on every screen.']]},
+ {icon:'2',title:'Signing in and moving around',intro:'The basics of getting in and finding your way.',items:[
+   ['Signing in','Enter your username or email address and your password, then select Sign in.'],
+   ['Account lock','If a wrong password is entered several times, the account locks for a few minutes. This protects your data from password guessing. Please wait, or ask your administrator to reset the password.'],
+   ['One session at a time','Signing in on a second computer signs you out of the first. This keeps the record of who entered what accurate.'],
+   ['Automatic sign out','If you leave the system idle for a long time you will be signed out. Please save your work before long breaks.'],
+   ['The left menu','The menu is the map of the system. You only see the sections your permissions allow, so two colleagues may see different menus. This is intentional.'],
+   ['Top right of every page','A record count, an Export button that offers every way of taking the data out, and a New button when you are allowed to add records.'],
+   ['Search box','Every list has a search box. It searches all columns, and it also finds records by the name of the linked person, group, project or donor, not only by the code stored in the row.']]},
+ {icon:'3',title:'Dashboard: the filter bar and the number cards',intro:'The Dashboard answers the question of how the programme is doing at this moment. Every item on it obeys the filter bar.',items:[
+   ['Project filter','Narrows the whole page to a single project.'],
+   ['Donor filter','Narrows the page to one funder. The Project list then shows only the projects that donor funds.'],
+   ['Filter chips','Your active choices appear as small chips. Select the cross on a chip to remove that one choice. The Clear button removes all of them.'],
+   ['Beneficiaries card','The number of people registered within the current filter. This is usually the first figure a donor asks for.'],
+   ['SHGs card','The number of Self Help Groups recorded. Membership and savings figures come from the group records.'],
+   ['Projects card','The number of projects in view. With a donor selected, it counts only that donor\'s projects.'],
+   ['Active Donors card','Donors who fund at least one project. A donor recorded in the system but funding nothing is deliberately not counted here.'],
+   ['Districts, Blocks and Villages cards','Your true geographic coverage, counted from the places assigned to projects. These figures grow on their own as geography is added.'],
+   ['Activities card','The number of planned activities, with the overall achievement percentage below it. That percentage is total achievement divided by total target.'],
+   ['Approved Budget card','The total approved donor budget within the current filter.'],
+   ['Loan Amount card','The total value of Self Help Group loans recorded.'],
+   ['Average Income Change card','The main impact figure. It compares average net income per year now against the average net baseline income, counting only beneficiaries who have production records. The card states how many beneficiaries it is based on, so you always know its coverage.'],
+   ['Active now card','The number of people signed into the system at this moment.']]},
+ {icon:'4',title:'Dashboard: every chart and how to read it',intro:'Each chart answers one question. All of them follow the filter bar.',items:[
+   ['Household Income, Before versus After','Two bars for each livelihood source. The first bar is income recorded at registration, the second is income now. Both are net figures. A Bar and Line switch changes the shape of the chart. If a source shows a tall first bar and a very short second bar, it usually means production for that source has not been entered yet, rather than a fall in income.'],
+   ['Income Over Time','A line starting at the baseline and continuing through each project year. Each point shows that year on its own and never adds the previous years to it, so a dip on the line is a real dip.'],
+   ['By Social Order','Beneficiaries divided into SC, ST, OBC and General. This is the inclusion evidence most donors ask for.'],
+   ['By Gender','Beneficiaries divided into Male, Female and Other.'],
+   ['By Religion','The religious composition of the registered beneficiaries.'],
+   ['Beneficiaries by District and Block','Where your people actually are, showing the largest areas first. It is a quick way to notice a block with unusually few records, which is normally a data entry gap rather than reality.'],
+   ['Farmers by Crop','How many separate farmers grow each crop. It counts people and not records, so a farmer with three paddy entries is counted once.'],
+   ['Beneficiaries by Project','How many people each project reaches. This is the fastest way to see whether one project is behind on registration.'],
+   ['Income Sources','The mix of sources that current income comes from.'],
+   ['Donor wise Funding','The approved budget of each donor.'],
+   ['Activity Achievement versus Target','The leading activities, showing achievement against target side by side.'],
+   ['Top Activity Progress','The five largest activities shown as progress bars, with the exact numbers and the percentage achieved.'],
+   ['Data Completion Status','The health of your data. It shows how many beneficiaries have a baseline recorded, how many have production records, and how many production rows are missing an income figure. Please correct anything shown here before sharing reports.'],
+   ['Projects and their Objectives','Each project with its full list of objectives, target beneficiaries and status.'],
+   ['Donors and the Projects they fund','The live funding map taken from Donor Mappings. It follows the filter bar.'],
+   ['Custom Charts','Charts you build yourself from any data in the system. They appear above Projects and their Objectives.'],
+   ['Export button','Creates a formatted Excel workbook of the Dashboard exactly as filtered.'],
+   ['Print button','Produces a printable page with a branded header, suitable for saving as a PDF.']]},
+ {icon:'5',title:'Reports and Analytics',intro:'Complete workbooks for donors and management, produced in one step.',items:[
+   ['Report type','Choose the view you need. Donor wise, Project wise, District wise, Block wise, Village wise or SHG wise.'],
+   ['Duration','This Month, This Quarter, This Financial Year, or your own From and To dates. Beneficiary figures are selected by their registration date, which is why that date matters.'],
+   ['Statistics strip','Districts, Blocks, Villages, Beneficiaries and SHGs for your current selection. Please check these figures before downloading.'],
+   ['Download','Produces the full workbook. It contains summary figures, activities for every year, loans, outputs by intervention, Income Impact with net figures for each source including the change in rupees and in percentage, Organic Farming before and now, the geographies covered, and the logged indicators.']]},
+ {icon:'6',title:'Data Entry: Head Office Setup tab',intro:'This is where the plan and the targets are prepared. It requires the Targets permission.',items:[
+   ['Project','Select the project first. The Donor is then filled in automatically.'],
+   ['Project Geography rows','Add each district with its planned targets, which are Total Blocks, Total Villages and Total Beneficiaries. The district list offers only places that are actually assigned to that project.'],
+   ['Assigned to officer','Sends this unit of work to a named officer. It then appears on that officer\'s Field Office page as an assignment.'],
+   ['Add activity and target','Creates a full Activity Progress record together with its multi year targets.'],
+   ['Add output or production','Opens the Production form for head office output targets.'],
+   ['Save HQ Targets','Saves one target row for each district. Saved rows are listed below, where they can be edited or deleted.']]},
+ {icon:'7',title:'Data Entry: Field Office tab',intro:'Set your context once, then record only what is new.',items:[
+   ['New workspace','Choose your Project and District. Block, Gram Panchayat and Village are optional. Leaving the village blank lets you choose it separately on each record.'],
+   ['Quick start from an HQ assignment','Fills in the project and district from work that head office assigned to you.'],
+   ['Workspace buttons','Each saved workspace appears as a button. Select one to switch to it. The pencil renames or edits it, and the cross removes it. Removing a workspace never affects the records you entered with it.'],
+   ['Add another workspace','Found under My Assignments. It starts a new workspace from that assignment.'],
+   ['Pause','Lets you enter a record without any workspace. Forms then open blank.'],
+   ['HQ Targets for this workspace','Shows the planned figures for your project and district, so you always know what you are working towards.'],
+   ['Entry cards','New Beneficiary, Production and Output, Activity Progress, New SHG, New SHG Loan, Gram Sabha and Convergence. Each card shows a live count of existing records. The cards appear faded until a workspace is active, which is a reminder and not a restriction.'],
+   ['Import cards','Upload a section from an Excel or CSV file. The importer recognises your column headings even when the wording differs, converts names into codes, corrects number and date formats, and returns an Excel file listing any rows it could not accept together with the reason.']]},
+ {icon:'8',title:'Beneficiaries',intro:'The people you serve, and the baseline that makes impact provable.',items:[
+   ['New button','Registration Date is filled with today\'s date and can never be set in the future. Choosing the Geography fills in District, Block, Gram Panchayat and Village.'],
+   ['Identity fields','Name, father or spouse name, age between 0 and 120, social order, gender and religion. These produce the inclusion charts that donors require.'],
+   ['Contact number','Must be a valid ten digit Indian mobile number. A leading zero or a country code is accepted and cleaned automatically.'],
+   ['Organic Farming, required','A Yes or No answer recorded at registration. This is the before position for the organic farming indicator.'],
+   ['Baseline livelihood table','One row for each source of income. Crop rows, which are paddy, millet, vegetable, tuber crop, pulses, oilseeds and mushroom cultivation, take Area, Production in kilograms, Income and Expenditure. The other livelihood rows, which are goat rearing, backyard poultry, micro enterprise and other, take Income and Expenditure.'],
+   ['The Net column','Calculated for you on every row and on the total line, as income minus expenditure. It is never typed and never stored, so it can never disagree with the figures it comes from.'],
+   ['The total must match','The baseline income total must equal the Annual Income at Registration. This check prevents half completed baselines. Total Land is added up from the crop areas automatically.'],
+   ['Income button on each row','Opens that person\'s full income position. It shows the baseline against the current average per year, a table of before, now and change for each source, and each project year listed separately with the change in rupees and in percentage.'],
+   ['Lock these fields','Keeps the context fields filled on your own screen while you register many people from one village. It has no effect on any other user.'],
+   ['Search','Finds a person by name, code, village or telephone number. All columns are searched, and when you type more than one word every word must match.']]},
+ {icon:'9',title:'Production and Output Progress',intro:'What actually happened, for each beneficiary, crop and season.',items:[
+   ['Crop or Season filter, required','No records are shown until you choose a Crop or a Season. One person correctly has several production rows, for example paddy in Kharif and millet in Rabi. Filtering shows each person once in the view, so a donor can never mistake them for a duplicate. This affects the display only. Reports always include every record.'],
+   ['Income, calculated','Output Quantity multiplied by Rate. You may type your own figure to replace it, which is useful for activities such as a health camp that have no quantity or rate.'],
+   ['Net Profit, calculated','Income minus Expenditure. This can also be replaced by your own figure.'],
+   ['Produce sold','A Yes or No answer. It replaces the earlier self consumption quantity.'],
+   ['Organic Farming, required','A Yes or No answer. This is the after position for the organic farming indicator.'],
+   ['Food security throughout the year','A Yes or No answer. This single answer produces logged indicator number two.'],
+   ['Income Change column','The change in rupees and in percentage from that person\'s total baseline to their production net income, expressed for one year. Every row belonging to the same person shows the same figure, because it describes one person and not one record.'],
+   ['Income button','Opens the same income position as in the Beneficiaries section.']]},
+ {icon:'10',title:'Activity Progress',intro:'Delivery recorded year by year against the targets set by head office.',items:[
+   ['New activity','Available to holders of the Targets permission. One table is used. Each year has its target and its four quarters. The Add Year button extends the table up to six years.'],
+   ['Quarterly and Monthly switch','Monthly replaces the four quarters with twelve months, from April to March. The months are added into the correct quarters automatically, so quarterly reports remain correct either way.'],
+   ['Achieved column, calculated','Each year\'s achievement is the total of its quarters or months. The cumulative total and the percentage bar against the overall target are calculated for you.'],
+   ['Update progress','The everyday field task. Quarters and months can be edited. The target cells stay locked unless you hold the Targets permission.'],
+   ['Year and Quarter switch on the list','The list shows Year 1 by default. Choosing a year changes the columns to that year\'s target and achievement. Adding a quarter shows that quarter alone. This keeps unused year columns off the screen.']]},
+ {icon:'11',title:'Self Help Groups and Loans',intro:'Groups, their members, their savings and their credit.',items:[
+   ['Self Help Groups list','Each group with its village, project, date of formation, number of members, monthly savings and bank details.'],
+   ['Members button','Manages the members of that group, including name, role such as President, Secretary, Treasurer or Member, age, social order, savings contribution and date of joining.'],
+   ['SHG Loans','You may first narrow the list by project, then select the group. The loan then takes the donor and project of that group automatically. You only enter the details of the loan itself.'],
+   ['Village and Block columns','Shown on the loan list and taken from the group record, so the location of a loan is visible at a glance.'],
+   ['Repayment status','Shown as a coloured label. Loans grouped by financial year are a standard sheet in the reports.']]},
+ {icon:'12',title:'Local Governance',intro:'One section containing two tabs, matching the format supplied by your organisation.',items:[
+   ['Gram Sabha and VDC tab','One record for each meeting. It holds the district through to the village, the name of the Village Development Committee, the date of the meeting, the number of male and female participants, and whether the Village Development Plan was submitted at the Gram Sabha.'],
+   ['Total Participants, calculated','Male plus female participants. You may type your own figure to replace it.'],
+   ['Why this matters','The number of female participants recorded here produces logged indicator number nine, which measures the participation of women in local governance.'],
+   ['Convergence tab','Every government scheme brought to the community. It records the department from the official list, the name of the scheme, the type of work, the number of households that benefited and the amount of money mobilised.'],
+   ['Why this matters','These records produce logged indicator number ten, which measures access to government schemes, and number eleven, which totals the amount of money leveraged.']]},
+ {icon:'13',title:'Logged Indicators',intro:'These are the eleven fixed indicators of your organisation. Nothing on this page is typed. Every value is calculated from data already entered elsewhere in the system.',items:[
+   ['1. Percentage increase in annual household income','Average current net household income per year, less the average net baseline income, divided by the average baseline, multiplied by one hundred. Only beneficiaries who have production records are included, so the comparison is like for like.'],
+   ['2. Percentage of households with improved food security','The number of households answering Yes to food security throughout the year, divided by the number of households that answered.'],
+   ['3. Percentage increase in agricultural productivity','Current paddy and millet production in kilograms compared with the baseline paddy and millet production in kilograms.'],
+   ['4. Percentage increase in area under improved practices','Total area under current cultivation compared with the total baseline crop area.'],
+   ['5. Percentage of farmers practising organic or natural farming','The number of households practising organic farming now, taken from production records, compared with the number practising it at baseline.'],
+   ['6. Percentage of households with diversified livelihoods','Households cultivating three or more different crops, divided by households that have production records.'],
+   ['7. Percentage of households adopting alternative livelihoods','Households with an alternative livelihood recorded, such as goatery, poultry or tailoring, divided by all households.'],
+   ['8. Percentage of SHG members using formal financial services','The members of groups that have received a loan, divided by the total membership of all groups.'],
+   ['9. Percentage of women participating in local governance','Female Gram Sabha participants divided by the total number of participants.'],
+   ['10. Percentage of households accessing government schemes','Households that benefited according to the Convergence records, divided by the total number of households.'],
+   ['11. Amount leveraged through government schemes','The total of the Amount Mobilised figures in the Convergence records.'],
+   ['Waiting for data','If the information an indicator needs has not been entered, the card states this and names what to fill in. It never displays an invented number.'],
+   ['Filters and Excel','The Project and Donor filters narrow every indicator. The Excel button downloads the table together with each formula and the figures behind it.']]},
+ {icon:'14',title:'Master Data',intro:'Prepared at the start and rarely changed. This is where the chain of information is created.',items:[
+   ['Donors','Shown as cards with the donor type, contact person, approved budget and live counts of funded projects and beneficiaries reached. A card reading that the donor funds no project yet means the chain is incomplete, and the card links to the place where it can be corrected.'],
+   ['Projects, Funded by is required','A project cannot be created without naming the donor who pays for it. This single rule is the reason every later record knows its donor.'],
+   ['Projects, Objectives button','The gold Add objective button adds one row for each objective, with an optional target. Add as many as the project has and they are saved together with the project. On an existing project the same button opens the objectives manager.'],
+   ['Projects, Geographies button','Assigns the places where the project works. This drives project filtered dashboards, the district lists used for head office targets, and the place lists offered to field officers.'],
+   ['Projects, Status','Planned, Ongoing or Completed is decided by the start and end dates, so it can never be left out of date.'],
+   ['Donor Mappings','The record of who funds what, with the funded component and the approved amount. It largely maintains itself. Use it to correct any project flagged as unmapped.'],
+   ['Geography','Country, State, District, Block, Gram Panchayat and Village. The gold Add another place button creates many places in a single save. Ten blocks of one district become ten separate records, each linked to the project.'],
+   ['Village Demographics','Households and social order profile for each village. Recording the total number of households is what allows the system to calculate coverage percentage.']]},
+ {icon:'15',title:'Administration',intro:'People, permissions and the record of everything that happens.',items:[
+   ['MIS Status','Shows who is signed in, the workspaces of every officer with the time they were last seen, and allows a workspace to be assigned to an officer.'],
+   ['Users and Access, permission matrix','Every module with View, Edit and Delete boxes. View allows the section to be opened. Edit allows records to be added and changed. Delete allows records to be removed.'],
+   ['Users and Access, presets','Field officer gives field data entry without head office access or targets. HQ staff gives everything except Users and Access, including targets. Viewer allows everything not sensitive to be seen but nothing to be changed. Clear all removes every permission.'],
+   ['Project access','Leaving every box unticked gives access to all projects. Ticking specific projects limits that user to them. Every list narrows accordingly, and the server refuses any record belonging to another project, whether it is being created, edited, deleted or imported.'],
+   ['Targets permission','The setting that protects the plan. Without it, target boxes are read only and the user cannot add or delete activities.'],
+   ['Root protection','Available to root administrators only. It grants full access at all times, prevents the account from being deleted, and the system always keeps at least one root administrator.'],
+   ['Reset Password','Sets a new password and signs that person out of every device immediately.'],
+   ['Audit Trail','Records every sign in, creation, change, deletion, import, permission change and password reset. Each entry shows the person as a coloured name label, the time in Indian Standard Time, the address, the device and the browser tab. Selecting an entry opens a table showing every field that changed, with the old value and the new value side by side. The list can be filtered by action, user and section, and exported to Excel.'],
+   ['User Manual','This page. It can be searched, and the labels at the top jump to any section.']]},
+ {icon:'16',title:'Practices that keep the data trustworthy',intro:'Small habits with a large effect on the quality of your reporting.',items:[
+   ['Complete the baseline properly','Two extra minutes for each beneficiary is what makes every later impact figure possible. Without a baseline there is no before position to compare against.'],
+   ['Never leave a project unmapped','A project with no donor cannot be used for data entry and can never appear in a donor report. The banner on the Projects page counts them for you.'],
+   ['Watch the Data Completion Status panel','It shows where the gaps are, so they can be corrected before anyone outside the organisation notices them.'],
+   ['Allow the calculated fields to calculate','Income, net profit, net baseline, cumulative achievement and the indicators are all arithmetic. Replacing them by hand is how figures begin to disagree with each other.'],
+   ['Treat warnings as information','A negative variance or a fall in income is real data and not a mistake. The system records it honestly rather than hiding it.']]},
 ];
 function renderManualPage(){
   $('main').innerHTML=`<div class="page-head"><div><div class="page-title">User Manual</div></div>
     <div class="page-actions"><input class="search-input" id="man-q" placeholder="Search the manual…" oninput="manualFilter()"></div></div>
-    <div class="fchips" style="margin-bottom:14px">${MANUAL_BOOK.map((s,i)=>`<span class="fchip" style="cursor:pointer" onclick="document.getElementById('man-sec-${i}').scrollIntoView({behavior:'smooth',block:'start'})">${s.icon} ${esc(s.title)}</span>`).join('')}</div>
+    <div class="man-jump">${MANUAL_BOOK.map((s,i)=>`<button type="button" class="man-chip" onclick="document.getElementById('man-sec-${i}').scrollIntoView({behavior:'smooth',block:'start'})"><span class="man-chip-n">${s.icon}</span>${esc(s.title)}</button>`).join('')}</div>
     <div id="man-body">${MANUAL_BOOK.map((s,i)=>`
-      <div class="card man-sec" id="man-sec-${i}" style="margin-bottom:14px">
-        <div class="card-title">${s.icon} ${esc(s.title)}</div>
-        <div class="card-sub" style="margin-bottom:10px">${esc(s.intro)}</div>
+      <div class="card man-sec" id="man-sec-${i}">
+        <div class="man-head"><span class="man-num">${s.icon}</span><div><div class="man-title">${esc(s.title)}</div><div class="man-intro">${esc(s.intro)}</div></div></div>
         <table class="man-tbl"><tbody>${s.items.map(([b,d])=>`<tr class="man-row"><td class="man-btn">${esc(b)}</td><td class="man-desc">${esc(d)}</td></tr>`).join('')}</tbody></table>
       </div>`).join('')}</div>`;
 }
@@ -5366,7 +5400,7 @@ function downloadSmartTemplate(){
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headers, example]), nm);
   }
   const help=XLSX.utils.aoa_to_sheet([
-    ['VIEWS India MIS — Smart Multi-Sheet Import Template'],[''],
+    ['VIEWS MIS — Smart Multi-Sheet Import Template'],[''],
     ['• One workbook, one sheet per section. Fill the sheets you need; delete the rest.'],
     ['• Keep the header row exactly as-is. Fields marked * are required.'],
     ['• For Thematic Area / Project / Donor / SHG / Indicator — type the NAME; we auto-link to the right ID.'],
@@ -5418,7 +5452,7 @@ function downloadImportTemplate(key){
     else if(type==='date') cmt += '\nType: Date\nFormats: dd/mm/yyyy, dd-mm-yyyy, yyyy-mm-dd, or Excel date';
     else if(['programme_id','project_id','donor_id','shg_id','indicator_id'].includes(f[0])) cmt += '\nType the NAME (fuzzy matching works).\nWe will auto-link to the right ID.';
     else if(type==='area') cmt += '\nType: Long description';
-    ws[addr].c=[{a:'VIEWS India MIS', t:cmt}];
+    ws[addr].c=[{a:'VIEWS MIS', t:cmt}];
     const exAddr=XLSX.utils.encode_cell({r:1,c});
     if(ws[exAddr]) ws[exAddr].s={font:{italic:true, color:{rgb:'FF94A3B8'}, sz:11}, alignment:{horizontal:'left'}, border:{bottom:{style:'thin',color:{rgb:'FFE4E9F2'}}}};
   }
@@ -5428,7 +5462,7 @@ function downloadImportTemplate(key){
 
   // Help sheet — explains every column
   const helpRows=[];
-  helpRows.push(['VIEWS India MIS — Template for: '+cfg.label]); helpRows.push([]);
+  helpRows.push(['VIEWS MIS — Template for: '+cfg.label]); helpRows.push([]);
   helpRows.push(['How to fill this template']);
   helpRows.push(['1. Replace the gray italic example row (row 2) with your own data.']);
   helpRows.push(['2. Add as many rows as you need below.']);
@@ -5947,7 +5981,7 @@ function smartDownloadErrors(){
       rows:list.map(f=>Object.assign({'⚠ Why it failed':f.reason}, f.row)),
       cols:[{key:'⚠ Why it failed',label:'⚠ Why it failed',type:'text'}].concat(keys.map(k=>({key:k,label:k,type:'text'}))) };
   });
-  XLS.workbook({ title:'VIEWS India MIS — Failed import rows', filters:[['Generated',nowIST()],['How to use','Fix each row, delete the reason column, re-import via Smart Import']],
+  XLS.workbook({ title:'VIEWS MIS — Failed import rows', filters:[['Generated',nowIST()],['How to use','Fix each row, delete the reason column, re-import via Smart Import']],
     sheets, filename:'VIEWS_India_MIS_failed_rows_'+todayIST()+'.xlsx' });
   toast('✓ Failed rows downloaded — fix & re-import');
 }
@@ -6562,7 +6596,7 @@ async function exportReportsView(){
     cols:[{key:'Donor',label:'Donor',type:'text'},{key:'Type',label:'Type',type:'text'},{key:'Approved (₹)',label:'Approved (₹)',type:'inr'},{key:'Mapped (₹)',label:'Mapped (₹)',type:'inr'}] });
 
   XLS.workbook({
-    title:'VIEWS India MIS — '+cfg.label+'-wise Report',
+    title:'VIEWS MIS — '+cfg.label+'-wise Report',
     filters:[['Report dimension', cfg.label+'-wise'],['Filter', fLabel],['Duration', dr.label],['Generated', nowIST()]],
     sheets, filename:'VIEWS_India_MIS_'+type+'_'+(String(fv||'all').replace(/[^\w]+/g,'_'))+'_'+todayIST()+'.xlsx'});
   toast('✓ '+cfg.label+'-wise report downloaded');
@@ -7386,7 +7420,7 @@ async function generateDonorReport(){
   });
 
   XLS.workbook({
-    title:'VIEWS India MIS — '+title,
+    title:'VIEWS MIS — '+title,
     filters, sheets,
     filename:`VIEWS_India_MIS_${periodLabel(period)}_Donor_Report_${(donorName||'').replace(/[^\w]+/g,'_')}_${todayIST()}.xlsx`,
   });
@@ -7412,7 +7446,7 @@ async function generateMasterWorkbook(){
       });
     }catch(e){}
   }
-  XLS.workbook({title:'VIEWS India MIS —Master Workbook', filters:[['Generated', nowIST()]], sheets, filename:'VIEWS_India_MIS_Master_Workbook_'+todayIST()+'.xlsx'});
+  XLS.workbook({title:'VIEWS MIS —Master Workbook', filters:[['Generated', nowIST()]], sheets, filename:'VIEWS_India_MIS_Master_Workbook_'+todayIST()+'.xlsx'});
   toast('✓ Master workbook ready — '+sheets.length+' sheets');
 }
 
@@ -7573,7 +7607,7 @@ const XLS = (function(){
       ...(sheets||[]).map((s,i)=>[i+1, s.name, (s.rows||[]).length]),
       [''],
       ['Generated', nowIST()],
-      ['Software', 'VIEWS India MIS · Realtime monitoring & evaluation platform'],
+      ['Software', 'VIEWS MIS · Realtime monitoring & evaluation platform'],
     ];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = [{wch:8},{wch:36},{wch:14},{wch:30}];
@@ -7811,7 +7845,7 @@ async function exportListView(key, asCSV){
     }catch(e){}
   }
   XLS.workbook({
-    title: 'VIEWS India MIS —'+RES[key].label,
+    title: 'VIEWS MIS —'+RES[key].label,
     filters: [['Generated', nowIST()], ['Records', rows.length+''], ...filters],
     sheets,
     filename: 'VIEWS_India_MIS_'+key+'_'+todayIST()+'.xlsx',
@@ -7851,7 +7885,7 @@ async function exportListSplit(key, groupCol, groupLabel){
     });
   }
   XLS.workbook({
-    title:'VIEWS India MIS —'+RES[key].label+' split by '+groupLabel,
+    title:'VIEWS MIS —'+RES[key].label+' split by '+groupLabel,
     filters:[['Generated', nowIST()],['Split by', groupLabel],['Groups', Object.keys(groups).length+''],['Records', rows.length+''], ...activeFilterPairs(key)],
     sheets,
     filename:'VIEWS_India_MIS_'+key+'_by_'+groupLabel.toLowerCase()+'_'+todayIST()+'.xlsx',
@@ -7868,7 +7902,7 @@ async function exportCustom(key){
   const head=cols.map(c=>`<th>${esc(c.label)}</th>`).join('');
   const body=rows.map(r=>{const pr=prettyRow(r,key); return `<tr>${cols.map(c=>`<td${c.type==='inr'||c.type==='num'?' class="num"':''}>${esc(pr[c.key]==null?'':pr[c.key])}</td>`).join('')}</tr>`;}).join('');
   const filtBand = filters.length?`<div class="hdfilt">${filters.map(f=>`<span><b>${esc(f[0])}:</b> ${esc(f[1])}</span>`).join('')}</div>`:'';
-  const html=`<!DOCTYPE html><htm`+`l><hea`+`d><meta charset="UTF-8"><title>VIEWS India MIS — ${esc(cfg.label)}<\/title>
+  const html=`<!DOCTYPE html><htm`+`l><hea`+`d><meta charset="UTF-8"><title>VIEWS MIS — ${esc(cfg.label)}<\/title>
 <style>body{font-family:Inter,Segoe UI,Arial,sans-serif;background:#f4f6fb;margin:0;color:#0b1220}
 .wrap{max-width:1280px;margin:0 auto;background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.08)}
 .hd{background:linear-gradient(135deg,#0b3d2e,#0d9488);color:#fff;padding:30px 36px}
@@ -7883,11 +7917,11 @@ tr:nth-child(even) td{background:#f8fafc}
 .btn{background:#4f46e5;color:#fff;border:none;padding:11px 24px;border-radius:8px;font-weight:700;cursor:pointer}
 .foot{padding:16px 36px;color:#5b6a85;font-size:11.5px;border-top:1px solid #eef2f9}
 @media print{.noprint{display:none}}<\/style><\/hea`+`d><bo`+`dy>
-<div class="noprint"><div><b>VIEWS India MIS</b> — Presentable report</div><button class="btn" onclick="window.print()">🖨 Print / Save as PDF</button></div>
-<div class="wrap"><div class="hd"><h1>VIEWS India MIS — ${esc(cfg.label)}</h1>
+<div class="noprint"><div><b>VIEWS MIS</b> — Presentable report</div><button class="btn" onclick="window.print()">🖨 Print / Save as PDF</button></div>
+<div class="wrap"><div class="hd"><h1>VIEWS MIS — ${esc(cfg.label)}</h1>
 <p>${rows.length} records · Generated ${esc(nowIST())}</p>${filtBand}</div>
 <div class="bd"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
-<div class="foot">Generated by VIEWS India MIS · ${esc(nowIST())} · All amounts in ₹</div></div><\/bo`+`dy><\/htm`+`l>`;
+<div class="foot">Generated by VIEWS MIS · ${esc(nowIST())} · All amounts in ₹</div></div><\/bo`+`dy><\/htm`+`l>`;
   const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='VIEWS_India_MIS_'+key+'_Report_'+todayIST()+'.html';document.body.appendChild(a);a.click();
   setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},100);

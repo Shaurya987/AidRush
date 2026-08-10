@@ -1,6 +1,8 @@
-# VIEWS India MIS — The Complete User Guide
+# VIEWS MIS — The Complete User Guide
 
 *Your organisation's Management Information System for livelihoods programmes — this guide explains every screen, every button, and every connection, in plain language.*
+
+> **This guide is also built into the application.** Open **Admin, then User Manual** to read the same explanations on screen, section by section, with a search box. That copy explains every card, every chart and every button in plain language.
 
 ---
 
@@ -33,7 +35,7 @@
 
 ## 1. What this system is
 
-VIEWS India MIS is the single place where your organisation's programme reality lives: who funds what, where the work happens, who benefits, what was achieved against what was planned — and it turns all of that into donor-ready reports in one click.
+VIEWS MIS is the single place where your organisation's programme reality lives: who funds what, where the work happens, who benefits, what was achieved against what was planned — and it turns all of that into donor-ready reports in one click.
 
 ### The one idea that connects everything: the chain
 
@@ -507,4 +509,4 @@ Download the failed-rows file the import screen offers — every row carries a p
 
 ---
 
-*VIEWS India MIS — built from the ground up for your programme. Keep this guide beside the system; it describes exactly what every screen does and why.*
+*VIEWS MIS — built from the ground up for your programme. Keep this guide beside the system; it describes exactly what every screen does and why.*
