@@ -87,6 +87,8 @@ Keep these two ideas in mind and every screen in this guide will feel obvious.
 - **Monitoring and Evaluation (MNE)** — Logged Indicators (the 11 computed indicators)
 - **Admin** — MIS Status · Users & Access · **User Manual** (this guide, built into the app) · Audit Trail (management and administrators)
 
+The interface carries the organisation's two colours — a deep navy for identity and actions, and a warm gold for highlights. Status colours are deliberately left alone: a warning is always amber, an error always red, success always green.
+
 **On almost every page, top-right, you will find:**
 
 | Element | What it is for |
@@ -353,7 +355,7 @@ Both work exactly like every other section — workspace auto-fill, filters, sea
 
 The three filters (Thematic / Project / Donor) use the same smart chain as the rest of the MIS, and **⬇ Excel** downloads the whole table with formulas and underlying figures — donor-ready.
 
-> The old free-form Indicators and Indicator Progress sections are **retired from the menu, but none of their data was deleted** — every historical row is still in the database and still appears in the Audit Trail and in exports. If they are ever needed again, an admin can re-enable them in Users & Access (they appear as "Indicators (legacy data)").
+> **These 11 are now the only indicators in the system.** The old free-form Indicators and Indicator Progress sections are fully retired — they are gone from the menu and from the permission matrix, and any old link or bookmark lands here instead. **No data was deleted:** every historical row is still in the database, still visible in the Audit Trail, and still included in exports — it is simply no longer editable, so the yardsticks can never be quietly changed.
 
 ---
 
