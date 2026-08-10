@@ -72,6 +72,8 @@ $RES = [
   'shg_members'=>'shg_members',
   'hq_targets'=>'hq_targets',
   'workspaces'=>'workspaces',
+  'gramsabha'=>'gram_sabha',
+  'convergence'=>'convergence',
 ];
 
 /* resource → [id_column, prefix, zero-pad] (auto-generated on POST) */
@@ -87,6 +89,8 @@ $ID_GEN = [
   'shg_members'=>['member_id','MEM',4],
   'hq_targets'=>['target_id','HQT',4],
   'workspaces'=>['workspace_id','WS',4],
+  'gramsabha'=>['gramsabha_id','GS',4],
+  'convergence'=>['convergence_id','CNV',4],
 ];
 
 /* Foreign key → [table, id_col, name_col]  — used by enrich_names() */
@@ -273,6 +277,25 @@ function target_columns($resource){
   if($resource==='indicators') return ['project_target','baseline_value'];
   if($resource==='projects')   return ['target_beneficiaries'];
   return [];
+}
+/* 📌 PROJECT-RESTRICTED USERS — Users & Access can pin a data-entry user to
+   specific project(s) (users.assigned_projects, comma-separated business IDs).
+   Returns NULL for "all projects" (admins, root, or no restriction set);
+   otherwise the array of allowed project IDs. Read fresh from the DB so an
+   admin's change applies on the user's very next request — no re-login needed. */
+function assigned_projects(){
+  static $cached=false,$val=null;
+  if($cached) return $val;
+  $cached=true;
+  $u=current_user(); if(!$u || is_admin()) return $val=null;
+  try{
+    if(!in_array('assigned_projects',table_columns('users'))) return $val=null;
+    $st=db()->prepare("SELECT assigned_projects FROM users WHERE id=?"); $st->execute([$u['id']]);
+    $raw=trim((string)(($st->fetch()['assigned_projects'])??''));
+    if($raw==='') return $val=null;
+    $list=array_values(array_filter(array_map('trim',explode(',',$raw))));
+    return $val=($list?:null);
+  }catch(Exception $e){ return $val=null; }
 }
 
 function table_columns($table){
@@ -540,8 +563,13 @@ if ($action==='bulk_create') {
   try{ db()->prepare("SELECT GET_LOCK(?,10)")->execute([$bulkLock]); }catch(Exception $e){ $bulkLock=null; }
   db()->beginTransaction();
   try{
+    $apB=assigned_projects();
     foreach($brows as $idx=>$row){
       if(!is_array($row)){ $errors[]=['row'=>$idx+1,'error'=>'Invalid row payload']; continue; }
+      // 📌 Project-restricted user: imported rows must belong to their project(s)
+      if($apB && !empty($row['project_id']) && !in_array((string)$row['project_id'],$apB,true)){
+        $errors[]=['row'=>$idx+1,'error'=>'Project '.$row['project_id'].' is not assigned to you']; continue;
+      }
       if($bres==='users'){
         if(empty($row['username']) || empty($row['password']) || strlen($row['password'])<6){
           $errors[]=['row'=>$idx+1,'error'=>'username and password (≥6 chars) required']; continue;
@@ -595,7 +623,7 @@ if ($action==='options') {
   require_session();
   $pdo=db();
   $q=function($sql) use($pdo){ try{return $pdo->query($sql)->fetchAll();}catch(Exception $e){return [];} };
-  out([
+  $L=[
     'programmes'=>$q("SELECT programme_id id, programme_name name FROM programmes WHERE programme_id IS NOT NULL ORDER BY programme_name"),
     'projects'=>$q("SELECT project_id id, project_name name, programme_id FROM projects WHERE project_id IS NOT NULL ORDER BY project_name"),
     'donors'=>$q("SELECT donor_id id, donor_name name, reporting_frequency, donor_type, total_approved_budget_inr FROM donors WHERE donor_id IS NOT NULL ORDER BY donor_name"),
@@ -606,7 +634,19 @@ if ($action==='options') {
     'geographies'=>$q("SELECT geography_id id, CONCAT_WS(' · ', NULLIF(village_or_ward,''), NULLIF(gram_panchayat,''), NULLIF(block,''), NULLIF(district,'')) name, state, district, block, gram_panchayat, village_or_ward village".(in_array('project_id',table_columns('geographies'))?", project_id":"")." FROM geographies WHERE geography_id IS NOT NULL AND geography_id<>'' ORDER BY district, block, gram_panchayat, village_or_ward"),
     /* staff — for assigning HQ work units to field officers (username is the stable key) */
     'staff'=>$q("SELECT username id, COALESCE(NULLIF(user_name,''),username) name, role FROM users WHERE username IS NOT NULL AND username<>'' ORDER BY name"),
-  ]);
+  ];
+  // 📌 Project-restricted user → every project-linked picker narrows to their projects
+  // (places/indicators without a project stay visible — they are the shared pool)
+  $ap=assigned_projects();
+  if($ap){
+    $inAp=function($pid) use($ap){ return in_array((string)$pid,$ap,true); };
+    $L['projects']=array_values(array_filter($L['projects'],function($r) use($inAp){ return $inAp($r['id']); }));
+    foreach(['geographies','indicators','shgs'] as $lk){
+      $L[$lk]=array_values(array_filter($L[$lk],function($r) use($inAp){ return empty($r['project_id']) || $inAp($r['project_id']); }));
+    }
+    $L['donor_projects']=array_values(array_filter($L['donor_projects'],function($r) use($inAp){ return $inAp($r['project_id']); }));
+  }
+  out($L);
 }
 
 /* ═══════ BENEFICIARY LOOKUP — loaded lazily & cached (only the Production form needs it; ═══════
@@ -627,6 +667,179 @@ if ($action==='counts') {
     try{ $res_out[$res]=(int)$pdo->query("SELECT COUNT(*) c FROM `$tbl`")->fetch()['c']; }catch(Exception $e){ $res_out[$res]=null; }
   }
   out(['counts'=>$res_out]);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   THE 11 LOGGED INDICATORS — fixed by the client, computed AUTOMATICALLY
+   from the data already entered (nothing is typed by hand). Formulas are
+   exactly the ones in the client's indicator sheet. Filter-aware
+   (thematic / project / donor / district) and project-restriction-aware.
+   Any indicator whose source data is not yet entered returns null and the
+   UI says so — a number is never invented.
+   ════════════════════════════════════════════════════════════════ */
+if ($action==='logged_indicators') {
+  require_session();
+  $pdo=db();
+  $p=[];
+  foreach(['programme_id','project_id','donor_id','district','block'] as $k){ if(!empty($_GET[$k])) $p[$k]=$_GET[$k]; }
+  $ap=assigned_projects();
+  $W=function($table) use($p,$ap){
+    try{
+      $cols=table_columns($table); $cl=[]; $vals=[];
+      foreach($p as $k=>$v){ if(in_array($k,$cols)){ $cl[]="`$k`=?"; $vals[]=$v; } }
+      if($ap && in_array('project_id',$cols)){
+        $ph=implode(',',array_fill(0,count($ap),'?'));
+        $cl[]="(project_id IN ($ph) OR project_id IS NULL OR TRIM(project_id)='')";
+        foreach($ap as $apv) $vals[]=$apv;
+      }
+      return $cl? [' WHERE '.implode(' AND ',$cl), $vals] : ['',[]];
+    }catch(Exception $e){ return ['',[]]; }
+  };
+  $one=function($sql,$v) use($pdo){ try{ $st=$pdo->prepare($sql); $st->execute($v); $r=$st->fetch(); return $r!==false ? (float)array_values($r)[0] : null; }catch(Exception $e){ return null; } };
+  $AND=function($w){ return $w? ($w.' AND ') : ' WHERE '; };
+  [$wB,$vB]=$W('beneficiaries'); [$wC,$vC]=$W('crops'); [$wG,$vG]=$W('gram_sabha');
+  [$wV,$vV]=$W('convergence');   [$wS,$vS]=$W('shgs');  [$wL,$vL]=$W('loans');
+  try{ $benCols=table_columns('beneficiaries'); }catch(Exception $e){ $benCols=[]; }
+  try{ $cropCols=table_columns('crops'); }catch(Exception $e){ $cropCols=[]; }
+  $pct=function($num,$den){ return ($num===null||$den===null||$den==0)? null : round($num/$den*1000)/10; };
+  $NPx="COALESCE(net_profit_inr,income_inr)";
+  $IND=[];
+
+  /* 1 · % increase in annual household income
+     (Avg current NET income/yr − Avg baseline NET income) / Avg baseline × 100 — matched pairs */
+  { $v=null;$b=null;$c=null;$n=0;
+    try{
+      $blMap=['bl_paddy_income','bl_millet_income','bl_vegetable_income','bl_tuber_income','bl_pulses_income','bl_oilseed_income','bl_mushroom_income','bl_goat_income','bl_poultry_income','bl_micro_enterprise_income','bl_other_income'];
+      $have=array_values(array_intersect($blMap,$benCols));
+      if($have){
+        $parts=[]; foreach($have as $ic){ $ec=str_replace('_income','_expenditure',$ic);
+          $parts[]=in_array($ec,$benCols)?"(COALESCE($ic,0)-COALESCE($ec,0))":"COALESCE($ic,0)"; }
+        $blExpr='('.implode('+',$parts).')';
+        $stP=$pdo->prepare("SELECT beneficiary_id bid, COALESCE(SUM($NPx),0) cur, COUNT(DISTINCT NULLIF(TRIM(project_year),'')) ny FROM crops".$AND($wC)."beneficiary_id IS NOT NULL AND TRIM(beneficiary_id)<>'' GROUP BY beneficiary_id");
+        $stP->execute($vC); $curBy=[];
+        foreach($stP->fetchAll() as $r){ $curBy[$r['bid']]=((float)$r['cur'])/max(1,(int)$r['ny']); }
+        if($curBy){
+          $ids=array_keys($curBy); $ph=implode(',',array_fill(0,count($ids),'?'));
+          $blPer="CASE WHEN $blExpr<>0 THEN $blExpr ELSE COALESCE(current_income_per_annum_inr,0) END";
+          $wBp=$wB?($wB." AND beneficiary_id IN ($ph)"):(" WHERE beneficiary_id IN ($ph)");
+          $stB=$pdo->prepare("SELECT beneficiary_id bid, $blPer bl FROM beneficiaries$wBp");
+          $stB->execute(array_merge($vB,$ids));
+          $sB=0;$sC=0;
+          foreach($stB->fetchAll() as $r){ $n++; $sB+=(float)$r['bl']; $sC+=$curBy[$r['bid']]??0; }
+          if($n){ $b=$sB/$n; $c=$sC/$n; if(abs($b)>0.004) $v=round(($c-$b)/abs($b)*1000)/10; }
+        }
+      }
+    }catch(Exception $e){}
+    $IND[]=['n'=>1,'name'=>'Percentage increase in annual household income','unit'=>'%','value'=>$v,
+      'before'=>$b===null?null:round($b),'after'=>$c===null?null:round($c),'pairs'=>$n,
+      'detail'=>$n?('Avg baseline NET ₹'.number_format(round($b)).' → avg current NET ₹'.number_format(round($c)).'/yr · '.$n.' beneficiaries with production logged'):'Needs beneficiaries with baseline income AND production records',
+      'formula'=>'(Avg current household NET income/yr − Avg baseline NET income) ÷ Avg baseline × 100'];
+  }
+
+  /* 2 · % households with food security throughout the year (Yes on production records) */
+  { $y=null;$t=null;
+    if(in_array('food_security',$cropCols)){
+      $y=$one("SELECT COUNT(DISTINCT beneficiary_id) FROM crops".$AND($wC)."LOWER(TRIM(food_security))='yes'",$vC);
+      $t=$one("SELECT COUNT(DISTINCT beneficiary_id) FROM crops".$AND($wC)."food_security IS NOT NULL AND TRIM(food_security)<>''",$vC);
+    }
+    $IND[]=['n'=>2,'name'=>'Percentage of households with improved food security','unit'=>'%','value'=>$pct($y,$t),
+      'before'=>null,'after'=>$y,'pairs'=>$t===null?0:(int)$t,
+      'detail'=>($t)?(((int)$y).' of '.((int)$t).' households answered YES to "food security throughout the year?"'):'Answer "Food security throughout the year?" on Production records to light this up',
+      'formula'=>'Households answering YES ÷ households answering, from Production & Output records'];
+  }
+
+  /* 3 · % increase in agricultural productivity — paddy + millet KG, current vs baseline */
+  { $cur=$one("SELECT COALESCE(SUM(production_kg),0) FROM crops".$AND($wC)."LOWER(TRIM(crop)) IN ('paddy','millet')",$vC);
+    $base=null;
+    $kgCols=array_values(array_intersect(['bl_paddy_kg','bl_millet_kg'],$benCols));
+    if($kgCols){
+      $base=$one("SELECT COALESCE(SUM(".implode('+',array_map(function($c){return "COALESCE($c,0)";},$kgCols))."),0) FROM beneficiaries$wB",$vB);
+    }
+    $v=($base!==null && $base>0 && $cur!==null)? round(($cur-$base)/$base*1000)/10 : null;
+    $IND[]=['n'=>3,'name'=>'Percentage increase in agricultural productivity','unit'=>'%','value'=>$v,
+      'before'=>$base,'after'=>$cur,'pairs'=>0,
+      'detail'=>($base!==null&&$cur!==null)?('Baseline paddy+millet: '.number_format(round($base)).' kg → current: '.number_format(round($cur)).' kg'):'Needs baseline Production (kg) for Paddy & Millet on the Beneficiary form, and current Production records',
+      'formula'=>'(Current paddy+millet production kg − Baseline paddy+millet kg) ÷ Baseline × 100'];
+  }
+
+  /* 4 · % increase in area under improved agricultural practices */
+  { $cur=$one("SELECT COALESCE(SUM(area_acre),0) FROM crops$wC",$vC);
+    $areaCols=array_values(array_intersect(['bl_paddy_area','bl_millet_area','bl_vegetable_area','bl_tuber_area','bl_pulses_area','bl_oilseed_area'],$benCols));
+    $base=$areaCols? $one("SELECT COALESCE(SUM(".implode('+',array_map(function($c){return "COALESCE($c,0)";},$areaCols))."),0) FROM beneficiaries$wB",$vB) : null;
+    $v=($base!==null && $base>0 && $cur!==null)? round(($cur-$base)/$base*1000)/10 : null;
+    $IND[]=['n'=>4,'name'=>'Percentage increase in area under improved agricultural practices','unit'=>'%','value'=>$v,
+      'before'=>$base,'after'=>$cur,'pairs'=>0,
+      'detail'=>($base!==null&&$cur!==null)?('Baseline cultivated area: '.number_format(round($base,1),1).' acre → current: '.number_format(round($cur,1),1).' acre'):'Needs baseline crop areas and current Production records with Area',
+      'formula'=>'(Total current cultivation area − Total baseline area) ÷ Baseline area × 100'];
+  }
+
+  /* 5 · % of farmers practicing organic / natural farming — growth vs baseline */
+  { $b=in_array('organic_farming',$benCols)? $one("SELECT COUNT(*) FROM beneficiaries".$AND($wB)."LOWER(TRIM(organic_farming))='yes'",$vB) : null;
+    $c=in_array('organic_farming',$cropCols)? $one("SELECT COUNT(DISTINCT beneficiary_id) FROM crops".$AND($wC)."LOWER(TRIM(organic_farming))='yes'",$vC) : null;
+    $v=($b!==null && $b>0 && $c!==null)? round(($c-$b)/$b*1000)/10 : null;
+    $IND[]=['n'=>5,'name'=>'Percentage of farmers practicing organic or natural farming','unit'=>'%','value'=>$v,
+      'before'=>$b,'after'=>$c,'pairs'=>0,
+      'detail'=>($b!==null||$c!==null)?('Organic at baseline: '.(int)$b.' households → organic now (production records): '.(int)$c):'Answer Organic Farming (Yes/No) on the Beneficiary and Production forms',
+      'formula'=>'(Households organic now − households organic at baseline) ÷ baseline households × 100'];
+  }
+
+  /* 6 · % households with diversified livelihood sources — ≥ 3 crops cultivated */
+  { $y=$one("SELECT COUNT(*) FROM (SELECT beneficiary_id FROM crops".$AND($wC)."TRIM(COALESCE(crop,''))<>'' AND beneficiary_id IS NOT NULL AND TRIM(beneficiary_id)<>'' GROUP BY beneficiary_id HAVING COUNT(DISTINCT LOWER(TRIM(crop)))>=3) t",$vC);
+    $t=$one("SELECT COUNT(DISTINCT beneficiary_id) FROM crops".$AND($wC)."beneficiary_id IS NOT NULL AND TRIM(beneficiary_id)<>''",$vC);
+    $IND[]=['n'=>6,'name'=>'Percentage of households with diversified livelihood sources','unit'=>'%','value'=>$pct($y,$t),
+      'before'=>null,'after'=>$y,'pairs'=>$t===null?0:(int)$t,
+      'detail'=>($t)?(((int)$y).' of '.((int)$t).' producing households cultivate 3 or more different crops'):'Computed from Production records (households with ≥3 distinct crops)',
+      'formula'=>'Households cultivating ≥ 3 crops ÷ households with production records × 100'];
+  }
+
+  /* 7 · % households adopting alternative livelihoods */
+  { $altCond="alternative_livelihood IS NOT NULL AND LOWER(TRIM(alternative_livelihood)) NOT IN ('','none')";
+    $y=$one("SELECT COUNT(*) FROM (SELECT beneficiary_id FROM beneficiaries".$AND($wB).$altCond." UNION SELECT beneficiary_id FROM crops".$AND($wC).$altCond." AND beneficiary_id IS NOT NULL AND TRIM(beneficiary_id)<>'') t",array_merge($vB,$vC));
+    $t=$one("SELECT COUNT(*) FROM beneficiaries$wB",$vB);
+    $IND[]=['n'=>7,'name'=>'Percentage of households adopting alternative livelihoods','unit'=>'%','value'=>$pct($y,$t),
+      'before'=>null,'after'=>$y,'pairs'=>$t===null?0:(int)$t,
+      'detail'=>($t)?(((int)$y).' of '.((int)$t).' households have an alternative livelihood recorded (goatery, poultry, tailoring…)'):'Fetched from the Alternative Livelihood option on Beneficiary & Production records',
+      'formula'=>'Households with an alternative livelihood recorded ÷ total households × 100'];
+  }
+
+  /* 8 · % SHG members accessing formal financial services — members of SHGs with loans */
+  { $y=$one("SELECT COALESCE(SUM(no_of_members),0) FROM shgs".$AND($wS)."shg_id IN (SELECT DISTINCT shg_id FROM loans".$AND($wL)."shg_id IS NOT NULL AND TRIM(shg_id)<>'')",array_merge($vS,$vL));
+    $t=$one("SELECT COALESCE(SUM(no_of_members),0) FROM shgs$wS",$vS);
+    $IND[]=['n'=>8,'name'=>'Percentage of SHG members accessing formal financial services','unit'=>'%','value'=>$pct($y,$t),
+      'before'=>null,'after'=>$y,'pairs'=>$t===null?0:(int)$t,
+      'detail'=>($t)?(number_format((int)$y).' of '.number_format((int)$t).' SHG members are in groups that have received a loan'):'Computed from SHGs and SHG Loans',
+      'formula'=>'Members of SHGs that received loans ÷ all SHG members × 100'];
+  }
+
+  /* 9 · % women participating in local governance — from Gram Sabha records */
+  { $f=$one("SELECT COALESCE(SUM(female_participants),0) FROM gram_sabha$wG",$vG);
+    $t=$one("SELECT COALESCE(SUM(total_participants),0) FROM gram_sabha$wG",$vG);
+    $m=$one("SELECT COUNT(*) FROM gram_sabha$wG",$vG);
+    $IND[]=['n'=>9,'name'=>'Percentage of women participating in local governance','unit'=>'%','value'=>$pct($f,$t),
+      'before'=>null,'after'=>$f,'pairs'=>$t===null?0:(int)$t,
+      'detail'=>($t!==null&&$t>0)?(number_format((int)$f).' women among '.number_format((int)$t).' Gram Sabha participants · '.((int)$m).' meetings recorded'):'Enter Gram Sabha / VDC records in the Local Governance section',
+      'formula'=>'Female Gram Sabha participants ÷ total participants × 100'];
+  }
+
+  /* 10 · % households accessing government schemes — from Convergence */
+  { $y=$one("SELECT COALESCE(SUM(hh_benefited),0) FROM convergence$wV",$vV);
+    $t=$one("SELECT COUNT(*) FROM beneficiaries$wB",$vB);
+    $IND[]=['n'=>10,'name'=>'Percentage of households accessing government schemes and social protection','unit'=>'%','value'=>$pct($y,$t),
+      'before'=>null,'after'=>$y,'pairs'=>$t===null?0:(int)$t,
+      'detail'=>($t)?(number_format((int)$y).' household benefits recorded in Convergence · '.number_format((int)$t).' beneficiaries in scope'):'Enter Convergence records (Local Governance section) to light this up',
+      'formula'=>'Households benefited (Convergence) ÷ total households × 100'];
+  }
+
+  /* 11 · Amount leveraged through government schemes (₹) — from Convergence */
+  { $amt=$one("SELECT COALESCE(SUM(amount_mobilised),0) FROM convergence$wV",$vV);
+    $cnt=$one("SELECT COUNT(*) FROM convergence$wV",$vV);
+    $IND[]=['n'=>11,'name'=>'Amount leveraged through government schemes and programmes','unit'=>'₹','value'=>$amt,
+      'before'=>null,'after'=>$amt,'pairs'=>$cnt===null?0:(int)$cnt,
+      'detail'=>($cnt!==null&&$cnt>0)?('Across '.((int)$cnt).' convergence record'.($cnt==1?'':'s')):'Total of "Amount Mobilised" from the Convergence section',
+      'formula'=>'Σ Amount Mobilised, Convergence section'];
+  }
+
+  out(['indicators'=>$IND,'generated_at'=>ist_now().' IST']);
 }
 
 /* ════════════════ AUDIT TRAIL ════════════════ */
@@ -1267,6 +1480,14 @@ if ($method==='GET') {
     if(in_array($k,['resource','id','q','limit','offset','action'])) continue;
     if(in_array($k,$cols) && $v!==''){ $where[]="`$k`=?"; $params[]=$v; }
   }
+  // 📌 Project-restricted user → only rows of their project(s); rows without any
+  // project (shared master data, unassigned places) stay visible.
+  $ap=assigned_projects();
+  if($ap && in_array('project_id',$cols) && $resource!=='users'){
+    $ph=implode(',',array_fill(0,count($ap),'?'));
+    $where[]="(project_id IN ($ph) OR project_id IS NULL OR TRIM(project_id)='')";
+    foreach($ap as $apv) $params[]=$apv;
+  }
   if(!empty($_GET['q'])){
     /* ── SMART SEARCH ──────────────────────────────────────────────
        Two bugs made search useless before:
@@ -1433,6 +1654,10 @@ if ($method==='POST') {
   if(in_array($resource,['activities','indicators','hq_targets']) && !can_edit_targets())
     out(['error'=>'Targets are locked — only target-setters (HQ) can add this. Ask your admin to tick 🎯 Targets in Users & Access.'],403);
   $b=body(); $cols=table_columns($table);
+  // 📌 Project-restricted user cannot create records under another project
+  { $ap=assigned_projects();
+    if($ap && !empty($b['project_id']) && !in_array((string)$b['project_id'],$ap,true))
+      out(['error'=>'You are assigned to specific project(s) — records for other projects are not allowed.'],403); }
   // Multi-user accountability — stamp who entered the record (column exists after upgrade8)
   $me=current_user();
   if($me && in_array('created_by',$cols)) $b['created_by']=$me['username'];
@@ -1533,6 +1758,15 @@ if ($method==='PUT') {
   if($me && in_array('updated_by',$cols)) $b['updated_by']=$me['username'];
   unset($b['created_by']);   // never let an edit overwrite who originally entered it
   $st=db()->prepare("SELECT * FROM `$table` WHERE id=?"); $st->execute([$id]); $before=$st->fetch();
+  // 📌 Project-restricted user: can neither move a record to another project
+  //    nor touch a record that already belongs to one
+  { $ap=assigned_projects();
+    if($ap && is_array($before)){
+      if(!empty($b['project_id']) && !in_array((string)$b['project_id'],$ap,true))
+        out(['error'=>'You are assigned to specific project(s) — records for other projects are not allowed.'],403);
+      if(!empty($before['project_id']) && !in_array((string)$before['project_id'],$ap,true))
+        out(['error'=>'This record belongs to a project you are not assigned to.'],403);
+    } }
   $set=[]; $vals=[];
   foreach($b as $k=>$v){
     if(in_array($k,$cols) && !in_array($k,['id','created_at','updated_at'])){
@@ -1581,6 +1815,10 @@ if ($method==='DELETE') {
   if(in_array($resource,['activities','indicators','hq_targets']) && !can_edit_targets())
     out(['error'=>'Targets are locked — only target-setters (HQ) can delete this. Ask your admin to tick 🎯 Targets in Users & Access.'],403);
   $st=db()->prepare("SELECT * FROM `$table` WHERE id=?"); $st->execute([$id]); $before=$st->fetch();
+  // 📌 Project-restricted user cannot delete another project's record
+  { $ap=assigned_projects();
+    if($ap && is_array($before) && !empty($before['project_id']) && !in_array((string)$before['project_id'],$ap,true))
+      out(['error'=>'This record belongs to a project you are not assigned to.'],403); }
   $st=db()->prepare("DELETE FROM `$table` WHERE id=?"); $st->execute([$id]);
   // ── Chain hygiene — nothing may keep pointing at a deleted donor/project ──
   if($resource==='donors' && !empty($before['donor_id'])){

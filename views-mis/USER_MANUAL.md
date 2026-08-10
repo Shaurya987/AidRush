@@ -83,7 +83,9 @@ Keep these two ideas in mind and every screen in this guide will feel obvious.
 - **Field Data** — Beneficiaries · Production & Output Progress · Activity Progress
 - **SHG & Finance** — Self-Help Groups · SHG Loans
 - **Monitoring and Evaluation (MNE)** — Indicators · Indicator Progress
-- **Admin** — MIS Status · Users & Access · Audit Trail (management and administrators)
+- **Local Governance** — Gram Sabha / VDC · Convergence — Govt Schemes
+- **Monitoring and Evaluation (MNE)** — Logged Indicators (the 11 computed indicators)
+- **Admin** — MIS Status · Users & Access · **User Manual** (this guide, built into the app) · Audit Trail (management and administrators)
 
 **On almost every page, top-right, you will find:**
 
@@ -317,17 +319,41 @@ Repayment status appears as a colour badge in the table, and loans-by-financial-
 
 ---
 
-## 10. Indicators and Indicator Progress
+## 9b. Local Governance — Gram Sabha & Convergence
 
-**Indicators** — the measurable promises of your programme (trainings held, income increased…), each defined under a thematic area and project with its target. Indicators are **defined by HQ/M&E** — deliberately not on the field-entry page — so the yardsticks stay stable.
+Two sections capture the governance side of the work:
 
-**Indicator Progress** — the field's periodic reporting against those yardsticks:
+**Gram Sabha / VDC** — one record per meeting: District → Village, the VDC name, the date, **Male + Female participants (Total adds itself up)** and whether the **VDP was submitted at the Gram Sabha (Yes/No)**. Female participation feeds the women-in-governance indicator automatically.
 
-- **The indicator list shows only the chosen project's indicators.** You cannot accidentally report against another project's indicator — the chain protecting data quality again.
-- **🗓 Data entry frequency** — choose Monthly or Quarterly. Pick the month (or quarter + year) and the **Reporting Period writes itself** — everyone's periods are worded identically, so grouped reports group correctly.
-- **Reporting Year** accepts `2025` or the Indian financial year form `2025-26` — nothing else, so "25" vs "2025" chaos cannot enter the data.
-- **Pick the indicator and everything else fills itself** — its thematic area, project *and* donor (through the project's funding link). A banner on the form shows the **indicator's total target** (set once, in the Indicators section — the single source of truth) and what earlier periods already achieved; the list measures every row's status against that same target.
-- Enter only the achievement for the period. **Cumulative and Variance calculate themselves**: cumulative adds every earlier period logged for that indicator, and variance compares the cumulative against the indicator's total project target (negative = behind plan — that is information, not an error). Neither can be typed, so the running totals can never drift.
+**Convergence — Govt Schemes** — every scheme leveraged: the **Department** (official government list), the scheme's name, type of work, **households benefited** and the **Amount Mobilised (₹)**. These records power two logged indicators: households accessing government schemes, and the total amount leveraged.
+
+Both work exactly like every other section — workspace auto-fill, filters, search, Excel export and bulk import.
+
+---
+
+## 10. Logged Indicators (M&E)
+
+**The M&E section is now the organisation's 11 fixed indicators — and nothing on that page is typed.** Every value is computed by the server from data already entered elsewhere in the MIS, using the exact formulas agreed with the client. There is no free-form indicator entry any more: the yardsticks cannot be invented, edited or argued with.
+
+| # | Indicator | Computed from |
+|---|---|---|
+| 1 | % increase in annual household income | (Avg current NET income/yr − Avg baseline NET) ÷ Avg baseline × 100 — matched pairs |
+| 2 | % households with improved food security | "Food security throughout the year?" on Production records |
+| 3 | % increase in agricultural productivity | Current paddy+millet kg vs baseline paddy+millet kg |
+| 4 | % increase in area under improved practices | Current cultivated area vs baseline crop area |
+| 5 | % farmers practising organic / natural farming | Organic Yes now (production) vs organic Yes at baseline |
+| 6 | % households with diversified livelihoods | Households cultivating **≥ 3 distinct crops** |
+| 7 | % households adopting alternative livelihoods | Alternative Livelihood recorded on Beneficiary / Production |
+| 8 | % SHG members accessing formal finance | Members of SHGs that received loans ÷ all SHG members |
+| 9 | % women participating in local governance | Female ÷ total Gram Sabha participants |
+| 10 | % households accessing government schemes | Households benefited (Convergence) ÷ total households |
+| 11 | Amount leveraged through govt schemes (₹) | Σ Amount Mobilised (Convergence) |
+
+**How to read a card:** the number, then the underlying figures in plain words ("Avg baseline NET ₹42,000 → avg current NET ₹61,500/yr · 128 beneficiaries with production logged"), then the exact formula. **An indicator whose source data is not entered yet says "waiting for data" — it never shows a made-up number**, and the detail line tells you exactly which field to fill to light it up.
+
+The three filters (Thematic / Project / Donor) use the same smart chain as the rest of the MIS, and **⬇ Excel** downloads the whole table with formulas and underlying figures — donor-ready.
+
+> The old free-form Indicators and Indicator Progress sections are **retired from the menu, but none of their data was deleted** — every historical row is still in the database and still appears in the Audit Trail and in exports. If they are ever needed again, an admin can re-enable them in Users & Access (they appear as "Indicators (legacy data)").
 
 ---
 
@@ -361,6 +387,7 @@ A table of everything in the system, grouped for sanity, with **View / Edit / De
 - **Pages & modules** — can they *open* Dashboard? Reports? **Data Entry — Field-Office Entry**? **Data Entry — HQ Setup & Targets**? MIS Status? Audit Trail? Users & Access? Note that Data Entry is **two separate boxes** — this is how a field officer sees only their tab while a manager sees both. On pages, Edit/Delete control the actions inside (e.g. on MIS Status, Edit = assign & rename workspaces, Delete = remove them).
 - **Master data / Field data / M&E / Planning & control** — per record type: View (see it), Edit (add & change), Delete (remove). Example: field officers usually get Edit on Beneficiaries but no Delete — mistakes are edited, not erased.
 - **Sensitive rows** — MIS Status, Audit Trail and Users & Access are hidden from everyone until you explicitly tick them. Handing someone Users & Access is delegation of trust: they can manage users, but they can never create or promote an Admin, and can never touch a root-protected account.
+- **📌 Project access — pin a user to specific project(s).** Above the matrix, tick the projects a user may work on. Tick **nothing** and they see all projects (normal for HQ). Tick one or more and that user's every list, dropdown and report narrows to those projects — and **the server refuses any record belonging to another project**, whether created, edited, deleted or bulk-imported, even from a tampered request. This is how a data-entry officer is confined to their own project without needing a separate login for anything else.
 - **🎯 Targets — the one row that protects your plan.** Every planned number in the system — activity targets (total and per-year), indicator baselines & targets, HQ plan rows, a project's target beneficiaries — is **locked for everyone** until you tick *Edit* on the **🎯 Targets** row (admins always can). Without it, a person can still update achievements and progress against those targets, but the target boxes are read-only 🔒, they cannot add or delete activities/indicators (a new one would carry new targets), and the server refuses target changes even from a tampered request. This is deliberate: the field reports *against* the plan; only HQ *sets* the plan.
 
 **Preset buttons** give you a sound starting point in one click — then adjust any box:

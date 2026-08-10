@@ -77,6 +77,25 @@ select.r-inp{padding-right:32px}
 .geo-more-add{width:auto;display:inline-flex;padding:9px 20px;font-size:13px;border-radius:8px;flex-shrink:0}
 .geo-more-note{font-size:11.5px;color:var(--t4);line-height:1.5;flex:1;min-width:220px}
 .geo-more-note b{color:var(--brand)}
+/* Logged Indicators — computed M&E cards */
+.li10-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.li10-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:var(--sh-1);position:relative;overflow:hidden;transition:all .2s}
+.li10-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--brand))}
+.li10-card:hover{transform:translateY(-2px);box-shadow:var(--sh-3)}
+.li10-wait{opacity:.72}
+.li10-top{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px}
+.li10-n{width:26px;height:26px;border-radius:8px;background:var(--accent-soft,var(--brand-soft));color:var(--accent,var(--brand));font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.li10-name{font-family:'Plus Jakarta Sans';font-weight:700;font-size:13.5px;color:var(--t1);line-height:1.4}
+.li10-val{font-family:'JetBrains Mono';font-weight:800;font-size:26px;letter-spacing:-.5px;display:flex;align-items:baseline;gap:10px}
+.li10-nodata{font-size:11px;color:var(--t4);font-family:'Inter',sans-serif;font-weight:600;background:var(--bg-soft);border-radius:999px;padding:3px 10px}
+.li10-detail{font-size:12.5px;color:var(--t2);margin-top:8px;line-height:1.55}
+.li10-formula{font-size:11px;color:var(--t4);margin-top:9px;border-top:1px dashed var(--border);padding-top:8px;font-family:'JetBrains Mono'}
+/* In-app User Manual */
+.man-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.man-tbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.man-tbl tr:last-child td{border-bottom:none}
+.man-btn{width:230px;font-weight:700;color:var(--brand);white-space:normal}
+.man-desc{color:var(--t2);line-height:1.6}
 /* Beneficiary BASELINE — one arranged table instead of 25 scattered boxes */
 .bl-wrap{border:1.5px solid var(--border);border-radius:13px;padding:15px 16px;background:linear-gradient(135deg,#f6fbf7,#fff)}
 .bl-head{margin-bottom:11px}
@@ -90,11 +109,11 @@ select.r-inp{padding-right:32px}
 .bl-tbl tbody tr:hover{background:var(--bg-soft)}
 .bl-tbl tfoot td{border-top:2px solid var(--border-2);border-bottom:none;background:var(--bg-soft);font-weight:800}
 .bl-tbl th.bl-src,.bl-tbl td.bl-src{text-align:left;padding-left:12px;font-weight:700;color:var(--t2);white-space:nowrap}
-.bl-in{width:96px;padding:7px 6px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;text-align:right;font-family:'JetBrains Mono';outline:none;background:#fff;transition:border-color .15s,box-shadow .15s}
-.bl-in:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
-.bl-in::-webkit-outer-spin-button,.bl-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.bl-in[type=number]{-moz-appearance:textfield}
-.bl-tot{background:var(--brand-soft);color:var(--brand);font-weight:800;border-color:var(--brand-soft)}
+.f .bl-in{width:96px;padding:7px 6px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;text-align:right;font-family:'JetBrains Mono';outline:none;background:#fff;transition:border-color .15s,box-shadow .15s}
+.f .bl-in:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
+.f .bl-in::-webkit-outer-spin-button,.f .bl-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.f .bl-in[type=number]{-moz-appearance:textfield}
+.f .bl-tot{background:var(--brand-soft);color:var(--brand);font-weight:800;border-color:var(--brand-soft)}
 .bl-na{color:var(--t5)}
 .bl-tbl .bl-net{font-family:'JetBrains Mono';font-weight:700;color:var(--ok);white-space:nowrap;padding-right:12px;text-align:right}
 .bl-tbl th.bl-net{text-align:right;color:var(--t3)}
@@ -758,7 +777,7 @@ const RES={
   crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — crops, alternative livelihoods, health, road safety, anything',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
     cols:[['beneficiary_id','Beneficiary'],['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['production_kg','Output Qty (kg)','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr'],['_incchg','Income Change — baseline → now','incchg']],
     filters:['programme_id','project_id','donor_id',['project_year','Year',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Crops / Interventions',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
-    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹) — auto: quantity × rate','num'],['net_profit_inr','Net Profit (₹) — auto: income − expenditure','num'],['sold','Produce sold?','sel',['Yes','No']],['organic_farming','Organic Farming *','sel',['Yes','No']],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
+    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹) — auto: quantity × rate','num'],['net_profit_inr','Net Profit (₹) — auto: income − expenditure','num'],['sold','Produce sold?','sel',['Yes','No']],['organic_farming','Organic Farming *','sel',['Yes','No']],['food_security','Food security throughout the year?','sel',['Yes','No']],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
   activities:{label:'Activity Progress',sub:'Every activity\'s multi-year targets & quarterly / monthly achievements — totals auto-computed',icon:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
     cols:[['project_activity','Activity'],['unit_of_measurement','Unit'],['total_target','Total Tgt','num'],['target_year_1','Y1 Tgt','num'],['y1_total_achievement','Y1 Ach','num'],['cumulative_achievement','Cum Ach','num']],
     filters:['programme_id','project_id','donor_id',['unit_of_measurement','Units',['Number','Percentage','INR','Event','Acres','Kilograms']]],
@@ -782,6 +801,14 @@ const RES={
     cols:[['shg_id','SHG'],['_shg_village','Village'],['_shg_block','Block'],['financial_year','FY'],['loan_amount_inr','Amount','inr'],['loan_source','Source'],['repayment_status','Status','status']],
     filters:[['financial_year','FY',['2023-24','2024-25','2025-26','2026-27','2027-28','2028-29','2029-30','2030-31']],['repayment_status','Status',['Ongoing','Repaid','Overdue','Not applicable']],['loan_source','Source',['Bank linkage','Donor','Government scheme','Other']]],
     fields:[['loan_record_id','Loan ID',1],['shg_id','SHG — search by name','ref','shgs'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['financial_year','Financial Year','sel',['2023-24','2024-25','2025-26','2026-27','2027-28','2028-29','2029-30','2030-31']],['loan_receiving_date','Loan Date','date'],['loan_amount_inr','Loan Amount (₹)','num'],['loan_source','Loan Source','sel',['Bank linkage','Donor','Government scheme','Other']],['purpose_of_loan','Purpose'],['repayment_status','Repayment Status','sel',['Ongoing','Repaid','Overdue','Not applicable']],['remarks','Remarks']]},
+  gramsabha:{label:'Gram Sabha / VDC',sub:'Village Development Committee & Gram Sabha participation — who attended, and was the VDP submitted',icon:'M3 21h18M5 21V9l7-6 7 6v12M9 21v-6h6v6',
+    cols:[['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['vdc_name','VDC Name'],['total_participants','Total Participants','num'],['male_participants','Male','num'],['female_participants','Female','num'],['vdp_submitted','VDP Submitted','status']],
+    filters:['programme_id','project_id','donor_id',['vdp_submitted','VDP',['Yes','No']]],
+    fields:[['gramsabha_id','Record ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography — pick the village','ref','geographies'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['vdc_name','VDC Name',1],['meeting_date','Gram Sabha Date','date'],['male_participants','Male Participants','num'],['female_participants','Female Participants','num'],['total_participants','Total Participants — auto: male + female','num'],['vdp_submitted','VDP submitted at Gram Sabha?','sel',['Yes','No']],['remarks','Remarks']]},
+  convergence:{label:'Convergence — Govt Schemes',sub:'Government schemes leveraged — department, scheme, households benefited & amount mobilised',icon:'M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+    cols:[['district','District'],['block','Block'],['village','Village'],['department','Department'],['scheme_name','Scheme'],['work_type','Type of Work'],['hh_benefited','HHs Benefited','num'],['amount_mobilised','Amount Mobilised','inr']],
+    filters:['programme_id','project_id','donor_id',['department','Departments',['Agriculture & Farmers\' Empowerment','Electronics & Information Technology','Co-operation','Energy','Excise','Finance','Fisheries & Animal Resources Development','Food Supplies & Consumer Welfare','Forest, Environment and Climate Change Department','Handlooms, Textiles & Handicrafts','Health & Family Welfare','Housing & Urban Development','Micro, Small & Medium Enterprise','Odia Language Literature & Culture Department','Panchayati Raj & Drinking Water','Planning & Convergence','Public Enterprises','Revenue & Disaster Management','Rural Development','Skill Development & Technical Education','Science & Technology','Social Security & Empowerment of Persons with Disabilities','ST & SC Development, Minorities & Backward Classes Welfare','Tourism','Water Resources','Women & Child Development','Works','Mission Shakti']]],
+    fields:[['convergence_id','Record ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography — pick the village','ref','geographies'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['department','Name of the Department','sel',['Agriculture & Farmers\' Empowerment','Electronics & Information Technology','Co-operation','Energy','Excise','Finance','Fisheries & Animal Resources Development','Food Supplies & Consumer Welfare','Forest, Environment and Climate Change Department','Handlooms, Textiles & Handicrafts','Health & Family Welfare','Housing & Urban Development','Micro, Small & Medium Enterprise','Odia Language Literature & Culture Department','Panchayati Raj & Drinking Water','Planning & Convergence','Public Enterprises','Revenue & Disaster Management','Rural Development','Skill Development & Technical Education','Science & Technology','Social Security & Empowerment of Persons with Disabilities','ST & SC Development, Minorities & Backward Classes Welfare','Tourism','Water Resources','Women & Child Development','Works','Mission Shakti']],['scheme_name','Name of the Government Scheme',1],['work_type','Type of Work'],['hh_benefited','Number of HHs Benefited','num'],['amount_mobilised','Amount Mobilised (₹)','num'],['remarks','Remarks']]},
   indicators:{label:'Indicators',sub:'Add UNLIMITED indicators for ANY sector — Output / Outcome / Process / Financial',icon:'M22 12h-4l-3 9L9 3l-3 9H2',
     cols:[['indicator_name','Name'],['indicator_type','Type'],['unit','Unit'],['baseline_value','Baseline','num'],['project_target','Target','num']],
     filters:[['indicator_type','Types',['Output','Outcome','Process','Financial']],'programme_id','project_id','donor_id'],
@@ -800,8 +827,9 @@ const SECTIONS=[
   ['Master Data',[['mappings'],['donors'],['programmes'],['projects'],['geographies'],['villages']]],
   ['Field Data',[['beneficiaries'],['crops'],['activities']]],
   ['SHG & Finance',[['shgs'],['loans']]],
-  ['Monitoring and Evaluation (MNE)',[['indicators'],['progress']]],
-  ['Admin',[['misstatus','MIS Status','M2 3h20v14H2zM8 21h8M12 17v4'],['users'],['audit','Audit Trail','M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11']]],
+  ['Local Governance',[['gramsabha'],['convergence']]],
+  ['Monitoring and Evaluation (MNE)',[['indicators10','Logged Indicators','M22 12h-4l-3 9L9 3l-3 9H2']]],
+  ['Admin',[['misstatus','MIS Status','M2 3h20v14H2zM8 21h8M12 17v4'],['users'],['manual','User Manual','M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z'],['audit','Audit Trail','M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11']]],
 ];
 
 /* resource → its business-ID column (auto-generated by the server, never typed by users) */
@@ -811,7 +839,8 @@ const RES_DEFAULTS={ geographies:{country:'India'}, beneficiaries:{registration_
 const AUTO_ID={programmes:'programme_id',projects:'project_id',donors:'donor_id',mappings:'mapping_id',
   geographies:'geography_id',villages:'demographic_id',beneficiaries:'beneficiary_id',crops:'production_record_id',
   activities:'activity_id',shgs:'shg_id',loans:'loan_record_id',indicators:'indicator_id',progress:'progress_id',
-  objectives:'objective_id',project_objectives:'objective_id',shg_members:'member_id'};
+  objectives:'objective_id',project_objectives:'objective_id',shg_members:'member_id',
+  gramsabha:'gramsabha_id',convergence:'convergence_id'};
 
 /* ════════ AUTH ════════ */
 async function doLogin(){
@@ -862,7 +891,7 @@ async function startApp(){
   await ensureLookups();
   // Land on the section in the URL hash when valid (deep-linking), else the Dashboard
   const h=(location.hash||'').replace(/^#/,'');
-  goPage(h && navAllowed(h) && (['dash','reports','dataentry','misstatus','audit'].includes(h)||RES[h]) ? h : 'dash');
+  goPage(h && navAllowed(h) && (['dash','reports','dataentry','misstatus','audit','indicators10','manual'].includes(h)||RES[h]) ? h : 'dash');
   startLivePolling();   // silent live refresh every 25s
 }
 
@@ -950,6 +979,8 @@ function goPage(key){
   if(key==='dataentry')return renderDataEntry();
   if(key==='misstatus')return renderMisStatus();
   if(key==='audit')return renderAudit();
+  if(key==='indicators10')return renderIndicators10();
+  if(key==='manual')return renderManualPage();
   renderResource(key);
 }
 /* Browser Back / Forward → section navigation (instead of leaving the site). */
@@ -957,7 +988,7 @@ window.addEventListener('hashchange', ()=>{
   if(!CU) return;
   const key=(location.hash||'').replace(/^#/,'');
   if(!key || key===CP) return;
-  const known=['dash','reports','dataentry','misstatus','audit'].includes(key) || (typeof RES!=='undefined' && RES[key]);
+  const known=['dash','reports','dataentry','misstatus','audit','indicators10','manual'].includes(key) || (typeof RES!=='undefined' && RES[key]);
   if(!known || !navAllowed(key)){ try{ history.replaceState(null,'','#'+(CP==='__form'?'dataentry':CP)); }catch(e){} return; }
   __NAV_FROM_HASH=true; goPage(key); __NAV_FROM_HASH=false;
   // goPage refused (unsaved form kept open) — put the hash back without re-firing this handler
@@ -1459,6 +1490,20 @@ function wireCropTotals(){
   hint(net,'Auto = Income − Expenditure — type your own to override');
   calcInc();
 }
+/* Gram Sabha: Total participants = Male + Female, live (type your own to override) */
+function wireGSTotal(){
+  const t=$('ff-total_participants'), m=$('ff-male_participants'), f=$('ff-female_participants');
+  if(!t) return;
+  const N=e=>+((e&&e.value)||0);
+  const has=e=>!!(e&&String(e.value).trim()!=='');
+  if(!has(t) || N(t)===N(m)+N(f)) t.dataset.auto='1';
+  t.addEventListener('input',()=>{ t.dataset.auto=''; });
+  const rc=()=>{ if(t.dataset.auto!=='1') return; const s=N(m)+N(f); t.value=(has(m)||has(f))?s:''; };
+  [m,f].forEach(e=>{ if(e) e.addEventListener('input',rc); });
+  t.title='Auto = Male + Female participants — type your own figure to override';
+  t.style.background='var(--bg-soft)';
+  rc();
+}
 function wireLandTotal(){
   const land=$('ff-total_land_acre'); if(!land) return;
   const areas=BL_AREA_KEYS;
@@ -1736,7 +1781,7 @@ function cellRender(row,col){
 }
 let CURRENT_ROWS=[];
 /* Signature accent colour per section — shown on the page header so you always know where you are. */
-const SECTION_ACCENT={beneficiaries:'--ok',crops:'--ok',activities:'--warn',shgs:'--pink',loans:'--pink',indicators:'--accent',progress:'--accent',programmes:'--brand',objectives:'--brand',projects:'--accent',project_objectives:'--accent',donors:'--violet',mappings:'--violet',geographies:'--teal',villages:'--teal',users:'--brand'};
+const SECTION_ACCENT={beneficiaries:'--ok',crops:'--ok',activities:'--warn',shgs:'--pink',loans:'--pink',indicators:'--accent',progress:'--accent',programmes:'--brand',objectives:'--brand',projects:'--accent',project_objectives:'--accent',donors:'--violet',mappings:'--violet',geographies:'--teal',villages:'--teal',users:'--brand',gramsabha:'--accent',convergence:'--violet'};
 function emptyStateHTML(key){
   const cfg=RES[key]||{}; const canW=can(key==='users'?'users':'write'); const label=(cfg.label||'records');
   return `<div class="empty-state">
@@ -1882,21 +1927,25 @@ async function openBeneficiaryIncome(bid, name){
       if(al==='goatery'||al==='goat'||al==='goat rearing')return'goat';
       if(al==='poultry'||al==='backyard poultry')return'poultry';
       if(['micro enterprise','petty shop','tailoring','dairy','bee keeping'].includes(al))return'micro'; return'other';};
+    // NET on both sides: production uses Net Profit (falls back to gross for old rows),
+    // baseline uses income − expenditure per source — what the household actually keeps.
+    const NP=c=>{ const n=c.net_profit_inr; return (n!=null&&String(n).trim()!=='')?(+n||0):N(c.income_inr); };
+    const BL=k=>N(b['bl_'+k+'_income'])-N(b['bl_'+k+'_expenditure']);
     const cur={paddy:0,millet:0,vegetable:0,tuber:0,pulses:0,oilseed:0,mushroom:0,goat:0,poultry:0,micro:0,other:0};
-    let curTotal=0; for(const c of cs){ const inc=N(c.income_inr); curTotal+=inc; cur[bucketOf(c)]+=inc; }
-    const acts=[['paddy','Paddy',N(b.bl_paddy_income)],['millet','Millet',N(b.bl_millet_income)],['vegetable','Vegetable',N(b.bl_vegetable_income)],['tuber','Tuber Crop',N(b.bl_tuber_income)],['pulses','Pulses',N(b.bl_pulses_income)],['oilseed','Oilseeds',N(b.bl_oilseed_income)],['mushroom','Mushroom',N(b.bl_mushroom_income)],['goat','Goat Rearing',N(b.bl_goat_income)],['poultry','Backyard Poultry',N(b.bl_poultry_income)],['micro','Micro Enterprise',N(b.bl_micro_enterprise_income)],['other','Other',N(b.bl_other_income)]];
+    let curTotal=0; for(const c of cs){ const inc=NP(c); curTotal+=inc; cur[bucketOf(c)]+=inc; }
+    const acts=[['paddy','Paddy',BL('paddy')],['millet','Millet',BL('millet')],['vegetable','Vegetable',BL('vegetable')],['tuber','Tuber Crop',BL('tuber')],['pulses','Pulses',BL('pulses')],['oilseed','Oilseeds',BL('oilseed')],['mushroom','Mushroom',BL('mushroom')],['goat','Goat Rearing',BL('goat')],['poultry','Backyard Poultry',BL('poultry')],['micro','Micro Enterprise',BL('micro_enterprise')],['other','Other',BL('other')]];
     const blSum=acts.reduce((s,a)=>s+a[2],0);
     const blTotal=blSum>0?blSum:N(b.current_income_per_annum_inr);
     // The baseline is an ANNUAL income. So "now" is the AVERAGE PER YEAR of the logged
     // production — never the multi-year running total, which would invent growth that
     // never happened (Year-3 reading as Y1+Y2+Y3 against one year's baseline).
-    const byYear={}; for(const c of cs){ const y=String(c.project_year||'').trim()||'Unspecified'; byYear[y]=(byYear[y]||0)+(+c.income_inr||0); }
+    const byYear={}; for(const c of cs){ const y=String(c.project_year||'').trim()||'Unspecified'; byYear[y]=(byYear[y]||0)+NP(c); }
     const yrsK=Object.keys(byYear).sort();
     const nY=Math.max(1,yrsK.length);
     const curAvg=curTotal/nY;
     const enh=curAvg-blTotal; const pct=blTotal>0?Math.round(1000*enh/blTotal)/10:(curAvg>0?100:0); const up=enh>=0;
     // Sources with nothing on either side stay hidden — the table shows only what this person actually has
-    const rows=acts.filter(a=>a[2]>0||(cur[a[0]]||0)>0).map(a=>{const cu=(cur[a[0]]||0)/nY,dd=cu-a[2];return `<tr><td style="padding:6px">${a[1]}</td><td class="mono" style="padding:6px;text-align:right">${fmtINR(a[2])}</td><td class="mono" style="padding:6px;text-align:right;color:var(--ok)">${fmtINR(cu)}</td><td class="mono" style="padding:6px;text-align:right;color:${dd>=0?'var(--ok)':'var(--bad)'}">${dd>=0?'+':'−'}${fmtINR(Math.abs(dd))}</td></tr>`;}).join('');
+    const rows=acts.filter(a=>a[2]!==0||(cur[a[0]]||0)!==0).map(a=>{const cu=(cur[a[0]]||0)/nY,dd=cu-a[2];return `<tr><td style="padding:6px">${a[1]}</td><td class="mono" style="padding:6px;text-align:right">${fmtINR(a[2])}</td><td class="mono" style="padding:6px;text-align:right;color:var(--ok)">${fmtINR(cu)}</td><td class="mono" style="padding:6px;text-align:right;color:${dd>=0?'var(--ok)':'var(--bad)'}">${dd>=0?'+':'−'}${fmtINR(Math.abs(dd))}</td></tr>`;}).join('');
     const otherRow='';
     // Each year shows its OWN income (never cumulative) plus its change vs the baseline
     const yearRow = yrsK.length ? `<div style="margin-top:16px"><div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px">📈 Income over time — each year on its own, vs baseline</div><div style="display:flex;gap:8px;flex-wrap:wrap"><div style="background:var(--bg-soft);border-radius:8px;padding:7px 13px;text-align:center"><div style="font-size:10.5px;color:var(--t4)">Baseline</div><div class="mono" style="font-weight:700">${fmtINR(blTotal)}</div></div>`+yrsK.map(y=>{
@@ -1914,7 +1963,7 @@ async function openBeneficiaryIncome(bid, name){
         <tbody>${rows}${otherRow}</tbody>
       </table>
       ${yearRow}
-      <div style="font-size:11.5px;color:var(--t4);margin-top:10px">Baseline is an annual figure, so "now" is the <b>average per year</b> — ${fmtINR(curTotal)} across ${nY} year${nY===1?'':'s'} of Production / Output (${cs.length} record${cs.length===1?'':'s'}). Each year above is shown on its own, never added up.</div>`;
+      <div style="font-size:11.5px;color:var(--t4);margin-top:10px">All figures are <b>NET</b> (income − expenditure on both sides; older production rows without a net fall back to gross). Baseline is an annual figure, so "now" is the <b>average per year</b> — ${fmtINR(curTotal)} across ${nY} year${nY===1?'':'s'} of Production / Output (${cs.length} record${cs.length===1?'':'s'}). Each year above is shown on its own, never added up.</div>`;
     showModal('💰 Income — '+esc(name), html);
   }catch(e){ showModal('💰 Income — '+esc(name), '<div class="empty">⚠ '+esc(e.message)+'</div>'); }
 }
@@ -1931,7 +1980,7 @@ function renderResChips(key){
   const box=$('res-chips'); if(!box) return;
   const cfg=RES[key]||{}; const out=[];
   const M={programme_id:LOOKUPS.programmes,project_id:LOOKUPS.projects,donor_id:LOOKUPS.donors,indicator_id:LOOKUPS.indicators,shg_id:LOOKUPS.shgs,geography_id:LOOKUPS.geographies};
-  const NM={programme_id:'Thematic Area',project_id:'Project',donor_id:'Donor',indicator_id:'Indicator',geography_id:'Geography',quarter:'Quarter',status:'Status',indicator_type:'Type',caste:'Social Order',gender:'Gender',donor_type:'Type',reporting_frequency:'Reporting',unit_of_measurement:'Unit',project_year:'Year',project_status:'Status',programme_status:'Status',crop:'Crop / Intervention',season:'Season'};
+  const NM={programme_id:'Thematic Area',project_id:'Project',donor_id:'Donor',indicator_id:'Indicator',geography_id:'Geography',quarter:'Quarter',status:'Status',indicator_type:'Type',caste:'Social Order',gender:'Gender',donor_type:'Type',reporting_frequency:'Reporting',unit_of_measurement:'Unit',project_year:'Year',project_status:'Status',programme_status:'Status',crop:'Crop / Intervention',season:'Season',vdp_submitted:'VDP',department:'Department'};
   const lblFor=(fn,val)=>{ if(M[fn]){ const o=(M[fn]||[]).find(x=>String(x.id)===String(val)); return o?o.label:val; } return val; };
   for(const f of (cfg.filters||[])){ const fn=fName(f); const e=$('flt-'+fn); if(e&&e.value) out.push([NM[fn]||fn, lblFor(fn,e.value), fn]); }
   const sv=$('res-search'); if(sv&&sv.value) out.push(['Search', sv.value, '__q']);
@@ -2216,7 +2265,7 @@ async function openForm(key,id){
   }
   /* Per-form display titles — fixes the naive strip-the-s bug ("Indicator Progres",
      "Beneficiarie") and renames field entry to "progress" language (targets come from HQ). */
-  const FORM_TITLES={ crops:'Progress of Production & Output', progress:'Indicator Progress', beneficiaries:'Beneficiary', activities:'Activity Progress' };
+  const FORM_TITLES={ crops:'Progress of Production & Output', progress:'Indicator Progress', beneficiaries:'Beneficiary', activities:'Activity Progress', gramsabha:'Gram Sabha / VDC Record', convergence:'Convergence Record' };
   const noNew=['crops','progress'];   // these read as headings, not "New …"
   const base=FORM_TITLES[key]||cfg.label.replace(/s$/,'');
   const titleTxt = noNew.includes(key) ? (id?('Edit — '+base):base) : ((id?'Edit ':'New ')+base);
@@ -2258,6 +2307,7 @@ async function openForm(key,id){
   }
   if(key==='beneficiaries'){ wireLandTotal(); recalcBaselineTotal(); }   // land auto-sum + baseline table totals
   if(key==='crops') wireCropTotals();                   // Income = qty × rate · Net Profit = income − expenditure
+  if(key==='gramsabha') wireGSTotal();                  // Total participants = Male + Female (auto)
   // Only one thematic area? Fill it in and hide the picker — it is the same answer every time.
   { const sp=soleProgramme();
     if(sp && (cfg.fields||[]).some(f=>f[0]==='programme_id')){
@@ -2373,7 +2423,7 @@ function toggleFormLock(){
      inherits that context, so those fields are removed from the form.
    ════════════════════════════════════════════════════════════════ */
 const FO_CTX_FIELDS=['programme_id','project_id','donor_id','geography_id','district','block','gram_panchayat','village'];
-const FO_FORMS=['beneficiaries','shgs','crops','progress','activities'];
+const FO_FORMS=['beneficiaries','shgs','crops','progress','activities','gramsabha','convergence'];
 /* ── MANY workspaces at once ── Multiple officers work multiple projects in
    parallel, so we keep a LIST of named workspaces (per officer / project /
    village) and switch the ACTIVE one in a click. Every form inherits the
@@ -2768,7 +2818,6 @@ function hqRowHTML(r,i){
       <div style="font-size:11px;color:var(--t4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px">Activities · Indicators · Output — added as real records (their targets live on the record)</div>
       <div class="fo-newrow">
         ${(canWriteResource('activities')&&canTargets())?`<button type="button" class="fo-newbtn" onclick="deHQForm('activities')">＋ Add activity &amp; target</button>`:''}
-        ${(canWriteResource('indicators')&&canTargets())?`<button type="button" class="fo-newbtn" onclick="deHQForm('indicators')">＋ Add indicator &amp; target</button>`:''}
         ${canWriteResource('crops')?`<button type="button" class="fo-newbtn" onclick="deHQForm('crops')">＋ Add output / production</button>`:''}
       </div>
     </div>
@@ -3159,7 +3208,9 @@ const PERMISSION_SECTIONS = [
   ['beneficiaries','Beneficiaries',null,'Field data'],
   ['crops','Production & Output Progress'],
   ['activities','Activity Progress'],['shgs','SHGs'],['loans','SHG Loans'],
-  ['indicators','Indicators',null,'Monitoring & evaluation'],['progress','Indicator Progress'],
+  ['gramsabha','Gram Sabha / VDC',null,'Local governance'],
+  ['convergence','Convergence (Govt Schemes)'],
+  ['indicators','Indicators (legacy data)',null,'Monitoring & evaluation'],['progress','Indicator Progress (legacy data)'],
   ['targets','🎯 Targets — set / change ANY planned target (tick Edit to grant)',null,'Planning & control'],
   ['hq_targets','HQ Targets (plan rows)'],
   ['workspaces','Field Workspaces (records)'],
@@ -3216,6 +3267,16 @@ async function openUserForm(id){
          <span style="font-size:12.5px;color:var(--t3)">Full access to everything, always (the matrix below is bypassed) · manages Users &amp; Access · and this account can <b>never be deleted</b>. Only root admins can grant or remove this, and the system always keeps at least one root admin.</span></span>
        </label>
      </div>`:''}
+     ${isRoot?'':`<div style="margin-top:14px;background:linear-gradient(135deg,#eef6ff,#fff);border:1.5px solid var(--brand-soft);border-radius:11px;padding:13px 15px">
+       <div style="font-weight:800;font-size:13px;color:var(--brand);margin-bottom:4px">📌 Project access — which project(s) can this user work on?</div>
+       <div style="font-size:12.5px;color:var(--t3);margin-bottom:10px">Tick nothing = <b>all projects</b> (normal for HQ). Tick specific projects for a data-entry officer: every list narrows to those projects and the server refuses records for any other project — even from a tampered request.</div>
+       <div style="display:flex;gap:7px;flex-wrap:wrap">
+         ${(LOOKUPS.projects||[]).map(pr=>{
+           const on=String(row.assigned_projects||'').split(',').map(s=>s.trim()).includes(String(pr.id));
+           return `<label style="display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:12.5px;background:#fff"><input type="checkbox" class="uf-proj" value="${esc(pr.id)}" ${on?'checked':''} style="width:14px;height:14px">${esc(pr.label)}</label>`;
+         }).join('')||'<span style="font-size:12px;color:var(--t4)">No projects yet</span>'}
+       </div>
+     </div>`}
      <div style="margin-top:18px"><div class="card-title" style="margin-bottom:8px">Permission Matrix</div>
        <div style="font-size:12.5px;color:var(--t3);margin-bottom:10px">Every box is yours to decide — nothing is fixed. <strong>View</strong> = can open / see it · <strong>Edit</strong> = add &amp; change · <strong>Delete</strong> = remove. On pages, Edit/Delete govern the actions inside (e.g. MIS Status: Edit = assign &amp; rename workspaces, Delete = remove them). To make someone as powerful as you: set <b>Role = Admin</b> (full access everywhere, including Users &amp; Access)${CU&&CU.is_root?' — and tick <b>🛡 Root protection</b> above so the account can never be deleted':''}.</div>
        ${isRoot?'':`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px">
@@ -3244,7 +3305,7 @@ async function openUserForm(id){
 }
 /* One-click starting points for the permission matrix — apply, then fine-tune any box. */
 function permPreset(mode){
-  const FIELD_EDIT=['beneficiaries','crops','activities','shgs','loans','progress','workspaces'];
+  const FIELD_EDIT=['beneficiaries','crops','activities','shgs','loans','progress','workspaces','gramsabha','convergence'];
   const SENSITIVE=['misstatus','audit','users'];
   document.querySelectorAll('#perm-matrix input[type=checkbox]').forEach(cb=>{
     const sec=cb.dataset.sec, k=cb.dataset.k; let on=false;
@@ -3274,6 +3335,9 @@ async function saveUser(id){
     role: get('role'), access_level: get('access_level'),
   };
   if(!payload.username || !payload.user_name || !payload.role){ toast('⚠ Username, full name and role are required','t-err'); return; }
+  // 📌 Project access — comma-separated project IDs; empty = all projects
+  { const picked=[...document.querySelectorAll('.uf-proj:checked')].map(cb=>cb.value);
+    payload.assigned_projects=picked.join(','); }
   const rootEl=$('ff-is_root'); if(rootEl) payload.is_root = rootEl.checked?1:0;   // root grants root (server re-checks)
   const pw = $('ff-password').value;
   if(pw){ payload.password = pw; if(pw.length<6){ toast('⚠ Password must be at least 6 characters','t-err'); return; } }
@@ -4281,7 +4345,9 @@ async function loadDash(){
      is logged are compared against THEIR OWN baseline. Comparing everyone's baseline to a
      handful of production records showed a bogus "−99.99%" while entry was still ramping up. */
   const mp=d.income_pairs||{n:0,baseline:0,current:0}; const mpN=+mp.n||0;
-  const incBefore=mpN?+mp.baseline||0:0, incNow=mpN?+mp.current||0:0, incEnh=incNow-incBefore;
+  // Baseline is ANNUAL, so "now" is per-year (total ÷ years covered) — never a stacked multi-year sum
+  const incYrs=Math.max(1,+k.income_years||1);
+  const incBefore=mpN?+mp.baseline||0:0, incNow=(mpN?+mp.current||0:0)/incYrs, incEnh=incNow-incBefore;
   const incPct=incBefore>0?(100*incEnh/incBefore):(incNow>0?100:0);
   const incMeta = mpN ? ((incEnh>=0?'▲ ':'▼ ')+fmtCr(Math.abs(incEnh))+' · '+mpN+' matched beneficiar'+(mpN>1?'ies':'y'))
                       : 'no production income logged yet';
@@ -4310,7 +4376,7 @@ async function loadDash(){
   document.querySelectorAll('.iba-seg').forEach(b=>b.classList.toggle('active', b.dataset.t===__incomeBaType));
   const ibs=$('income-ba-summary');
   if(ibs) ibs.innerHTML = mpN
-    ? `Before: <b style="color:var(--t1)">${fmtCr(incBefore)}</b> &rarr; Now: <b style="color:var(--ok)">${fmtCr(incNow)}</b><br>Enhanced: <b style="color:${incEnh>=0?'var(--ok)':'var(--bad)'}">${incEnh>=0?'+':'−'}${fmtCr(Math.abs(incEnh))}</b> (${incEnh>=0?'+':'−'}${Math.abs(incPct).toFixed(2)}%)<br><span style="color:var(--t4);font-weight:400">based on ${mpN} of ${fmt((d.readiness||{}).ben_total||k.beneficiaries)} beneficiaries with production data</span>`
+    ? `Before: <b style="color:var(--t1)">${fmtCr(incBefore)}</b> &rarr; Now (avg/yr): <b style="color:var(--ok)">${fmtCr(incNow)}</b><br>Enhanced: <b style="color:${incEnh>=0?'var(--ok)':'var(--bad)'}">${incEnh>=0?'+':'−'}${fmtCr(Math.abs(incEnh))}</b> (${incEnh>=0?'+':'−'}${Math.abs(incPct).toFixed(2)}%)<br><span style="color:var(--t4);font-weight:400">NET income · based on ${mpN} of ${fmt((d.readiness||{}).ben_total||k.beneficiaries)} beneficiaries with production data${incYrs>1?` · across ${incYrs} years`:''}</span>`
     : `<span style="color:var(--t4);font-weight:400">No production income logged yet — enter Production &amp; Output records and the Before-vs-After comparison appears here.</span>`;
   // Income over time (Baseline → each project year)
   const iby=d.income_by_year||[];
@@ -4527,7 +4593,7 @@ const AUD_ACT={
   bulk_import:['📥 BULK IMPORT','#0891b2'] };
 const AUD_UC=['#6366f1','#0891b2','#059669','#d97706','#db2777','#7c3aed','#dc2626','#0d9488','#4f46e5','#b45309'];
 function audUserColor(u){ let h=0; u=String(u||''); for(let i=0;i<u.length;i++) h=(h*31+u.charCodeAt(i))>>>0; return AUD_UC[h%AUD_UC.length]; }
-function audEntity(v){ return (RES[v]&&RES[v].label)||({auth:'Sign-in / Security',users:'Users & Access',hq_targets:'HQ Targets',workspaces:'Workspaces',charts:'Custom Charts'})[v]||titleize(String(v||'')); }
+function audEntity(v){ return (RES[v]&&RES[v].label)||({auth:'Sign-in / Security',users:'Users & Access',hq_targets:'HQ Targets',workspaces:'Workspaces',charts:'Custom Charts',gramsabha:'Gram Sabha / VDC',convergence:'Convergence'})[v]||titleize(String(v||'')); }
 function audDevice(ua){ if(!ua) return ''; ua=String(ua); let b=''; if(/edg/i.test(ua))b='Edge'; else if(/chrome|crios/i.test(ua))b='Chrome'; else if(/firefox|fxios/i.test(ua))b='Firefox'; else if(/safari/i.test(ua))b='Safari'; let os=''; if(/windows/i.test(ua))os='Windows'; else if(/android/i.test(ua))os='Android'; else if(/iphone|ipad/i.test(ua))os='iOS'; else if(/mac os|macintosh/i.test(ua))os='macOS'; else if(/linux/i.test(ua))os='Linux'; return [b,os].filter(Boolean).join(' · '); }
 /* field key → the human label used on the forms (built once from RES) */
 function audFieldLabel(k){
@@ -4686,6 +4752,153 @@ function audExport(){
 }
 
 /* ════════════════════════════════════════════════════════════════
+   THE 11 LOGGED INDICATORS — the organisation's fixed M&E indicators,
+   computed automatically by the server from the data already entered.
+   Nothing on this page is typed; a number is never invented — an
+   indicator whose source data is missing says so instead.
+   ════════════════════════════════════════════════════════════════ */
+let __LI10=[];
+const LI10_DELTA=new Set([1,3,4,5]);   // these are change-vs-baseline (signed); the rest are shares / amounts
+async function renderIndicators10(){
+  const sp=soleProgramme();
+  $('main').innerHTML=`<div class="page-head" data-accent style="--sec-accent:var(--accent)"><div><div class="page-title">Logged Indicators</div><div class="page-sub">The 11 fixed M&amp;E indicators — <b>computed automatically</b> from Beneficiaries, Production, SHGs, Loans, Gram Sabha &amp; Convergence. Nothing here is typed.</div></div>
+    <div class="page-actions"><span class="pill pill-cyan" id="li10-when">…</span><button class="btn btn-success btn-sm" onclick="li10Export()">⬇ Excel</button></div></div>
+    <div class="filter-bar"><label>Filter</label>
+      ${sp?'':`<select id="li10-prg" onchange="li10Sync()"><option value="">All Thematic Areas</option>${(LOOKUPS.programmes||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>`}
+      <select id="li10-prj" onchange="li10Sync()"><option value="">All Projects</option>${(LOOKUPS.projects||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
+      <select id="li10-don" onchange="li10Sync()"><option value="">All Donors</option>${(LOOKUPS.donors||[]).map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('')}</select>
+      <button class="btn btn-ghost btn-sm" onclick="li10Clear()">✕ Clear</button></div>
+    ${unmappedFilterNote()}
+    <div class="li10-grid" id="li10-grid"><div class="empty" style="grid-column:1/-1">Computing…</div></div>`;
+  loadIndicators10();
+}
+function li10Sync(){ smartFilterSync($('li10-prg'),$('li10-prj'),$('li10-don')); loadIndicators10(); }
+function li10Clear(){ ['li10-prg','li10-prj','li10-don'].forEach(i=>{ const e=$(i); if(e) e.value=''; }); smartFilterSync($('li10-prg'),$('li10-prj'),$('li10-don')); loadIndicators10(); }
+async function loadIndicators10(){
+  const g=$('li10-grid'); if(!g) return;
+  let qs='?action=logged_indicators';
+  const prg=soleProgramme()||((($('li10-prg')||{}).value)||''), prj=((($('li10-prj')||{}).value)||''), don=((($('li10-don')||{}).value)||'');
+  if(prg) qs+='&programme_id='+encodeURIComponent(prg);
+  if(prj) qs+='&project_id='+encodeURIComponent(prj);
+  if(don) qs+='&donor_id='+encodeURIComponent(don);
+  try{
+    const d=await apiGet(qs); __LI10=d.indicators||[];
+    const w=$('li10-when'); if(w) w.textContent='🕒 '+(d.generated_at||'');
+    g.innerHTML=__LI10.map(x=>{
+      const has=x.value!=null;
+      const isD=LI10_DELTA.has(+x.n);
+      const val=!has?'—':(x.unit==='₹'?fmtINR(+x.value):((isD?((+x.value>=0?'+':'−')+Math.abs(+x.value).toLocaleString('en-IN')):(+x.value).toLocaleString('en-IN'))+'%'));
+      const col=!has?'var(--t4)':(x.unit==='₹'?(+x.value>0?'var(--ok)':'var(--t2)'):(isD?(+x.value>=0?'var(--ok)':'var(--bad)'):'var(--brand)'));
+      return `<div class="li10-card${has?'':' li10-wait'}">
+        <div class="li10-top"><span class="li10-n">${x.n}</span><span class="li10-name">${esc(x.name)}</span></div>
+        <div class="li10-val" style="color:${col}">${val}${has?'':'<span class="li10-nodata">waiting for data</span>'}</div>
+        <div class="li10-detail">${esc(x.detail||'')}</div>
+        <div class="li10-formula">ƒ ${esc(x.formula||'')}</div>
+      </div>`;
+    }).join('') || '<div class="empty" style="grid-column:1/-1">No indicators returned</div>';
+  }catch(e){ g.innerHTML='<div class="empty" style="grid-column:1/-1">⚠ '+esc(e.message)+'</div>'; }
+}
+function li10Export(){
+  if(typeof XLSX==='undefined'){ toast('Excel engine still loading…','t-warn'); return; }
+  if(!__LI10.length){ toast('Nothing to export yet','t-warn'); return; }
+  const rows=__LI10.map(x=>({'#':x.n,'Indicator':x.name,
+    'Value':x.value==null?'—':(x.unit==='₹'?x.value:(x.value+'%')),
+    'How it is computed':x.formula||'','Underlying figures':x.detail||''}));
+  XLS.workbook({ title:'VIEWS India MIS — Logged Indicators',
+    filters:[['Generated',nowIST()],['Basis','Computed automatically from entered data — never typed']],
+    sheets:[{name:'Logged Indicators', title:'The 11 logged M&E indicators', subtitle:nowIST(), rows,
+      cols:[{key:'#',label:'#',type:'num'},{key:'Indicator',label:'Indicator',type:'text'},{key:'Value',label:'Value',type:'text'},{key:'How it is computed',label:'How it is computed',type:'text'},{key:'Underlying figures',label:'Underlying figures',type:'text'}]}],
+    filename:'VIEWS_India_MIS_logged_indicators_'+todayIST()+'.xlsx' });
+  toast('✓ Logged indicators downloaded');
+}
+
+/* ════════════════════════════════════════════════════════════════
+   IN-APP USER MANUAL — every module, every button, in plain language.
+   Static content (no server call), searchable, always up to date with
+   the features actually in this build.
+   ════════════════════════════════════════════════════════════════ */
+const MANUAL_BOOK=[
+ {icon:'📊',title:'Dashboard',intro:'The live overview — every number follows the filters at the top and updates the moment data changes.',items:[
+   ['Filter: Thematic Area / Project / Donor','The smart chain: pick a Project and its Thematic Area & Donor select themselves; pick a Donor and the Project list narrows to what that donor funds.'],
+   ['Clear','Resets all dashboard filters back to everything.'],
+   ['⬇ Export ▾','Downloads the dashboard as a formatted Excel workbook — KPIs, breakdowns, income impact, one sheet per topic.'],
+   ['🖨 Print','Prints the dashboard (or saves as PDF) exactly as filtered, with a branded report header.'],
+   ['Income Impact panel','Baseline vs current NET income (avg per year) for beneficiaries who have production logged — honest matched pairs, never a stacked multi-year sum.'],
+   ['+ Add Chart','Builds a custom chart from ANY data (beneficiaries, outputs, SHGs, loans…) — pick source, group-by and measure. Custom charts sit above Projects & their Objectives.']]},
+ {icon:'📑',title:'Reports & Analytics',intro:'One-click, donor-ready Excel workbooks for every dimension.',items:[
+   ['Report picker','Choose the lens: Donor-wise, Thematic-wise, Project-wise, District / Block / Village-wise, SHG-wise.'],
+   ['Duration','This Month / Quarter / FY, or a custom From–To range — beneficiary figures follow their registration dates.'],
+   ['Stat strip','Districts · Blocks · Villages · Beneficiaries · SHGs for the current choice — check before downloading.'],
+   ['⬇ Download report','Generates the full workbook: summary metrics, activities, indicators, loans, outputs, Income Impact (all NET), Organic Farming before-vs-now, geographies covered.']]},
+ {icon:'＋',title:'Data Entry — two tiers',intro:'HQ plans; the field enters against the plan.',items:[
+   ['HQ Setup tab','Pick a Project → its Donor & Thematic fill in → add each District with its targets (Blocks, Villages, Beneficiaries) and assign an officer. Needs the 🎯 Targets right.'],
+   ['Field-Office Workspaces','Create one workspace per Project · District (Village optional) — the active workspace auto-fills every form. Keep several; switch with one click; ✎ edit or ✕ remove any (records are never touched).'],
+   ['＋ Add another workspace (My assignments)','Starts a new workspace pre-filled from an HQ assignment made for you.'],
+   ['Pause','Enter without any workspace — forms open blank.'],
+   ['Entry cards','New Beneficiary · Production & Output · Activity Progress (opens the full page) · New SHG · New SHG Loan · Gram Sabha / VDC · Convergence. Cards show live record counts.'],
+   ['📥 Import cards','Bulk-upload any section from .xlsx/.csv — fuzzy headers, value cleaning, per-row error workbook for anything skipped.']]},
+ {icon:'👥',title:'Beneficiaries',intro:'The people. Full demographic & economic profile, chained to Project → Donor → Thematic → Place.',items:[
+   ['+ New','Registration date pre-fills today; Geography picker fills District/Block/GP/Village; Organic Farming (Yes/No) is required.'],
+   ['Baseline livelihood table','One row per source: Area · Production kg · Income · Expenditure — NET calculates itself; the total must equal Annual Income at Registration; Total Land auto-sums the crop areas.'],
+   ['💰 Income (per row)','That person\'s NET income story: baseline vs current average per year, per-source breakdown, each year on its own with ₹ and % change.'],
+   ['🔒 Lock these fields','Keeps context fields filled on YOUR screen while registering many people.'],
+   ['Search','Finds by anything — name, ID, village, phone. Every column is searched.']]},
+ {icon:'🌾',title:'Production & Output Progress',intro:'The actuals: any intervention output, per beneficiary, per season.',items:[
+   ['Crop / Season filters (required)','Pick a Crop/Intervention OR a Season before rows display — one person has many production rows (Paddy·Kharif, Millet·Rabi…), so this guarantees no one ever looks duplicated.'],
+   ['Income & Net Profit (auto)','Income = Output Qty × Rate · Net Profit = Income − Expenditure. Type your own to override either.'],
+   ['Produce sold? / Organic Farming / Food security','Three Yes/No answers — Organic is required; they feed logged indicators 2 and 5.'],
+   ['Income Change column','₹ and % from that person\'s total baseline to their cumulative production NET (expressed per year) — same figure on every row of the same person.'],
+   ['💰 Income (per row)','Opens the same per-beneficiary income view as in Beneficiaries.']]},
+ {icon:'📈',title:'Activity Progress',intro:'Delivery, year by year, against HQ-set targets.',items:[
+   ['+ New activity','Target-setters (🎯 right) only. One compact table: per year its Target and Q1–Q4 (or 12 months — they roll up into quarters); ＋ Add Year up to six; achievements & cumulative compute themselves.'],
+   ['✎ Update progress','Everyday field work — quarters/months editable, target cells locked 🔒 unless you hold the 🎯 Targets right.'],
+   ['Year / Quarter switcher','The list shows Y1 by default; pick a year (and quarter) and the columns switch to that year — every year is one click away.']]},
+ {icon:'🤝',title:'SHGs & Loans',intro:'Groups, members, savings and credit.',items:[
+   ['SHGs · 👥 Members','Each group with village, project, bank details; the Members button manages names, roles, savings inline.'],
+   ['SHG Loans','Pick the SHG (find it by thematic/project) — the loan inherits its whole context. The list shows each loan\'s Village & Block.']]},
+ {icon:'🏛',title:'Local Governance',intro:'Gram Sabha participation and government-scheme convergence.',items:[
+   ['Gram Sabha / VDC','District → Village, VDC name, meeting date, Male + Female participants (Total auto-sums), and "VDP submitted at Gram Sabha?" — feeds the women-in-governance indicator.'],
+   ['Convergence','Department (official list), scheme, type of work, HHs benefited, Amount Mobilised — feeds indicators 10 & 11 (scheme access, amount leveraged).']]},
+ {icon:'🎯',title:'Logged Indicators (M&E)',intro:'The 11 fixed indicators — computed automatically; nothing is typed.',items:[
+   ['The cards','Each shows its number, the computed value, the underlying figures, and the exact formula. An indicator without source data says "waiting for data" — a number is never invented.'],
+   ['Filters','Thematic / Project / Donor — the same smart chain as everywhere.'],
+   ['⬇ Excel','The full indicator table with formulas and underlying figures — donor-ready.']]},
+ {icon:'🗂',title:'Master Data',intro:'Set up once, touched rarely — this is where the chain is forged.',items:[
+   ['Donors','Cards with budget, contacts and live funded-project counts. "⚠ Not funding any project yet" links straight to the fix.'],
+   ['Projects','"Funded by — Donor" is required (forges the chain); objectives are added right on the form (golden 🎯 button); 🌍 Geographies assigns the places that power dashboards & field entry; status derives from dates.'],
+   ['Donor Mappings','The who-funds-what ledger — mostly maintains itself; fix ⚠-flagged projects here.'],
+   ['Geography','State → District → Block → GP → Village. The golden ＋ Add another place creates MANY places in one save, each its own record, auto-linked to the project.'],
+   ['Village Demographics','Households & social-order profile per village — powers Coverage %.']]},
+ {icon:'🛡',title:'Admin',intro:'People, permissions, forensics.',items:[
+   ['MIS Status','Who is online, everyone\'s workspaces, 📌 assign a workspace to an officer.'],
+   ['Users & Access','Create users, per-section View/Edit/Delete matrix, presets (Field officer / HQ / Viewer), 🎯 Targets right, 📌 Project access (pin a user to specific projects — server-enforced), 🔑 reset password, 🛡 root protection.'],
+   ['Audit Trail','Every sign-in, create, edit, delete, import, permission change — who, when, from where, and every field that changed (Before → After). Filter by action/user/section; ⬇ Excel.'],
+   ['User Manual','This page — every module and button explained.']]},
+];
+function renderManualPage(){
+  $('main').innerHTML=`<div class="page-head"><div><div class="page-title">User Manual</div><div class="page-sub">Every module and every button, in plain language — always matching this exact build of the MIS.</div></div>
+    <div class="page-actions"><input class="search-input" id="man-q" placeholder="Search the manual…" oninput="manualFilter()"></div></div>
+    <div class="fchips" style="margin-bottom:14px">${MANUAL_BOOK.map((s,i)=>`<span class="fchip" style="cursor:pointer" onclick="document.getElementById('man-sec-${i}').scrollIntoView({behavior:'smooth',block:'start'})">${s.icon} ${esc(s.title)}</span>`).join('')}</div>
+    <div id="man-body">${MANUAL_BOOK.map((s,i)=>`
+      <div class="card man-sec" id="man-sec-${i}" style="margin-bottom:14px">
+        <div class="card-title">${s.icon} ${esc(s.title)}</div>
+        <div class="card-sub" style="margin-bottom:10px">${esc(s.intro)}</div>
+        <table class="man-tbl"><tbody>${s.items.map(([b,d])=>`<tr class="man-row"><td class="man-btn">${esc(b)}</td><td class="man-desc">${esc(d)}</td></tr>`).join('')}</tbody></table>
+      </div>`).join('')}</div>`;
+}
+function manualFilter(){
+  const q=String((($('man-q')||{}).value)||'').trim().toLowerCase();
+  document.querySelectorAll('.man-sec').forEach(sec=>{
+    let any=false;
+    sec.querySelectorAll('.man-row').forEach(r=>{
+      const hit=!q || r.textContent.toLowerCase().includes(q);
+      r.style.display=hit?'':'none'; if(hit) any=true;
+    });
+    sec.style.display=(any || !q || sec.textContent.toLowerCase().includes(q))?'':'none';
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
    SMARTEST EXCEL IMPORTER — v2
    A four-year-old-friendly wizard that handles every kind of mistake.
 
@@ -4778,6 +4991,18 @@ const HEADER_SYN = {
   bl_other_income:         ['other income','other baseline income','baseline other','misc income','miscellaneous income'],
   organic_farming:         ['organic','organic farming','organic farmer','is organic','organic yes no'],
   sold:                    ['sold','produce sold','sold produce','was it sold','sale'],
+  food_security:           ['food security','food secure','food security throughout the year','food sufficiency'],
+  vdc_name:                ['vdc','vdc name','village development committee'],
+  total_participants:      ['total participants','participants','total participant in gram sabha','gram sabha participants'],
+  male_participants:       ['male','male participants','men'],
+  female_participants:     ['female','femele','female participants','women'],
+  vdp_submitted:           ['vdp','vdp submitted','vdp submitted at gram sabha'],
+  meeting_date:            ['meeting date','gram sabha date','date of gram sabha'],
+  department:              ['department','name of the department','govt department'],
+  scheme_name:             ['scheme','scheme name','name of the government scheme','government scheme'],
+  work_type:               ['type of work','work type','work'],
+  hh_benefited:            ['hh benefited','households benefited','numbers of hh benefited','hhs benefited'],
+  amount_mobilised:        ['amount mobilised','amount mobilized','total amount mobilised','amount leveraged'],
   ...Object.fromEntries(BL_SOURCES.flatMap(([k,label,land])=>{
     const L=label.toLowerCase();
     const e=[['bl_'+k+'_expenditure',[L+' expenditure',L+' cost',L+' expense','baseline '+L+' expenditure','expenditure '+L]]];
@@ -4879,6 +5104,13 @@ function parseNumFlex(v){
 function buildAutoMapping(key, sourceHeaders){
   const cfg=RES[key]; if(!cfg) return {};
   const targets=(cfg.fields||[]).filter(isDataField).map(f=>({key:f[0], label:f[1], required:f[2]===1, type:f[2]}));
+  // Beneficiaries: the baseline table's fields live outside cfg.fields — keep them importable
+  if(key==='beneficiaries') for(const [k,label,land] of BL_SOURCES){
+    if(land){ targets.push({key:'bl_'+k+'_area',label:'Baseline · '+label+' Area (acre)',required:false,type:'num'},
+                           {key:'bl_'+k+'_kg',label:'Baseline · '+label+' Production (kg)',required:false,type:'num'}); }
+    targets.push({key:'bl_'+k+'_income',label:'Baseline · '+label+' Income (₹)',required:false,type:'num'},
+                 {key:'bl_'+k+'_expenditure',label:'Baseline · '+label+' Expenditure (₹)',required:false,type:'num'});
+  }
   const variantToField={};
   const add=(variant,fk)=>{ variantToField[normH(variant)]=fk; };
   for(const f of targets){
@@ -5396,6 +5628,8 @@ const SHEET_ROUTE = {
   'beneficiaries':'beneficiaries','beneficiary':'beneficiaries','farmer':'beneficiaries','farmers':'beneficiaries',
   'production':'crops','outputs':'crops','crops':'crops','crop':'crops','production / outputs':'crops','production outputs':'crops','production & output progress':'crops','production and output progress':'crops',
   'activities':'activities','activity':'activities','activity progress':'activities','activities & targets':'activities','activities and targets':'activities','targets':'activities',
+  'gram sabha':'gramsabha','gramsabha':'gramsabha','vdc':'gramsabha','local governance':'gramsabha','governance':'gramsabha',
+  'convergence':'convergence','government schemes':'convergence','govt schemes':'convergence','schemes':'convergence',
   'shgs':'shgs','shg':'shgs','self-help groups':'shgs','self help groups':'shgs','selfhelpgroups':'shgs',
   'shg members':'shg_members','shg member':'shg_members','members':'shg_members',
   'loans':'loans','loan':'loans','shg loans':'loans',
@@ -5620,11 +5854,12 @@ const ENTRY_GROUPS = [
     ['shgs','+ New SHG','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z','--pink'],
     ['loans','+ New SHG Loan','M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6','--pink'],
   ]],
-  ['Monitoring and Evaluation (MNE)', [
-    // NOTE: "+ New Indicator" is intentionally NOT on the field-office page — indicators are
-    // defined by HQ (HQ Setup or the MNE nav section). Field officers only report progress.
-    ['progress','Indicator Progress','M18 20V10M12 20V4M6 20v-6','--accent'],
+  ['Local Governance', [
+    ['gramsabha','+ New Gram Sabha / VDC record','M3 21h18M5 21V9l7-6 7 6v12M9 21v-6h6v6','--accent'],
+    ['convergence','+ New Convergence record','M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6','--accent'],
   ]],
+  // NOTE: the M&E indicators are now the 11 LOGGED INDICATORS — computed automatically
+  // from the data above, so there is nothing to enter here anymore.
   // NOTE: Master-data setup (Programme / Objective / Project / Donor / Mapping / Geography / Village)
   // is intentionally NOT shown on the Data Entry page. Those are added INLINE from within the
   // everyday forms — the "＋ New …" buttons next to the dropdowns — or from their own nav sections.
@@ -5657,7 +5892,7 @@ function renderDataEntry(){
     ['beneficiaries','Beneficiaries'],['crops','Production / Outputs'],
     ['activities','Activity Progress'],
     ['shgs','SHGs'],['shg_members','SHG Members'],['loans','SHG Loans'],
-    ['indicators','Indicators'],['progress','Indicator Progress'],
+    ['gramsabha','Gram Sabha / VDC'],['convergence','Convergence (Govt Schemes)'],
   ];
   const importCards = importTargets
     .filter(([k])=>!(['activities','indicators'].includes(k) && !canTargets()))   // 🎯 target-carrying imports need the Targets grant
@@ -6668,12 +6903,15 @@ async function generateDonorReport(){
       if(['micro enterprise','petty shop','tailoring','dairy','bee keeping'].includes(al)) return 'micro';
       return 'other';
     };
+    // NET on both sides — production rows use Net Profit (older rows fall back to gross),
+    // baseline uses income − expenditure per source
+    const NPx=c=>{ const n=c.net_profit_inr; return (n!=null&&String(n).trim()!=='')?(+n||0):N(c.income_inr); };
     const impactRows = beneficiaries.map(b=>{
       const cur={paddy:{a:0,i:0},millet:{a:0,i:0},vegetable:{a:0,i:0},tuber:{a:0,i:0},pulses:{a:0,i:0},oilseed:{a:0,i:0},mushroom:{i:0},goat:{i:0},poultry:{i:0},micro:{i:0},other:{i:0}};
       let curTotal=0;
-      for(const c of (prodByBen[b.beneficiary_id]||[])){ const slot=cur[bucketOf(c)], inc=N(c.income_inr); curTotal+=inc; slot.i+=inc; if('a' in slot) slot.a+=N(c.area_acre); }
-      const blSum = BL_INCOME_KEYS.reduce((s,k)=>s+N(b[k]),0);
-      const blTotal = blSum>0 ? blSum : N(b.current_income_per_annum_inr);
+      for(const c of (prodByBen[b.beneficiary_id]||[])){ const slot=cur[bucketOf(c)], inc=NPx(c); curTotal+=inc; slot.i+=inc; if('a' in slot) slot.a+=N(c.area_acre); }
+      const blSum = BL_INCOME_KEYS.reduce((s,k)=>s+N(b[k]),0) - BL_EXP_KEYS.reduce((s,k)=>s+N(b[k]),0);
+      const blTotal = blSum!==0 ? blSum : N(b.current_income_per_annum_inr);
       return {
         'Beneficiary ID':b.beneficiary_id, 'Name':b.beneficiary_farmer_name, 'Village':b.village, 'Block':b.block,
         'BL Paddy Area':N(b.bl_paddy_area), 'BL Paddy Income':N(b.bl_paddy_income),
@@ -6702,8 +6940,8 @@ async function generateDonorReport(){
     });
     sheets.push({
       name:'Income Impact',
-      title:'Income Impact — Baseline (at registration) vs Current',
-      subtitle:beneficiaries.length+' beneficiaries · current = cumulative across all years, summed from Production/Output · '+nowIST(),
+      title:'Income Impact — Baseline (at registration) vs Current · NET',
+      subtitle:beneficiaries.length+' beneficiaries · all ₹ figures are NET (income − expenditure; older rows without a net fall back to gross) · current = cumulative from Production/Output · '+nowIST(),
       rows: impactRows,
       cols:[
         {key:'Beneficiary ID',label:'Beneficiary ID',type:'text'},
