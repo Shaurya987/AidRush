@@ -1475,6 +1475,7 @@ if ($method==='GET') {
     if(!$own && !can_view_section('misstatus')) out(['error'=>'You do not have permission to view all workspaces'],403);
   }
   $cols=table_columns($table);
+  $ownIdCol = isset($ID_GEN[$resource]) ? $ID_GEN[$resource][0] : 'id';
   $where=[]; $params=[];
   foreach($_GET as $k=>$v){
     if(in_array($k,['resource','id','q','limit','offset','action'])) continue;
@@ -1500,22 +1501,61 @@ if ($method==='GET') {
        its real name (beneficiary / SHG / project / donor / thematic /
        indicator), so what you see on screen is what you can search for.
        Multiple words = all must match somewhere (AND of ORs).            */
-    $terms=array_slice(array_values(array_filter(preg_split('/\s+/', trim((string)$_GET['q'])))),0,5);
-    // Secrets are never searchable — matching against them would leak whether a guess
-    // is right, one character at a time.
+    /* The query is split into terms. Three power features are supported and are
+       all optional, so plain typing keeps working exactly as before:
+         "exact phrase"   a quoted phrase is matched as one whole string
+         -word            a leading minus EXCLUDES rows containing that word
+         column:value     restricts the match to one column, e.g. village:badagada
+       Everything else is a normal term. All terms must match (AND), and each
+       term may match in any column or in any linked record's real name.       */
+    $raw = trim((string)$_GET['q']);
+    preg_match_all('/"[^"]*"|\S+/', $raw, $mm);
+    $terms = array_slice($mm[0], 0, 6);
+    // Secrets are never searchable. Matching against them would reveal whether a
+    // guess is correct, one character at a time.
     $noSearch=['password_hash','active_session_token','active_tab_id','password','token'];
     $searchCols=array_values(array_diff($cols,$noSearch));
-    foreach($terms as $t){
-      $like='%'.$t.'%';
-      $ors=[];
-      foreach($searchCols as $c){ $ors[]="`$c` LIKE ?"; $params[]=$like; }
-      foreach($FK_NAMES as $fk=>$info){
-        if(!in_array($fk,$cols)) continue;
-        list($ftbl,$fidc,$fnamec)=$info;
-        $ors[]="`$fk` IN (SELECT `$fidc` FROM `$ftbl` WHERE `$fnamec` LIKE ?)";
-        $params[]=$like;
+    // Friendly aliases so a user can type what they see on screen
+    $alias=['name'=>['beneficiary_farmer_name','shg_name','project_name','donor_name','programme_name','indicator_name','vdc_name','scheme_name','member_name','user_name'],
+            'phone'=>['contact_number','phone','village_contact_person_cell_no'],
+            'id'=>[$ownIdCol ?? 'id'],
+            'village'=>['village','village_or_ward'],
+            'place'=>['village','village_or_ward','gram_panchayat','block','district'],
+            'crop'=>['crop'],'season'=>['season'],'gender'=>['gender'],'caste'=>['caste'],
+            'district'=>['district'],'block'=>['block'],'gp'=>['gram_panchayat'],
+            'scheme'=>['scheme_name'],'department'=>['department'],'status'=>['repayment_status','project_status','programme_status','status'],
+            'remarks'=>['remarks']];
+    foreach($terms as $term){
+      $neg = false;
+      if($term!=='' && $term[0]==='-' && strlen($term)>1){ $neg=true; $term=substr($term,1); }
+      // column:value restricts the search to the named column or alias group
+      $only = null;
+      if(preg_match('/^([A-Za-z_]{2,30}):(.*)$/', $term, $cm)){
+        $key=strtolower($cm[1]); $val=$cm[2];
+        $cand = isset($alias[$key]) ? $alias[$key] : [$key];
+        $cand = array_values(array_intersect($cand, $searchCols));
+        if($cand && $val!==''){ $only=$cand; $term=$val; }
       }
-      if($ors) $where[]='('.implode(' OR ',$ors).')';
+      $term = trim($term, '"');
+      if($term==='') continue;
+      $like='%'.$term.'%';
+      $ors=[]; $vals=[];
+      $targetCols = $only ?: $searchCols;
+      foreach($targetCols as $c){ $ors[]="`$c` LIKE ?"; $vals[]=$like; }
+      if(!$only){
+        // also match the real NAME of any linked record, so searching a person on the
+        // Production page or an SHG on the Loans page works as the user expects
+        foreach($FK_NAMES as $fk=>$info){
+          if(!in_array($fk,$cols)) continue;
+          list($ftbl,$fidc,$fnamec)=$info;
+          $ors[]="`$fk` IN (SELECT `$fidc` FROM `$ftbl` WHERE `$fnamec` LIKE ?)";
+          $vals[]=$like;
+        }
+      }
+      if(!$ors) continue;
+      $clause='('.implode(' OR ',$ors).')';
+      $where[] = $neg ? ('NOT '.$clause) : $clause;
+      foreach($vals as $v) $params[]=$v;
     }
   }
   $w = $where? ' WHERE '.implode(' AND ',$where) : '';
