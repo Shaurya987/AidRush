@@ -1523,7 +1523,7 @@ if ($method==='GET') {
   $ownIdCol = isset($ID_GEN[$resource]) ? $ID_GEN[$resource][0] : 'id';
   $where=[]; $params=[];
   // search accumulators: strict (own columns) and broad (own columns + linked names)
-  $sWhere=[]; $sParams=[]; $bWhere=[]; $bParams=[]; $firstTerm=null; $usedTerms=0;
+  $sWhere=[]; $sParams=[]; $mWhere=[]; $mParams=[]; $bWhere=[]; $bParams=[]; $firstTerm=null; $usedTerms=0;
   foreach($_GET as $k=>$v){
     if(in_array($k,['resource','id','q','limit','offset','action'])) continue;
     if(in_array($k,$cols) && $v!==''){ $where[]="`$k`=?"; $params[]=$v; }
@@ -1556,8 +1556,13 @@ if ($method==='GET') {
          column:value     restricts the match to one column, e.g. village:badagada
        Everything else is a normal term. All terms must match (AND), and each
        term may match in any column or in any linked record's real name.       */
-    $raw = trim((string)$_GET['q']);
-    preg_match_all('/"[^"]*"|\S+/', $raw, $mm);
+    /* Normalise the typed text first. A name copied from elsewhere often carries a
+       non breaking space, a zero width character or doubled spaces, and a plain
+       LIKE would then never match. This is why an exact paste sometimes failed. */
+    $raw = (string)($_GET['q'] ?? '');
+    $raw = str_replace(["\xC2\xA0","\xE2\x80\x8B","\xE2\x80\x8C","\xE2\x80\x8D","\xEF\xBB\xBF"], ' ', $raw);
+    $raw = preg_replace('/\s+/u', ' ', trim($raw));
+    preg_match_all('/"[^"]*"|\S+/u', $raw, $mm);
     $terms = array_slice($mm[0], 0, 6);
     // Secrets are never searchable. Matching against them would reveal whether a
     // guess is correct, one character at a time.
@@ -1573,14 +1578,19 @@ if ($method==='GET') {
             'district'=>['district'],'block'=>['block'],'gp'=>['gram_panchayat'],
             'scheme'=>['scheme_name'],'department'=>['department'],'status'=>['repayment_status','project_status','programme_status','status'],
             'remarks'=>['remarks']];
-    /* PRECISION FIRST.
-       Two clause sets are built for the same query:
-         STRICT  matches only this table's own columns
-         BROAD   also matches the NAME of any linked record
-       The strict set runs first. The broad set is used only when strict finds
-       nothing. Without this, searching a person's name that happens to sit
-       inside a project or donor name returned every record of that project,
-       which looked like a page full of unrelated people. */
+    /* THREE TIERS, TRIED IN ORDER OF PRECISION.
+         tier 1  this table's own columns only
+         tier 2  plus the SUBJECT of the row, meaning the linked record whose name
+                 is actually shown in the list: the beneficiary on Production, the
+                 group on Loans, the indicator on Progress
+         tier 3  plus organisational links: project, donor, thematic area
+       Each tier is only used when the one before it finds nothing. Lumping the
+       subject together with the organisational links was the bug behind searching
+       a person and receiving everyone who shares a project whose NAME contains
+       those letters, for example a project named after Gopalpur when the search
+       was for Gopal. */
+    $SUBJECT_FK = ['crops'=>'beneficiary_id','loans'=>'shg_id','progress'=>'indicator_id','shg_members'=>'shg_id'];
+    $subjectFk  = $SUBJECT_FK[$resource] ?? null;
     foreach($terms as $term){
       $neg = false;
       if($term!=='' && $term[0]==='-' && strlen($term)>1){ $neg=true; $term=substr($term,1); }
@@ -1591,41 +1601,45 @@ if ($method==='GET') {
         $cand = array_values(array_intersect($cand, $searchCols));
         if($cand && $val!==''){ $only=$cand; $term=$val; }
       }
-      $term = trim($term, '"');
-      $term = trim($term);
+      $term = trim(trim($term, '"'));
       if($term===''){ continue; }
       $like='%'.$term.'%';
       $targetCols = $only ?: $searchCols;
       $ors=[]; $vals=[];
       foreach($targetCols as $c){ $ors[]="`$c` LIKE ?"; $vals[]=$like; }
       if(!$ors) continue;
-      $strictClause='('.implode(' OR ',$ors).')';
-      $sWhere[] = $neg ? ('NOT '.$strictClause) : $strictClause;
-      foreach($vals as $v) $sParams[]=$v;
-      // the broad variant adds linked-record names for the same term
-      $bors=$ors; $bvals=$vals;
+      $wrap = function($list) use($neg){ return ($neg?'NOT ':'').'('.implode(' OR ',$list).')'; };
+      // tier 1
+      $sWhere[] = $wrap($ors); foreach($vals as $v) $sParams[]=$v;
+      // tier 2 — own columns plus the subject of the row
+      $mors=$ors; $mvals=$vals;
+      if(!$only && $subjectFk && in_array($subjectFk,$cols) && isset($FK_NAMES[$subjectFk])){
+        list($ftbl,$fidc,$fnamec)=$FK_NAMES[$subjectFk];
+        $mors[]="`$subjectFk` IN (SELECT `$fidc` FROM `$ftbl` WHERE `$fnamec` LIKE ?)";
+        $mvals[]=$like;
+      }
+      $mWhere[] = $wrap($mors); foreach($mvals as $v) $mParams[]=$v;
+      // tier 3 — everything, including organisational links
+      $bors=$mors; $bvals=$mvals;
       if(!$only){
         foreach($FK_NAMES as $fk=>$info){
-          if(!in_array($fk,$cols)) continue;
+          if($fk===$subjectFk || !in_array($fk,$cols)) continue;
           list($ftbl,$fidc,$fnamec)=$info;
           $bors[]="`$fk` IN (SELECT `$fidc` FROM `$ftbl` WHERE `$fnamec` LIKE ?)";
           $bvals[]=$like;
         }
       }
-      $broadClause='('.implode(' OR ',$bors).')';
-      $bWhere[] = $neg ? ('NOT '.$broadClause) : $broadClause;
-      foreach($bvals as $v) $bParams[]=$v;
+      $bWhere[] = $wrap($bors); foreach($bvals as $v) $bParams[]=$v;
       if(!$neg && $firstTerm===null) $firstTerm=$term;
       $usedTerms++;
     }
-    /* The user typed something, but nothing usable came out of it (for example a
-       lone quotation mark). Return NO rows rather than the whole table, which is
-       what silently happened before. */
-    if($usedTerms===0){ $sWhere[]='1=0'; $bWhere[]='1=0'; }
+    /* Typed something that reduced to nothing, for example a lone quotation mark.
+       Return NO rows rather than the whole table. */
+    if($usedTerms===0){ $sWhere[]='1=0'; $mWhere[]='1=0'; $bWhere[]='1=0'; }
   }
 
-  /* Relevance: rows whose own label column matches are shown first, prefix
-     matches ahead of mid-word matches, so the closest answer is at the top. */
+  /* Relevance: rows whose own label column matches come first, a name beginning
+     with the query ahead of one that merely contains it. */
   $LABEL_COL = ['beneficiaries'=>'beneficiary_farmer_name','shgs'=>'shg_name','shg_members'=>'member_name',
     'projects'=>'project_name','donors'=>'donor_name','programmes'=>'programme_name','indicators'=>'indicator_name',
     'geographies'=>'village_or_ward','villages'=>'village','crops'=>'crop','activities'=>'project_activity',
@@ -1649,13 +1663,18 @@ if ($method==='GET') {
     out(['row'=>$row]);
   }
   $limit=min((int)($_GET['limit']??5000),10000); $offset=(int)($_GET['offset']??0);
-  // Pass one: precise. Pass two: broadened to linked names, only if precise found nothing.
-  $w = $mkWhere($sWhere); $params = array_merge($baseParams, $sParams); $broadened=false;
-  $cnt=db()->prepare("SELECT COUNT(*) c FROM `$table`$w"); $cnt->execute($params); $total=(int)$cnt->fetch()['c'];
-  if($total===0 && $sWhere && $bWhere && $bParams!==$sParams){
-    $w2=$mkWhere($bWhere); $p2=array_merge($baseParams,$bParams);
-    $c2=db()->prepare("SELECT COUNT(*) c FROM `$table`$w2"); $c2->execute($p2); $t2=(int)$c2->fetch()['c'];
-    if($t2>0){ $w=$w2; $params=$p2; $total=$t2; $broadened=true; }
+  // Try each tier in turn and stop at the first that finds anything.
+  $tier='exact'; $w=$mkWhere($sWhere); $params=array_merge($baseParams,$sParams);
+  $countWith=function($ww,$pp) use($table){ $c=db()->prepare("SELECT COUNT(*) c FROM `$table`$ww"); $c->execute($pp); return (int)$c->fetch()['c']; };
+  $total=$countWith($w,$params);
+  if($total===0 && $sWhere){
+    foreach([['subject',$mWhere,$mParams],['linked',$bWhere,$bParams]] as $try){
+      list($tname,$tw,$tp)=$try;
+      if(!$tw || $tp===$sParams) continue;
+      $w2=$mkWhere($tw); $p2=array_merge($baseParams,$tp);
+      $t2=$countWith($w2,$p2);
+      if($t2>0){ $w=$w2; $params=$p2; $total=$t2; $tier=$tname; break; }
+    }
   }
   $st=db()->prepare("SELECT * FROM `$table`$w".$orderBy." LIMIT $limit OFFSET $offset");
   $st->execute(array_merge($params, $orderParams));
@@ -1675,6 +1694,11 @@ if ($method==='GET') {
   // (all sources, else the registration annual income) and CUMULATIVE production income
   // across EVERY record they have — so the list shows their income change till now.
   if($resource==='crops' && $rows){
+    /* Income context for each row, RESPECTING THE YEAR FILTER.
+       With no year chosen the comparison is baseline against the average of every
+       year that has production. With a year chosen it is baseline against THAT
+       year alone, so the figures on screen always describe the year being viewed. */
+    $yearSel = trim((string)($_GET['project_year'] ?? ''));
     $bids=[]; foreach($rows as $r){ if(!empty($r['beneficiary_id'])) $bids[$r['beneficiary_id']]=1; }
     $bids=array_keys($bids);
     if($bids){
@@ -1684,17 +1708,75 @@ if ($method==='GET') {
         $benCols=table_columns('beneficiaries');
         $blCands=['bl_paddy_income','bl_millet_income','bl_vegetable_income','bl_tuber_income','bl_pulses_income','bl_oilseed_income','bl_mushroom_income','bl_goat_income','bl_poultry_income','bl_micro_enterprise_income','bl_other_income'];
         $have=array_values(array_intersect($blCands,$benCols));
-        $blExpr=$have? ('('.implode('+',array_map(fn($c)=>"COALESCE($c,0)",$have)).')') : '0';
-        $stb=db()->prepare("SELECT beneficiary_id bid, CASE WHEN $blExpr>0 THEN $blExpr ELSE COALESCE(current_income_per_annum_inr,0) END bl FROM beneficiaries WHERE beneficiary_id IN ($ph)");
+        $expr=[];
+        foreach($have as $ic){ $ec=str_replace('_income','_expenditure',$ic);
+          $expr[] = in_array($ec,$benCols) ? "(COALESCE($ic,0)-COALESCE($ec,0))" : "COALESCE($ic,0)"; }
+        $blExpr = $expr ? ('('.implode('+',$expr).')') : '0';
+        $stb=db()->prepare("SELECT beneficiary_id bid, CASE WHEN $blExpr<>0 THEN $blExpr ELSE COALESCE(current_income_per_annum_inr,0) END bl FROM beneficiaries WHERE beneficiary_id IN ($ph)");
         $stb->execute($bids); foreach($stb->fetchAll() as $r2){ $bl[$r2['bid']]=(float)$r2['bl']; }
-        // total income AND how many distinct project years it spans — the baseline is an
-        // ANNUAL figure, so the honest comparison is income PER YEAR, not the running sum
-        $stc=db()->prepare("SELECT beneficiary_id bid, COALESCE(SUM(COALESCE(net_profit_inr,income_inr)),0) s, COUNT(DISTINCT NULLIF(TRIM(project_year),'')) ny FROM crops WHERE beneficiary_id IN ($ph) GROUP BY beneficiary_id");
-        $stc->execute($bids); foreach($stc->fetchAll() as $r2){ $cum[$r2['bid']]=(float)$r2['s']; $yrs[$r2['bid']]=max(1,(int)$r2['ny']); }
+        // NET on the production side, falling back to gross for rows saved before Net Profit existed
+        $NP="COALESCE(net_profit_inr,income_inr)";
+        if($yearSel!==''){
+          $args=$bids; $args[]=$yearSel;
+          $stc=db()->prepare("SELECT beneficiary_id bid, COALESCE(SUM($NP),0) s FROM crops WHERE beneficiary_id IN ($ph) AND TRIM(project_year)=? GROUP BY beneficiary_id");
+          $stc->execute($args);
+          foreach($stc->fetchAll() as $r2){ $cum[$r2['bid']]=(float)$r2['s']; $yrs[$r2['bid']]=1; }
+        } else {
+          $stc=db()->prepare("SELECT beneficiary_id bid, COALESCE(SUM($NP),0) s, COUNT(DISTINCT NULLIF(TRIM(project_year),'')) ny FROM crops WHERE beneficiary_id IN ($ph) GROUP BY beneficiary_id");
+          $stc->execute($bids);
+          foreach($stc->fetchAll() as $r2){ $cum[$r2['bid']]=(float)$r2['s']; $yrs[$r2['bid']]=max(1,(int)$r2['ny']); }
+        }
       }catch(Exception $e){}
-      foreach($rows as &$r){ $bid=$r['beneficiary_id']??''; $r['_bl_total']=$bl[$bid]??null; $r['_cum_income']=$cum[$bid]??null; $r['_years_n']=$yrs[$bid]??1; } unset($r);
+      foreach($rows as &$r){ $bid=$r['beneficiary_id']??'';
+        $r['_bl_total']=$bl[$bid]??null; $r['_cum_income']=$cum[$bid]??null;
+        $r['_years_n']=$yrs[$bid]??1; $r['_year_scope']=$yearSel; } unset($r);
     }
   }
+  /* Beneficiary rows: the income view. `income_year` decides what is shown.
+       Baseline (or empty)  the income recorded at registration
+       Year-N               that beneficiary's income from Year-N production only
+     This is what lets a reader follow one household from baseline through each
+     year. It is computed here, never stored, so it cannot go stale. */
+  if($resource==='beneficiaries' && $rows){
+    $iy = trim((string)($_GET['income_year'] ?? ''));
+    $benCols=table_columns('beneficiaries');
+    $blCands=['bl_paddy_income','bl_millet_income','bl_vegetable_income','bl_tuber_income','bl_pulses_income','bl_oilseed_income','bl_mushroom_income','bl_goat_income','bl_poultry_income','bl_micro_enterprise_income','bl_other_income'];
+    $have=array_values(array_intersect($blCands,$benCols));
+    foreach($rows as &$r){
+      $gross=0.0; $exp=0.0;
+      foreach($have as $ic){
+        $gross += (float)($r[$ic] ?? 0);
+        $ec = str_replace('_income','_expenditure',$ic);
+        if(in_array($ec,$benCols)) $exp += (float)($r[$ec] ?? 0);
+      }
+      $net = $gross - $exp;
+      $r['_bl_total'] = ($net!=0) ? $net : (float)($r['current_income_per_annum_inr'] ?? 0);
+    } unset($r);
+    if($iy!=='' && strcasecmp($iy,'Baseline')!==0){
+      $bids=[]; foreach($rows as $r){ if(!empty($r['beneficiary_id'])) $bids[$r['beneficiary_id']]=1; }
+      $bids=array_keys($bids);
+      $ysum=[];
+      if($bids){
+        try{
+          $ph=implode(',',array_fill(0,count($bids),'?'));
+          $args=$bids; $args[]=$iy;
+          $st2=db()->prepare("SELECT beneficiary_id bid, COALESCE(SUM(COALESCE(net_profit_inr,income_inr)),0) s, COUNT(*) n
+                              FROM crops WHERE beneficiary_id IN ($ph) AND TRIM(project_year)=? GROUP BY beneficiary_id");
+          $st2->execute($args);
+          foreach($st2->fetchAll() as $r2){ $ysum[$r2['bid']]=['s'=>(float)$r2['s'],'n'=>(int)$r2['n']]; }
+        }catch(Exception $e){}
+      }
+      foreach($rows as &$r){
+        $bid=$r['beneficiary_id']??'';
+        $r['_year_income'] = isset($ysum[$bid]) ? $ysum[$bid]['s'] : null;   // null means nothing logged for that year
+        $r['_year_records']= isset($ysum[$bid]) ? $ysum[$bid]['n'] : 0;
+        $r['_income_year'] = $iy;
+      } unset($r);
+    } else {
+      foreach($rows as &$r){ $r['_income_year']='Baseline'; } unset($r);
+    }
+  }
+
   // SHG Loan rows: attach the SHG's village & block, so a loan is placeable at a glance
   if($resource==='loans' && $rows){
     $sids=[]; foreach($rows as $r){ if(!empty($r['shg_id'])) $sids[$r['shg_id']]=1; }
@@ -1741,7 +1823,7 @@ if ($method==='GET') {
     try{ foreach(db()->query("SELECT shg_id, COUNT(*) c FROM shg_members GROUP BY shg_id")->fetchAll() as $r2){ $mc[$r2['shg_id']]=(int)$r2['c']; } }catch(Exception $e){}
     foreach($rows as &$r){ $r['_members']=$mc[$r['shg_id']]??0; } unset($r);
   }
-  out(['rows'=>$rows,'total'=>$total,'limit'=>$limit,'offset'=>$offset,'broadened'=>!empty($broadened),'q'=>(string)($_GET['q']??'')]);
+  out(['rows'=>$rows,'total'=>$total,'limit'=>$limit,'offset'=>$offset,'tier'=>$tier,'broadened'=>($tier!=='exact'),'q'=>$raw]);
  } catch (Throwable $e) {
   // Never let a query error surface to the browser as a bare 500 / "failed to fetch".
   out(['error'=>'Could not load '.$resource.' right now. '.safe_err($e,'')], 500);

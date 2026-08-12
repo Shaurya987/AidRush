@@ -841,13 +841,13 @@ const RES={
     filters:['donor_id','project_id'],
     fields:[['demographic_id','Demographic ID',1],['geography_id','Geography','ref','geographies'],['district','District',1],['block','Block',1],['gram_panchayat','Gram Panchayat'],['village','Village',1],['total_hhs','Total HHs','num'],['hhs_covered_under_project','HHs Covered','num'],['sc_hhs','SC HHs','num'],['st_hhs','ST HHs','num'],['obc_hhs','OBC HHs','num'],['general_hhs','General HHs','num'],['village_contact_person','Contact Person'],['village_contact_person_cell_no','Contact Phone'],['responsible_staff','Responsible Staff'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['remarks','Remarks']]},
   beneficiaries:{label:'Beneficiaries',sub:'Farmer & household beneficiaries — full demographic & economic profile',icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',badge:true,
-    cols:[['beneficiary_id','ID'],['beneficiary_farmer_name','Name'],['gender','Gender','gender'],['caste','Social Order','caste'],['religion','Religion'],['village','Village'],['block','Block'],['primary_income_source','Income Source'],['current_income_per_annum_inr','Annual Income','inr']],
-    filters:['project_id','donor_id','caste','gender'],
+    cols:[['beneficiary_id','ID'],['beneficiary_farmer_name','Name'],['gender','Gender','gender'],['caste','Social Order','caste'],['religion','Religion'],['village','Village'],['block','Block'],['_income_view','Income','incyear']],
+    filters:['project_id','donor_id','caste','gender',['income_year','Income view: Baseline',['Baseline','Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']]],
     fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['organic_farming','Organic Farming at registration *','sel',['Yes','No']],['__bl_tbl','Baseline livelihood — at registration','bltable'],['total_land_acre','Total Land (acres) — auto-sums the crop areas','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
   crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — crops, alternative livelihoods, health, road safety, anything',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
-    cols:[['beneficiary_id','Beneficiary'],['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['production_kg','Output Qty (kg)','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr'],['_incchg','Income Change — baseline → now','incchg']],
-    filters:['project_id','donor_id',['project_year','Year',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Crops / Interventions',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
-    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹) — auto: quantity × rate','num'],['net_profit_inr','Net Profit (₹) — auto: income − expenditure','num'],['sold','Produce sold?','sel',['Yes','No']],['organic_farming','Organic Farming *','sel',['Yes','No']],['food_security','Food security throughout the year?','sel',['Yes','No']],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
+    cols:[['beneficiary_id','Beneficiary'],['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['production_kg','Output Qty (kg)','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr'],['_incchg','Income Change','incchg']],
+    filters:['project_id','donor_id',['project_year','All Years (baseline comparison)',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Crops / Interventions',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
+    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year *','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹) — auto: quantity × rate','num'],['net_profit_inr','Net Profit (₹) — auto: income − expenditure','num'],['sold','Produce sold?','sel',['Yes','No']],['organic_farming','Organic Farming *','sel',['Yes','No']],['food_security','Food security throughout the year?','sel',['Yes','No']],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
   activities:{label:'Activity Progress',sub:'Every activity\'s multi-year targets & quarterly / monthly achievements — totals auto-computed',icon:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
     cols:[['project_activity','Activity'],['unit_of_measurement','Unit'],['total_target','Total Tgt','num'],['target_year_1','Y1 Tgt','num'],['y1_total_achievement','Y1 Ach','num'],['cumulative_achievement','Cum Ach','num']],
     filters:['project_id','donor_id',['unit_of_measurement','Units',['Number','Percentage','INR','Event','Acres','Kilograms']]],
@@ -1837,15 +1837,37 @@ function achvCell(row){
 function cellRender(row,col){
   const [k,l,type]=col;
   if(type==='achv') return achvCell(row);
+  if(type==='incyear'){
+    // Baseline view shows the registration income. A year view shows that year's
+    // income from production, with the change against baseline beneath it.
+    const yr=String(row._income_year||'Baseline');
+    const bl=+row._bl_total||0;
+    if(yr==='Baseline' || !yr){
+      return `<div style="min-width:120px"><span class="mono" style="font-weight:700">${bl?fmtINR(bl):'<span style="color:var(--t5)">—</span>'}</span><div style="font-size:10px;color:var(--t4)">baseline at registration</div></div>`;
+    }
+    const yi=row._year_income;
+    if(yi===null||yi===undefined){
+      return `<div style="min-width:120px"><span style="color:var(--t5)">no ${esc(yr)} records</span><div style="font-size:10px;color:var(--t4)">baseline ${bl?fmtINR(bl):'—'}</div></div>`;
+    }
+    const cur=+yi||0, d=cur-bl, up=d>=0;
+    const pct = bl>0 ? Math.round(d/bl*1000)/10 : null;
+    return `<div style="min-width:140px"><span class="mono" style="font-weight:800;color:var(--ok)">${fmtINR(cur)}</span>
+      <div style="font-size:10.5px;color:${up?'var(--ok)':'var(--bad)'};font-family:'JetBrains Mono'">${up?'▲ +':'▼ −'}${fmtINR(Math.abs(d))}${pct!=null?` (${up?'+':'−'}${Math.abs(pct)}%)`:''}</div>
+      <div style="font-size:10px;color:var(--t4)">${esc(yr)} · ${row._year_records||0} record${(row._year_records||0)===1?'':'s'} · baseline ${bl?fmtINR(bl):'—'}</div></div>`;
+  }
   if(type==='incchg'){
     // Per-BENEFICIARY income change. Their production income counts EVERY record they
     // have (all crops, all seasons) but is expressed PER YEAR, because the baseline is
     // an annual figure — stacking 3 years against one year's baseline is false growth.
     const bl=+row._bl_total||0, tot=+row._cum_income||0, ny=Math.max(1,+row._years_n||1);
+    const yr=String(row._year_scope||'').trim();
     if(!bl && !tot) return '<span style="color:var(--t5)">—</span>';
     const cur=tot/ny, d=cur-bl, up=d>=0;
     const pct = bl>0 ? Math.round(d/bl*1000)/10 : null;
-    return `<div style="min-width:120px"><span class="mono" style="font-weight:800;color:${up?'var(--ok)':'var(--bad)'}">${up?'▲ +':'▼ −'}${fmtINR(Math.abs(d))}</span>${pct!=null?` <span class="bdg" style="background:${up?'var(--ok-soft)':'#fee2e2'};color:${up?'var(--ok)':'var(--bad)'};font-size:10.5px">${up?'+':'−'}${Math.abs(pct)}%</span>`:''}<div style="font-size:10px;color:var(--t4)">baseline → ${ny>1?`avg/yr (${ny} yrs)`:'now'}</div></div>`;
+    // The caption always names the exact period the figure describes, so a year
+    // filtered view can never be mistaken for an all years average.
+    const cap = yr ? ('baseline → '+esc(yr)) : (ny>1 ? `baseline → avg/yr (${ny} yrs)` : 'baseline → now');
+    return `<div style="min-width:120px"><span class="mono" style="font-weight:800;color:${up?'var(--ok)':'var(--bad)'}">${up?'▲ +':'▼ −'}${fmtINR(Math.abs(d))}</span>${pct!=null?` <span class="bdg" style="background:${up?'var(--ok-soft)':'#fee2e2'};color:${up?'var(--ok)':'var(--bad)'};font-size:10.5px">${up?'+':'−'}${Math.abs(pct)}%</span>`:''}<div style="font-size:10px;color:var(--t4)">${cap}</div></div>`;
   }
   // Donor↔Project linkage status — mapped shows the funding donor, unmapped is loudly flagged
   if(type==='maplink'){ const did=(LOOKUPS.project_donor||{})[row.project_id];
@@ -2090,7 +2112,7 @@ function renderResChips(key){
   const box=$('res-chips'); if(!box) return;
   const cfg=RES[key]||{}; const out=[];
   const M={programme_id:LOOKUPS.programmes,project_id:LOOKUPS.projects,donor_id:LOOKUPS.donors,indicator_id:LOOKUPS.indicators,shg_id:LOOKUPS.shgs,geography_id:LOOKUPS.geographies};
-  const NM={programme_id:'Thematic Area',project_id:'Project',donor_id:'Donor',indicator_id:'Indicator',geography_id:'Geography',quarter:'Quarter',status:'Status',indicator_type:'Type',caste:'Social Order',gender:'Gender',donor_type:'Type',reporting_frequency:'Reporting',unit_of_measurement:'Unit',project_year:'Year',project_status:'Status',programme_status:'Status',crop:'Crop / Intervention',season:'Season',vdp_submitted:'VDP',department:'Department'};
+  const NM={programme_id:'Thematic Area',project_id:'Project',donor_id:'Donor',indicator_id:'Indicator',geography_id:'Geography',quarter:'Quarter',status:'Status',indicator_type:'Type',caste:'Social Order',gender:'Gender',donor_type:'Type',reporting_frequency:'Reporting',unit_of_measurement:'Unit',project_year:'Year',project_status:'Status',programme_status:'Status',crop:'Crop / Intervention',season:'Season',income_year:'Income view',vdp_submitted:'VDP',department:'Department'};
   const lblFor=(fn,val)=>{ if(M[fn]){ const o=(M[fn]||[]).find(x=>String(x.id)===String(val)); return o?o.label:val; } return val; };
   for(const f of (cfg.filters||[])){ const fn=fName(f); const e=$('flt-'+fn); if(e&&e.value) out.push([NM[fn]||fn, lblFor(fn,e.value), fn]); }
   const sv=$('res-search'); if(sv&&sv.value) out.push(['Search', sv.value, '__q']);
@@ -4055,6 +4077,11 @@ async function saveForm(key,id){
   { const vErr=validatePayload(key,payload); if(vErr){ toast('⚠ '+vErr,'t-err'); return; } }
   // Donor↔Project linkage is MANDATORY — without it the project is invisible to Data Entry & donor reports
   if(key==='projects' && !String(payload.donor_id||'').trim()){ toast('⚠ Select the Donor funding this project — the donor↔project link powers Data Entry & every donor report','t-err'); return; }
+  // Project Year is mandatory on Production. Without it the record cannot be placed in
+  // any year, so it would sit outside every year filter and every year by year comparison.
+  if(key==='crops' && !String(payload.project_year||'').trim()){
+    toast('⚠ Please choose the Project Year — every production record must belong to a year so it can be reported and compared','t-err'); return;
+  }
   // Organic Farming is mandatory on both forms — it is the before/after the indicator counts
   if((key==='beneficiaries'||key==='crops') && !String(payload.organic_farming||'').trim()){
     toast('⚠ Please answer Organic Farming (Yes / No) — the organic-farming indicator counts it','t-err'); return;
@@ -5040,7 +5067,8 @@ const MANUAL_BOOK=[
    ['Search: searching one field only','Type the field name, a colon, then the value. For example village:badagada. The field names available are name, id, phone, village, place, district, block, gp, crop, season, gender, caste, scheme, department, status and remarks. Any exact column name also works.'],
    ['Search: clearing and help','The small cross inside the box clears the search, and pressing Escape does the same. The question mark button opens these tips on screen.'],
    ['Search: when nothing matches','The system states <b>No results found</b>, repeats what you searched for, and offers a button to clear the search. It does not fall back to showing a long list of unrelated records, and it does not suggest the section is empty when it is not.'],
-   ['Search: precise first, then wider','The search first looks only at the columns of the list you are on. Only if that finds nothing does it widen to the names of linked records, such as the project or the donor. This is why searching a person no longer floods the page with everyone who happens to share a project whose name contains those letters. When the wider search is used, a note above the list says so.'],
+   ['Search: three levels of precision','The search tries the closest match first and only widens if it finds nothing. Level one looks at the columns of the list you are on. Level two adds the name of the record the row is about, which is the beneficiary on Production, the group on Loans. Level three adds organisational links such as the project and the donor. Because the person is tried before the project, searching a name can no longer return everyone who happens to share a project whose name contains those letters. A note above the list appears whenever a wider level was used.'],
+   ['Search: pasted names','A name copied from a document often carries an invisible character or a double space. These are removed before searching, so pasting an exact name now finds it.'],
    ['Search: best matches first','Results are ordered by closeness. A record whose name begins with what you typed appears before one that merely contains it, and both appear before a record that matched only in a remark.']]},
  {icon:'3',title:'Dashboard: the filter bar and the number cards',intro:'The Dashboard answers the question of how the programme is doing at this moment. Every item on it obeys the filter bar.',items:[
    ['Project filter','Narrows the whole page to a single project.'],
@@ -5114,8 +5142,11 @@ const MANUAL_BOOK=[
    ['The total must match','The baseline income total must equal the Annual Income at Registration. This check prevents half completed baselines. Total Land is added up from the crop areas automatically.'],
    ['Income button on each row','Opens that person\'s full income position. It shows the baseline against the current average per year, a table of before, now and change for each source, and each project year listed separately with the change in rupees and in percentage.'],
    ['Lock these fields','Keeps the context fields filled on your own screen while you register many people from one village. It has no effect on any other user.'],
+   ['Income view filter','Choose Baseline to see the income recorded at registration. Choose Year 1 through Year 6 to see that person\'s income for that year, calculated from their production records, with the change against the baseline beneath it. Where a person has no records for the chosen year the column says so rather than showing a zero. This is how you follow one household from baseline through each year.'],
    ['Search','Finds a person by name, code, village or telephone number. All columns are searched, and when you type more than one word every word must match.']]},
  {icon:'9',title:'Production and Output Progress',intro:'What actually happened, for each beneficiary, crop and season.',items:[
+   ['Project Year is required on the form','Every production record must state its project year. Without one the record would sit outside every year filter and every year by year comparison, so the form will not save until a year is chosen.'],
+   ['The Year filter changes the figures','With no year chosen, the Income Change column compares the baseline against the average of every year that has production. Choose Year 1 and it compares the baseline against Year 1 alone, and only Year 1 records are listed. The caption under each figure always names the period it describes, so a year view can never be mistaken for an average. The Income Impact panel above the list follows the same year.'],
    ['Crop or Season filter, required','No records are shown until you choose a Crop or a Season. One person correctly has several production rows, for example paddy in Kharif and millet in Rabi. Filtering shows each person once in the view, so a donor can never mistake them for a duplicate. This affects the display only. Reports always include every record.'],
    ['Income, calculated','Output Quantity multiplied by Rate. You may type your own figure to replace it, which is useful for activities such as a health camp that have no quantity or rate.'],
    ['Net Profit, calculated','Income minus Expenditure. This can also be replaced by your own figure.'],
@@ -5629,7 +5660,7 @@ function downloadSmartTemplate(){
     ['VIEWS MIS — Smart Multi-Sheet Import Template'],[''],
     ['• One workbook, one sheet per section. Fill the sheets you need; delete the rest.'],
     ['• Keep the header row exactly as-is. Fields marked * are required.'],
-    ['• For Thematic Area / Project / Donor / SHG / Indicator — type the NAME; we auto-link to the right ID.'],
+    ['• For Project / Donor / SHG / Beneficiary — type the NAME; we auto-link to the right ID.'],
     ['• Every "… ID" is generated automatically — leave those out.'],
     ['• Upload via Data Entry → Smart Multi-Sheet Import → Upload Workbook.'],
   ]);
@@ -5694,7 +5725,7 @@ function downloadImportTemplate(key){
   helpRows.push(['2. Add as many rows as you need below.']);
   helpRows.push(['3. Columns marked with a red header are REQUIRED.']);
   helpRows.push(['4. Hover any column header to see allowed values and tips.']);
-  helpRows.push(['5. For Thematic Area / Project / Donor / SHG / Indicator — type the NAME, we auto-link.']);
+  helpRows.push(['5. For Project / Donor / SHG / Beneficiary — type the NAME, we auto-link.']);
   helpRows.push(['6. Dates: dd/mm/yyyy or dd-mm-yyyy or yyyy-mm-dd.']);
   helpRows.push(['7. Numbers: ₹, commas, K (1000), L (lakh), Cr (crore) all accepted.']);
   helpRows.push(['8. Save as .xlsx and import — even if a four-year-old fills it.']);
@@ -8082,7 +8113,7 @@ function toggleExportMenu(ev, key){
   let html = '';
   html += `<div class="x-grp">Excel — formatted, donor-ready</div>`;
   html += `<a onclick="exportListView('${key}')">⬇ Current view${esc(flbl)}</a>`;
-  if(has('programme_id')) html += `<a onclick="exportListSplit('${key}','programme_id','Thematic Area')">📊 Split by Thematic Area</a>`;
+  // Thematic Area is retired as a dimension, so it is no longer offered here
   if(has('project_id'))   html += `<a onclick="exportListSplit('${key}','project_id','Project')">📊 Split by Project</a>`;
   if(has('donor_id'))     html += `<a onclick="exportListSplit('${key}','donor_id','Donor')">📊 Split by Donor</a>`;
   html += `<div class="x-sep"></div>`;
