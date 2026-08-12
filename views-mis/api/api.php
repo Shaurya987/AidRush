@@ -1522,6 +1522,8 @@ if ($method==='GET') {
   $cols=table_columns($table);
   $ownIdCol = isset($ID_GEN[$resource]) ? $ID_GEN[$resource][0] : 'id';
   $where=[]; $params=[];
+  // search accumulators: strict (own columns) and broad (own columns + linked names)
+  $sWhere=[]; $sParams=[]; $bWhere=[]; $bParams=[]; $firstTerm=null; $usedTerms=0;
   foreach($_GET as $k=>$v){
     if(in_array($k,['resource','id','q','limit','offset','action'])) continue;
     if(in_array($k,$cols) && $v!==''){ $where[]="`$k`=?"; $params[]=$v; }
@@ -1534,6 +1536,7 @@ if ($method==='GET') {
     $where[]="(project_id IN ($ph) OR project_id IS NULL OR TRIM(project_id)='')";
     foreach($ap as $apv) $params[]=$apv;
   }
+  $baseParams = $params;   // filters and any project restriction, shared by both passes
   if(!empty($_GET['q'])){
     /* ── SMART SEARCH ──────────────────────────────────────────────
        Two bugs made search useless before:
@@ -1570,10 +1573,17 @@ if ($method==='GET') {
             'district'=>['district'],'block'=>['block'],'gp'=>['gram_panchayat'],
             'scheme'=>['scheme_name'],'department'=>['department'],'status'=>['repayment_status','project_status','programme_status','status'],
             'remarks'=>['remarks']];
+    /* PRECISION FIRST.
+       Two clause sets are built for the same query:
+         STRICT  matches only this table's own columns
+         BROAD   also matches the NAME of any linked record
+       The strict set runs first. The broad set is used only when strict finds
+       nothing. Without this, searching a person's name that happens to sit
+       inside a project or donor name returned every record of that project,
+       which looked like a page full of unrelated people. */
     foreach($terms as $term){
       $neg = false;
       if($term!=='' && $term[0]==='-' && strlen($term)>1){ $neg=true; $term=substr($term,1); }
-      // column:value restricts the search to the named column or alias group
       $only = null;
       if(preg_match('/^([A-Za-z_]{2,30}):(.*)$/', $term, $cm)){
         $key=strtolower($cm[1]); $val=$cm[2];
@@ -1582,28 +1592,56 @@ if ($method==='GET') {
         if($cand && $val!==''){ $only=$cand; $term=$val; }
       }
       $term = trim($term, '"');
-      if($term==='') continue;
+      $term = trim($term);
+      if($term===''){ continue; }
       $like='%'.$term.'%';
-      $ors=[]; $vals=[];
       $targetCols = $only ?: $searchCols;
+      $ors=[]; $vals=[];
       foreach($targetCols as $c){ $ors[]="`$c` LIKE ?"; $vals[]=$like; }
+      if(!$ors) continue;
+      $strictClause='('.implode(' OR ',$ors).')';
+      $sWhere[] = $neg ? ('NOT '.$strictClause) : $strictClause;
+      foreach($vals as $v) $sParams[]=$v;
+      // the broad variant adds linked-record names for the same term
+      $bors=$ors; $bvals=$vals;
       if(!$only){
-        // also match the real NAME of any linked record, so searching a person on the
-        // Production page or an SHG on the Loans page works as the user expects
         foreach($FK_NAMES as $fk=>$info){
           if(!in_array($fk,$cols)) continue;
           list($ftbl,$fidc,$fnamec)=$info;
-          $ors[]="`$fk` IN (SELECT `$fidc` FROM `$ftbl` WHERE `$fnamec` LIKE ?)";
-          $vals[]=$like;
+          $bors[]="`$fk` IN (SELECT `$fidc` FROM `$ftbl` WHERE `$fnamec` LIKE ?)";
+          $bvals[]=$like;
         }
       }
-      if(!$ors) continue;
-      $clause='('.implode(' OR ',$ors).')';
-      $where[] = $neg ? ('NOT '.$clause) : $clause;
-      foreach($vals as $v) $params[]=$v;
+      $broadClause='('.implode(' OR ',$bors).')';
+      $bWhere[] = $neg ? ('NOT '.$broadClause) : $broadClause;
+      foreach($bvals as $v) $bParams[]=$v;
+      if(!$neg && $firstTerm===null) $firstTerm=$term;
+      $usedTerms++;
     }
+    /* The user typed something, but nothing usable came out of it (for example a
+       lone quotation mark). Return NO rows rather than the whole table, which is
+       what silently happened before. */
+    if($usedTerms===0){ $sWhere[]='1=0'; $bWhere[]='1=0'; }
   }
-  $w = $where? ' WHERE '.implode(' AND ',$where) : '';
+
+  /* Relevance: rows whose own label column matches are shown first, prefix
+     matches ahead of mid-word matches, so the closest answer is at the top. */
+  $LABEL_COL = ['beneficiaries'=>'beneficiary_farmer_name','shgs'=>'shg_name','shg_members'=>'member_name',
+    'projects'=>'project_name','donors'=>'donor_name','programmes'=>'programme_name','indicators'=>'indicator_name',
+    'geographies'=>'village_or_ward','villages'=>'village','crops'=>'crop','activities'=>'project_activity',
+    'gramsabha'=>'vdc_name','convergence'=>'scheme_name','users'=>'user_name'];
+  $orderBy = ' ORDER BY id DESC';
+  $orderParams = [];
+  if($firstTerm!==null && isset($LABEL_COL[$resource]) && in_array($LABEL_COL[$resource],$cols)){
+    $lc=$LABEL_COL[$resource];
+    $orderBy = " ORDER BY (CASE WHEN `$lc` LIKE ? THEN 0 WHEN `$lc` LIKE ? THEN 1 ELSE 2 END), id DESC";
+    $orderParams = [$firstTerm.'%', '%'.$firstTerm.'%'];
+  }
+
+  $mkWhere = function($extra) use($where){
+    $all = array_merge($where, $extra);
+    return $all ? (' WHERE '.implode(' AND ',$all)) : '';
+  };
   if ($id) {
     $st=db()->prepare("SELECT * FROM `$table` WHERE id=?"); $st->execute([$id]);
     $row = $st->fetch();
@@ -1611,9 +1649,16 @@ if ($method==='GET') {
     out(['row'=>$row]);
   }
   $limit=min((int)($_GET['limit']??5000),10000); $offset=(int)($_GET['offset']??0);
+  // Pass one: precise. Pass two: broadened to linked names, only if precise found nothing.
+  $w = $mkWhere($sWhere); $params = array_merge($baseParams, $sParams); $broadened=false;
   $cnt=db()->prepare("SELECT COUNT(*) c FROM `$table`$w"); $cnt->execute($params); $total=(int)$cnt->fetch()['c'];
-  $st=db()->prepare("SELECT * FROM `$table`$w ORDER BY id DESC LIMIT $limit OFFSET $offset");
-  $st->execute($params);
+  if($total===0 && $sWhere && $bWhere && $bParams!==$sParams){
+    $w2=$mkWhere($bWhere); $p2=array_merge($baseParams,$bParams);
+    $c2=db()->prepare("SELECT COUNT(*) c FROM `$table`$w2"); $c2->execute($p2); $t2=(int)$c2->fetch()['c'];
+    if($t2>0){ $w=$w2; $params=$p2; $total=$t2; $broadened=true; }
+  }
+  $st=db()->prepare("SELECT * FROM `$table`$w".$orderBy." LIMIT $limit OFFSET $offset");
+  $st->execute(array_merge($params, $orderParams));
   $rows=$st->fetchAll();
   $ownId = isset($ID_GEN[$resource]) ? $ID_GEN[$resource][0] : null;
   $rows=enrich_names($rows, $ownId);
@@ -1696,7 +1741,7 @@ if ($method==='GET') {
     try{ foreach(db()->query("SELECT shg_id, COUNT(*) c FROM shg_members GROUP BY shg_id")->fetchAll() as $r2){ $mc[$r2['shg_id']]=(int)$r2['c']; } }catch(Exception $e){}
     foreach($rows as &$r){ $r['_members']=$mc[$r['shg_id']]??0; } unset($r);
   }
-  out(['rows'=>$rows,'total'=>$total,'limit'=>$limit,'offset'=>$offset]);
+  out(['rows'=>$rows,'total'=>$total,'limit'=>$limit,'offset'=>$offset,'broadened'=>!empty($broadened),'q'=>(string)($_GET['q']??'')]);
  } catch (Throwable $e) {
   // Never let a query error surface to the browser as a bare 500 / "failed to fetch".
   out(['error'=>'Could not load '.$resource.' right now. '.safe_err($e,'')], 500);
@@ -1920,6 +1965,63 @@ if ($method==='DELETE') {
       if($n->rowCount()) audit('update','geographies',$before['project_id'],"Unlinked ".$n->rowCount()." geographies (places kept) because project ".$before['project_id']." was deleted");
     }}catch(Exception $e){}
   }
+  /* ── DERIVED DATA MUST NOT OUTLIVE ITS SOURCE ──
+     Every figure the system reports (income change, the eleven indicators,
+     dashboard totals, report sheets) is CALCULATED from these tables at the
+     moment it is shown. Nothing is pre-stored. So the only way stale or false
+     data can survive a deletion is if a CHILD record is left behind pointing at
+     a parent that no longer exists. Those orphans would still be counted.
+     The cascades below remove them, and each one is written to the Audit Trail
+     so the whole chain of a deletion can be traced afterwards. */
+
+  // A beneficiary's production and output records go with them. Left behind, their
+  // income would keep inflating the dashboard, the indicators and every report for a
+  // person who is no longer registered.
+  if($resource==='beneficiaries' && !empty($before['beneficiary_id'])){
+    try{
+      $n=db()->prepare("DELETE FROM crops WHERE beneficiary_id=?"); $n->execute([$before['beneficiary_id']]);
+      if($n->rowCount()) audit('delete','crops',$before['beneficiary_id'],
+        "Removed ".$n->rowCount()." production and output record(s) because beneficiary ".$before['beneficiary_id']." was deleted. Their income no longer counts anywhere.");
+    }catch(Exception $e){}
+  }
+
+  // A group's members and its loans go with the group. Orphan members would keep
+  // counting toward the SHG finance indicator, and orphan loans toward loan totals.
+  if($resource==='shgs' && !empty($before['shg_id'])){
+    foreach([['shg_members','member(s)'],['loans','loan record(s)']] as $pair){
+      list($tbl,$what)=$pair;
+      try{
+        $n=db()->prepare("DELETE FROM `$tbl` WHERE shg_id=?"); $n->execute([$before['shg_id']]);
+        if($n->rowCount()) audit('delete',$tbl==='loans'?'loans':'shg_members',$before['shg_id'],
+          "Removed ".$n->rowCount()." ".$what." because SHG ".$before['shg_id']." was deleted.");
+      }catch(Exception $e){}
+    }
+  }
+
+  // Legacy indicator progress rows follow their indicator.
+  if($resource==='indicators' && !empty($before['indicator_id'])){
+    try{
+      $n=db()->prepare("DELETE FROM indicator_progress WHERE indicator_id=?"); $n->execute([$before['indicator_id']]);
+      if($n->rowCount()) audit('delete','progress',$before['indicator_id'],
+        "Removed ".$n->rowCount()." progress record(s) because indicator ".$before['indicator_id']." was deleted.");
+    }catch(Exception $e){}
+  }
+
+  // A deleted place must not leave records pointing at it. The records themselves are
+  // KEPT, because they still hold their own district, block and village text; only the
+  // broken link is cleared, so nothing is lost and nothing points at a missing place.
+  if($resource==='geographies' && !empty($before['geography_id'])){
+    foreach(['beneficiaries','crops','shgs','villages','gram_sabha','convergence'] as $tbl){
+      try{
+        if(!in_array('geography_id', table_columns($tbl))) continue;
+        $n=db()->prepare("UPDATE `$tbl` SET geography_id=NULL WHERE geography_id=?");
+        $n->execute([$before['geography_id']]);
+        if($n->rowCount()) audit('update',$tbl,$before['geography_id'],
+          "Unlinked ".$n->rowCount()." ".$tbl." record(s) from place ".$before['geography_id']." because that place was deleted. The records were kept.");
+      }catch(Exception $e){}
+    }
+  }
+
   // Forensic audit message — the deleted record's business ID (its full data is stored alongside)
   $bizRef=null;
   if(isset($ID_GEN[$resource]) && is_array($before)){ $bc=$ID_GEN[$resource][0]; if(!empty($before[$bc])) $bizRef=$before[$bc]; }

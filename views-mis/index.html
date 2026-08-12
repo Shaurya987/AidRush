@@ -380,6 +380,7 @@ a{color:inherit;text-decoration:none}
 .srch-x:hover{background:var(--bad-soft);color:var(--bad)}
 .srch-help{right:7px}
 .srch-help:hover{background:var(--gold);color:var(--navy-900)}
+.srch-note{font-size:12.5px;color:var(--gold-ink);background:var(--gold-soft);border:1px solid #f0dfb4;border-left:3px solid var(--gold);border-radius:9px;padding:9px 13px;margin-bottom:14px;line-height:1.6}
 .table-wrap{overflow-x:auto;max-height:620px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 thead{position:sticky;top:0;background:var(--navy-800);z-index:1}
@@ -1869,6 +1870,22 @@ let CURRENT_ROWS=[];
 const SECTION_ACCENT={beneficiaries:'--ok',crops:'--ok',activities:'--warn',shgs:'--pink',loans:'--pink',indicators:'--accent',progress:'--accent',programmes:'--brand',objectives:'--brand',projects:'--accent',project_objectives:'--accent',donors:'--violet',mappings:'--violet',geographies:'--teal',villages:'--teal',users:'--brand',gramsabha:'--accent',convergence:'--violet'};
 function emptyStateHTML(key){
   const cfg=RES[key]||{}; const canW=can(key==='users'?'users':'write'); const label=(cfg.label||'records');
+  // If a search is active, say plainly that nothing matched. Showing the usual
+  // "none yet, add one" message here wrongly suggests the section is empty.
+  const q=((($('res-search')||{}).value)||'').trim();
+  if(q){
+    const fl=(cfg.filters||[]).map(f=>fName(f)).filter(fn=>{const e=$('flt-'+fn);return e&&e.value;}).length;
+    return `<div class="empty-state">
+      <div class="empty-ico" style="color:var(--t4)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+      <div class="empty-title">No results found</div>
+      <div class="empty-sub" style="max-width:520px;margin:8px auto 0;line-height:1.7">Nothing in <b>${esc(label)}</b> matches <b>“${esc(q)}”</b>.${fl?' A filter is also active, which narrows the search further.':''}<br>Please check the spelling, try a shorter word, or search by village or identity code instead.</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:15px">
+        <button class="btn btn-primary btn-sm" onclick="clearSearch('${key}')">✕ Clear the search</button>
+        ${fl?`<button class="btn btn-ghost btn-sm" onclick="clearFilters('${key}')">Clear the filters too</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="showSearchHelp()">Search tips</button>
+      </div>
+    </div>`;
+  }
   return `<div class="empty-state">
     <div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
     <div class="empty-title">No ${esc(String(label).toLowerCase())} yet</div>
@@ -1928,6 +1945,7 @@ async function renderResource(key){
     ${linkBanner}
     ${filterBar}
     ${cfg.filters?`<div id="res-chips" class="fchips"></div>`:''}
+    <div id="res-broadened"></div>
     ${key==='geographies' ? `<div id="geo-summary" class="geo-summary"><div class="geo-stat"><div class="geo-stat-val">…</div><div class="geo-stat-lbl">Loading coverage…</div></div></div>` : ''}
     ${(key==='crops'||key==='beneficiaries') ? `<div id="income-banner" style="display:none;margin-bottom:16px"></div>` : ''}
     ${cfg.view==='cards' ? `
@@ -2187,6 +2205,11 @@ async function reloadResource(key){
     const cnt=$('res-count'); if(cnt)cnt.textContent=PAGE.total+' records';
     if(key==='beneficiaries'){const nb=$('nav-ben-count'); if(nb)nb.textContent=PAGE.total;}
     renderResChips(key); syncSearchUI();
+    // Honest note when the precise search found nothing and the system had to look
+    // at linked record names instead, so a wider result set is never a surprise.
+    { const nb=$('res-broadened');
+      if(nb) nb.innerHTML = (d.broadened && CURRENT_ROWS.length)
+        ? `<div class="srch-note">No exact match for <b>${esc(String(d.q||''))}</b> in this section, so these rows are matched through a linked project, donor, person or group instead.</div>` : ''; }
     const canW=can(key==='users'?'users':'write'), canD=can(key==='users'?'users':'delete');
     if(cfg.view==='cards'){
       const wrap=$('res-cards');
@@ -4152,14 +4175,58 @@ async function delRow(key,id){
       if(don||geos) msg+=`<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;padding:10px 13px;margin-top:12px">
         ${don?`This project is funded by <b>${esc(lblOf(LOOKUPS.donors,don))}</b> — that mapping will be removed.`:''}
         ${geos?`<br>${geos} assigned geograph${geos>1?'ies':'y'} will be unlinked (the places themselves are kept).`:''}</div>`;
+    } else if(key==='beneficiaries'){
+      // Their production records go too, so every figure derived from them disappears
+      const d=await apiGet('?resource=beneficiaries&id='+id); const bid=(d.row||{}).beneficiary_id||'';
+      let prod=[]; try{ const pr=await apiGet('?resource=crops&beneficiary_id='+encodeURIComponent(bid)+'&limit=2000'); prod=pr.rows||[]; }catch(e){}
+      const inc=prod.reduce((a,c)=>a+(+(c.net_profit_inr!=null&&String(c.net_profit_inr)!==''?c.net_profit_inr:c.income_inr)||0),0);
+      msg+=`<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;padding:10px 13px;margin-top:12px">
+        ${prod.length?`This person has <b>${prod.length} production and output record${prod.length>1?'s':''}</b> worth <b>${fmtINR(inc)}</b> of net income. Those records will be <b>deleted as well</b>, so their income, their income change, the dashboard totals, the indicators and every report will stop counting them.`
+                     :`This person has no production records. Their registration and baseline will be removed.`}</div>`;
+    } else if(key==='shgs'){
+      const d=await apiGet('?resource=shgs&id='+id); const sid=(d.row||{}).shg_id||'';
+      let mem=[],ln=[];
+      try{ const m=await apiGet('?resource=shg_members&shg_id='+encodeURIComponent(sid)+'&limit=2000'); mem=m.rows||[]; }catch(e){}
+      try{ const l=await apiGet('?resource=loans&shg_id='+encodeURIComponent(sid)+'&limit=2000'); ln=l.rows||[]; }catch(e){}
+      if(mem.length||ln.length) msg+=`<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;padding:10px 13px;margin-top:12px">
+        This group has ${mem.length?`<b>${mem.length} member${mem.length>1?'s':''}</b>`:''}${mem.length&&ln.length?' and ':''}${ln.length?`<b>${ln.length} loan record${ln.length>1?'s':''}</b>`:''}. They will be <b>deleted as well</b>, so they stop counting toward the savings, loan and SHG finance figures.</div>`;
+    } else if(key==='crops'){
+      msg+=`<div style="background:var(--brand-soft);border:1px solid var(--border);border-radius:9px;padding:10px 13px;margin-top:12px">
+        Every figure calculated from this record will update immediately: the beneficiary's income change, the Income Impact panel, the dashboard totals, the logged indicators and all reports. Nothing derived from it is left behind.</div>`;
+    } else if(key==='geographies'){
+      const d=await apiGet('?resource=geographies&id='+id); const gid=(d.row||{}).geography_id||'';
+      let uses=0;
+      for(const rk of ['beneficiaries','crops','shgs','villages']){
+        try{ const u=await apiGet('?resource='+rk+'&geography_id='+encodeURIComponent(gid)+'&limit=1'); uses+=(+u.total||0); }catch(e){}
+      }
+      if(uses) msg+=`<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;padding:10px 13px;margin-top:12px">
+        <b>${uses} record${uses>1?'s':''}</b> currently point to this place. Those records are <b>kept</b>, because they hold their own district, block and village text. Only the broken link is cleared.</div>`;
     }
   }catch(e){}
   if(!(await appConfirm('⚠ Permanent delete', msg))) return;
   try{
-    await apiDel('?resource='+key+'&id='+id); toast('Deleted permanently','t-warn'); reloadResource(key);
-    if(key==='donors'||key==='projects'||key==='mappings'){ LOOKUPS._loaded=false; ensureLookups(); }   // the chain changed — refresh every picker
+    await apiDel('?resource='+key+'&id='+id); toast('Deleted permanently','t-warn');
+    await afterDeleteRefresh(key);
   }
   catch(e){ toast('⚠ '+e.message,'t-err'); }
+}
+
+/* Every reported figure is calculated at the moment it is displayed, so once a
+   record is gone the numbers are already correct on the server. This clears the
+   caches the browser is holding and redraws whatever is on screen, so the user
+   never has to refresh the page to see the truth. */
+async function afterDeleteRefresh(key){
+  // caches that could still describe the deleted record
+  LOOKUPS._benLoaded=false;
+  if(MASTER_LK.includes(key)){ LOOKUPS._loaded=false; await ensureLookups(); }
+  reloadResource(key);
+  // panels that show figures derived from the data
+  if(key==='crops'||key==='beneficiaries'){
+    if(CP==='crops'||CP==='beneficiaries') renderIncomeBanner(CP);
+  }
+  if(CP==='dash') loadDash();
+  if(CP==='indicators10') loadIndicators10();
+  if(CP==='dataentry' && typeof loadEntryCounts==='function') loadEntryCounts();
 }
 
 /* ════════ DASHBOARD ════════ */
@@ -4971,7 +5038,10 @@ const MANUAL_BOOK=[
    ['Search: exact phrase','Put quotation marks around words to match them as one phrase. For example "ramesh kumar" will not match a Ramesh whose second name is different.'],
    ['Search: excluding a word','Put a minus sign in front of a word to leave those records out. For example paddy -rabi finds paddy records that are not from the Rabi season.'],
    ['Search: searching one field only','Type the field name, a colon, then the value. For example village:badagada. The field names available are name, id, phone, village, place, district, block, gp, crop, season, gender, caste, scheme, department, status and remarks. Any exact column name also works.'],
-   ['Search: clearing and help','The small cross inside the box clears the search, and pressing Escape does the same. The question mark button opens these tips on screen.']]},
+   ['Search: clearing and help','The small cross inside the box clears the search, and pressing Escape does the same. The question mark button opens these tips on screen.'],
+   ['Search: when nothing matches','The system states <b>No results found</b>, repeats what you searched for, and offers a button to clear the search. It does not fall back to showing a long list of unrelated records, and it does not suggest the section is empty when it is not.'],
+   ['Search: precise first, then wider','The search first looks only at the columns of the list you are on. Only if that finds nothing does it widen to the names of linked records, such as the project or the donor. This is why searching a person no longer floods the page with everyone who happens to share a project whose name contains those letters. When the wider search is used, a note above the list says so.'],
+   ['Search: best matches first','Results are ordered by closeness. A record whose name begins with what you typed appears before one that merely contains it, and both appear before a record that matched only in a remark.']]},
  {icon:'3',title:'Dashboard: the filter bar and the number cards',intro:'The Dashboard answers the question of how the programme is doing at this moment. Every item on it obeys the filter bar.',items:[
    ['Project filter','Narrows the whole page to a single project.'],
    ['Donor filter','Narrows the page to one funder. The Project list then shows only the projects that donor funds.'],
@@ -5153,7 +5223,17 @@ const MANUAL_BOOK=[
    ['No geographies assigned to this project yet','The project has no places attached, so district and village lists will be empty. Please assign them under Projects, then Geographies.'],
    ['A negative variance, or a fall in income','Not an error. Under achievement and reduced income are real results. The system reports them honestly rather than hiding them.'],
    ['Excel engine still loading','The spreadsheet component has not finished loading. Please wait a moment and select the download again.']]},
- {icon:'17',title:'Practices that keep the data trustworthy',intro:'Small habits with a large effect on the quality of your reporting.',items:[
+ {icon:'17',title:'Deleting a record, and what goes with it',intro:'Deleting is permanent. Before it happens the system shows you exactly what else will be affected, so there are no surprises afterwards.',items:[
+   ['Nothing is stored twice','Every reported figure, such as an income change, an indicator value, a dashboard total or a report sheet, is calculated at the moment it is shown. No calculated figure is saved anywhere. This is why removing a record removes its effect everywhere at once, with nothing left over.'],
+   ['Deleting a production record','The record goes, and with it every figure that came from it. The beneficiary income change, the Income Impact panel, the dashboard totals, the logged indicators and all report sheets update straight away, on the same screen, without needing a refresh.'],
+   ['Deleting a beneficiary','Their production and output records are deleted as well. The confirmation tells you how many records and how much net income will go. If they were left behind, that income would keep counting toward the dashboard, the indicators and every report for a person who is no longer registered.'],
+   ['Deleting a Self Help Group','Its members and its loan records are deleted with it, so they stop counting toward savings, loan totals and the SHG finance indicator. The confirmation states how many of each.'],
+   ['Deleting a donor','Every project it funded is unmapped. The project data itself is kept, but it will not appear in donor reports until it is mapped to a donor again.'],
+   ['Deleting a project','Its donor mapping is removed and its assigned places are unlinked. The places themselves are kept.'],
+   ['Deleting a place from Geography','Records that pointed at it are <b>kept</b>, because they carry their own district, block and village text. Only the broken link is cleared. The confirmation tells you how many records are affected.'],
+   ['Every step is recorded','Each deletion and each follow on removal is written to the Audit Trail as its own entry, with the full contents of what was removed. The chain of a deletion can always be traced afterwards.'],
+   ['If you are unsure','Close the confirmation. Nothing is deleted until you choose to continue.']]},
+ {icon:'18',title:'Practices that keep the data trustworthy',intro:'Small habits with a large effect on the quality of your reporting.',items:[
    ['Complete the baseline properly','Two extra minutes for each beneficiary is what makes every later impact figure possible. Without a baseline there is no before position to compare against.'],
    ['Never leave a project unmapped','A project with no donor cannot be used for data entry and can never appear in a donor report. The banner on the Projects page counts them for you.'],
    ['Watch the Data Completion Status panel','It shows where the gaps are, so they can be corrected before anyone outside the organisation notices them.'],
