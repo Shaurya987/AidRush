@@ -54,7 +54,7 @@ function safe_err($e, $fallback='Something went wrong — please try again.'){
   $m = $e instanceof Exception ? $e->getMessage() : (string)$e;
   error_log('[VIEWS-MIS] '.$m);
   if(stripos($m,"doesn't exist")!==false || stripos($m,'Unknown column')!==false)
-    return 'A required table or column is missing — run the /sql upgrade files once in phpMyAdmin.';
+    return 'This section needs a technical update before it can be used. No data has been lost. Please contact developer.';
   if(stripos($m,'Duplicate entry')!==false) return 'Duplicate value — a record with this key already exists.';
   if(stripos($m,'cannot be null')!==false || stripos($m,'Incorrect')!==false) return 'A value was missing or in the wrong format.';
   return $fallback;
@@ -416,7 +416,7 @@ if ($action==='login') {
        WHERE id=?");
     $up->execute([$token,$tabId,$expAt, client_ip(), $u['id']]);
   }catch(Exception $e){
-    out(['error'=>'Login failed — please run sql/upgrade2.sql','detail'=>safe_err($e,'Server error during login.')],500);
+    out(['error'=>'Sign in needs a technical update before it can work. Please contact developer.','detail'=>safe_err($e,'Server error during login.')],500);
   }
 
   $_SESSION['user'] = [
@@ -1379,8 +1379,53 @@ if ($action==='report') {
     }
   }catch(Exception $e){}
 
+  /* ── LOCAL GOVERNANCE for the report workbook ──
+     Gram Sabha participation and Convergence (government schemes leveraged),
+     both filter aware, with the row detail and a summary. */
+  $gsRows=[]; $gsSum=['meetings'=>0,'total'=>0,'male'=>0,'female'=>0,'vdp_yes'=>0];
+  try{
+    [$wG,$pG]=$applyFilter('gram_sabha');
+    $st=$pdo->prepare("SELECT district,block,gram_panchayat,village,vdc_name,meeting_date,
+        COALESCE(total_participants,0) total_participants, COALESCE(male_participants,0) male_participants,
+        COALESCE(female_participants,0) female_participants, vdp_submitted, remarks
+      FROM `gram_sabha`$wG ORDER BY district, block, village");
+    $st->execute($pG); $gsRows=$st->fetchAll();
+    foreach($gsRows as $g){
+      $gsSum['meetings']++;
+      $gsSum['total']+=(int)$g['total_participants'];
+      $gsSum['male']+=(int)$g['male_participants'];
+      $gsSum['female']+=(int)$g['female_participants'];
+      if(strcasecmp((string)$g['vdp_submitted'],'Yes')===0) $gsSum['vdp_yes']++;
+    }
+  }catch(Exception $e){}
+
+  $cvRows=[]; $cvSum=['records'=>0,'hh'=>0,'amount'=>0.0]; $cvByDept=[];
+  try{
+    [$wV,$pV]=$applyFilter('convergence');
+    $st=$pdo->prepare("SELECT district,block,gram_panchayat,village,department,scheme_name,work_type,
+        COALESCE(hh_benefited,0) hh_benefited, COALESCE(amount_mobilised,0) amount_mobilised, remarks
+      FROM `convergence`$wV ORDER BY department, scheme_name");
+    $st->execute($pV); $cvRows=$st->fetchAll();
+    foreach($cvRows as $c){
+      $cvSum['records']++;
+      $cvSum['hh']+=(int)$c['hh_benefited'];
+      $cvSum['amount']+=(float)$c['amount_mobilised'];
+      $d=trim((string)$c['department']) ?: 'Not stated';
+      if(!isset($cvByDept[$d])) $cvByDept[$d]=['department'=>$d,'schemes'=>[],'hh'=>0,'amount'=>0.0,'records'=>0];
+      $cvByDept[$d]['records']++;
+      $cvByDept[$d]['hh']+=(int)$c['hh_benefited'];
+      $cvByDept[$d]['amount']+=(float)$c['amount_mobilised'];
+      $sn=trim((string)$c['scheme_name']); if($sn && !in_array($sn,$cvByDept[$d]['schemes'])) $cvByDept[$d]['schemes'][]=$sn;
+    }
+    foreach($cvByDept as $k=>$v){ $cvByDept[$k]['scheme_count']=count($v['schemes']); $cvByDept[$k]['schemes']=implode(', ',$v['schemes']); }
+    $cvByDept=array_values($cvByDept);
+    usort($cvByDept, function($a,$b){ return $b['amount'] <=> $a['amount']; });
+  }catch(Exception $e){}
+
   out([
     'period'=>$period,
+    'gram_sabha'=>$gsRows,'gram_sabha_summary'=>$gsSum,
+    'convergence'=>$cvRows,'convergence_summary'=>$cvSum,'convergence_by_dept'=>$cvByDept,
     'filters'=>['donor_id'=>$donor,'programme_id'=>$prog,'project_id'=>$proj,'from'=>$from,'to'=>$to],
     'generated_at'=>ist_now().' IST',
     'organic'=>$organic,

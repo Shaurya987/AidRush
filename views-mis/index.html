@@ -5009,7 +5009,15 @@ const MANUAL_BOOK=[
    ['Report type','Choose the view you need. Donor wise, Project wise, District wise, Block wise, Village wise or SHG wise.'],
    ['Duration','This Month, This Quarter, This Financial Year, or your own From and To dates. Beneficiary figures are selected by their registration date, which is why that date matters.'],
    ['Statistics strip','Districts, Blocks, Villages, Beneficiaries and SHGs for your current selection. Please check these figures before downloading.'],
-   ['Download','Produces the full workbook. It contains summary figures, activities for every year, loans, outputs by intervention, Income Impact with net figures for each source including the change in rupees and in percentage, Organic Farming before and now, the geographies covered, and the logged indicators.']]},
+   ['Download','Produces the full workbook, formatted so it can be sent to a donor without any further work.'],
+   ['Every workbook opens with a Cover sheet','It states the report title, the filters that were applied, a numbered list of every sheet with its record count, the time it was generated, a note that all amounts are in rupees and that income is net, and the build credit.'],
+   ['How each sheet is laid out','A navy title band, the description beneath it, the filters that produced it, then the table. The header row is ruled in gold, panes are frozen so headings stay visible while scrolling, a filter is switched on for every column, and a bold TOTAL row is added wherever totals are meaningful.'],
+   ['Reading the numbers','Rupee columns are formatted as currency, quantities carry thousands separators, and dates use day, month, year. Percentage columns are colour graded: green at eighty percent and above, amber between forty and eighty, red below forty.'],
+   ['Printing','Each sheet is set to narrow margins and fits the page width, and the header row repeats at the top of every printed page, so a long table stays readable on paper.'],
+   ['Sheets you will find','Summary figures. Activities for every year with quarterly detail. Indicator sheets. Loans by financial year. Outputs by intervention. Income Impact with net figures for each source including the change in rupees and in percentage. Organic Farming before and now. Geographies covered. Gram Sabha summary and every meeting. Convergence by department and every record. A glossary.'],
+   ['Logged Indicators sheet','All eleven indicators with the computed value, the before and now figures, how many records each is based on, the figures behind it in words, and the exact formula. Where the source data has not been entered the value is left blank and the status column reads Waiting for data, so a reader can never mistake an empty figure for a zero.'],
+   ['Local Governance sheets','Gram Sabha Summary gives meetings, participants, the share of women and the rate at which the Village Development Plan was submitted. Gram Sabha Records lists every meeting with its own share of women. Convergence by Department totals households and money for each department with its share of the whole, and Convergence Records lists every scheme entry.'],
+   ['What is no longer in any workbook','The old free form Indicators and Indicator Progress tables, and the Thematic Area tables, have been removed from every report, every export and every import template. Their rows remain in the database and in the Audit Trail.']]},
  {icon:'6',title:'Data Entry: Head Office Setup tab',intro:'This is where the plan and the targets are prepared. It requires the Targets permission.',items:[
    ['Project','Select the project first. The Donor is then filled in automatically.'],
    ['Project Geography rows','Add each district with its planned targets, which are Total Blocks, Total Villages and Total Beneficiaries. The district list offers only places that are actually assigned to that project.'],
@@ -5105,12 +5113,12 @@ const MANUAL_BOOK=[
    ['Session expired, please sign in again','You were signed out because the system was idle for a long time, or because the same account signed in somewhere else. Please sign in again. Anything you had typed but not saved will need to be entered again.'],
    ['Could not reach the server','Your device could not contact the server. This is almost always the internet connection. Please check your connection and try the action again. The system retries a read automatically before showing this.'],
    ['The server took too long to respond','The request was abandoned after thirty seconds. Please try again. If it repeats, the internet connection is likely very slow or the server is busy.'],
-   ['Bad server response','The server replied with something the application could not read. Please try again. If it repeats, inform your administrator, because the server may need attention.'],
-   ['Save failed','The record could not be written to the database. Nothing was saved, so no partial record exists. Please try again, and if it repeats inform your administrator.'],
-   ['Could not load a list','One of the reference lists, such as projects or donors, did not load. The system will retry on your next action. If dropdowns look empty, please refresh the page.'],
+   ['Bad server response','The reply could not be read. Please try the action again. If it repeats, please <b>contact developer</b>.'],
+   ['Save failed','The record could not be saved. Nothing was written, so no half finished record exists. Please try again. If it repeats, please <b>contact developer</b>.'],
+   ['Could not load a list','One of the reference lists, such as projects or donors, did not load. The system retries on your next action. If the dropdowns stay empty after refreshing the page, please <b>contact developer</b>.'],
    ['Some lists failed to load, retrying on your next click','A temporary connection problem. The dropdown lists will fill themselves shortly. Please avoid saving a record until they do, so the correct links are recorded.'],
-   ['A required table or column is missing','The database has not been upgraded to match this version of the application. Your administrator needs to run the upgrade files in the sql folder once, using phpMyAdmin. No data is lost by running them.'],
-   ['Login failed, please run the upgrade file','The same cause as above, seen at the sign in screen. The administrator needs to run the database upgrade once.'],
+   ['A required table or column is missing','The system needs a technical update before this section can be used. No data has been lost. Please <b>contact developer</b>.'],
+   ['Login failed, a technical update is needed','The same cause as above, seen at the sign in screen. Please <b>contact developer</b>.'],
    ['You do not have permission to view this section','Your account has not been granted access to that section. Please ask your administrator to tick the View box for it in Users and Access.'],
    ['You do not have permission to add, edit or delete records','Your account can see the section but not change it. Ask your administrator for the Edit or Delete box on that row.'],
    ['You are assigned to specific projects, records for other projects are not allowed','Your account is limited to certain projects. The record you tried to save belongs to a different project. Please choose one of your own projects, or ask your administrator to widen your project access.'],
@@ -5135,9 +5143,9 @@ const MANUAL_BOOK=[
    ['Duplicate value, a record with this key already exists','The database refused a second record with the same identity code. This protects your reports from double counting. If you are correcting an old duplicate, remove the wrong record first.'],
    ['Possible duplicate, save anyway','A warning and not a block. A very similar record already exists. Please check it before continuing. Choose to continue only if this is genuinely a separate record.'],
    ['Duplicate donor identity code','Two donors share one code, so their figures would mix. Keep one, move the details across, delete the other, and create it again so a fresh code is generated.'],
-   ['A value was missing or in the wrong format','The database rejected a value, usually a number field that received text. Please check the highlighted field.'],
+   ['A value was missing or in the wrong format','A value was rejected, usually a number field that received text. Please check the field you last edited. If everything looks correct, please <b>contact developer</b>.'],
    ['The file has no data rows','The uploaded spreadsheet has headings but no records beneath them. Please check that you selected the correct sheet.'],
-   ['Bulk import failed, or some rows were skipped','Rows that could not be accepted are listed in a downloadable Excel file with the reason against each one. Correct those rows, delete the reason column, and import the file again. Accepted rows are already saved.'],
+   ['Bulk import failed, or some rows were skipped','Rows that could not be accepted are listed in a downloadable Excel file with the reason against each one. Correct those rows, delete the reason column, and import the file again. Accepted rows are already saved. If the whole import fails repeatedly, please <b>contact developer</b>.'],
    ['You have unsaved changes on this form','You tried to leave a form with typing that was not saved. Choose to stay and save, or to leave and lose those changes.'],
    ['Pick a Crop or a Season to display the records','Not an error. Production records are only shown once a crop or a season is chosen, so that one person is never mistaken for a duplicate. Please choose one.'],
    ['Waiting for data on an indicator card','Not an error. The indicator has no source data yet. The card names the field that needs to be filled. The system shows this instead of inventing a number.'],
@@ -5159,13 +5167,16 @@ function renderManualPage(){
     <div id="man-body">${MANUAL_BOOK.map((s,i)=>`
       <div class="card man-sec" id="man-sec-${i}">
         <div class="man-head"><span class="man-num">${s.icon}</span><div><div class="man-title">${esc(s.title)}</div><div class="man-intro">${esc(s.intro)}</div></div></div>
-        <table class="man-tbl"><tbody>${s.items.map(([b,d])=>`<tr class="man-row"><td class="man-btn">${esc(b)}</td><td class="man-desc">${esc(d)}</td></tr>`).join('')}</tbody></table>
+        <table class="man-tbl"><tbody>${s.items.map(([b,d])=>`<tr class="man-row"><td class="man-btn">${esc(b)}</td><td class="man-desc">${manFmt(d)}</td></tr>`).join('')}</tbody></table>
       </div>`).join('')}</div>
     <div class="man-credit">
       <img src="planexhivers.png" alt="PlanEx Hivers Consulting Private Limited">
       <div class="man-credit-txt"><b>This platform was built by PlanEx Hivers Consulting Private Limited.</b><b>All rights reserved 2026.</b></div>
     </div>`;
 }
+/* The manual keeps plain text, with one exception: <b> is allowed so the phrase
+   contact developer can stand out. Everything else is escaped. */
+function manFmt(t){ return esc(String(t||'')).replace(/&lt;b&gt;/g,'<b>').replace(/&lt;\/b&gt;/g,'</b>'); }
 function manualFilter(){
   const q=String((($('man-q')||{}).value)||'').trim().toLowerCase();
   document.querySelectorAll('.man-sec').forEach(sec=>{
@@ -5513,7 +5524,7 @@ function readWorkbook(file){
 /* One workbook with a sheet per section — the template for the Smart Multi-Sheet Import. */
 function downloadSmartTemplate(){
   if(typeof XLSX==='undefined'){toast('Excel engine still loading…','t-warn');return;}
-  const order=['programmes','objectives','projects','project_objectives','donors','mappings','geographies','villages','beneficiaries','crops','activities','shgs','shg_members','loans','indicators','progress'];
+  const order=['projects','project_objectives','donors','mappings','geographies','villages','beneficiaries','crops','activities','shgs','shg_members','loans','gramsabha','convergence'];
   const wb=XLSX.utils.book_new(); const used={};
   for(const key of order){
     const cfg=RES[key]; if(!cfg) continue; const idCol=AUTO_ID[key];
@@ -6641,7 +6652,8 @@ async function exportReportsView(){
   const fLabel = fv ? ((cfg.list.find(o=>String(o.id)===String(fv))||{}).label||fv) : 'All';
   toast('Building your '+cfg.label+'-wise report…');
   let d={},r={};
-  try{ [d,r]=await Promise.all([ apiGet('?action=dashboard'+q), apiGet('?action=report'+q+dq) ]); }
+  let li={};
+  try{ [d,r,li]=await Promise.all([ apiGet('?action=dashboard'+q), apiGet('?action=report'+q+dq), apiGet('?action=logged_indicators'+q).catch(()=>({})) ]); }
   catch(e){ toast('⚠ '+e.message,'t-err'); return; }
   const k=d.kpi||{}, overall=k.tgt?Math.round(100*k.ach/k.tgt):0;
   const N=v=>Number(v)||0;
@@ -6689,10 +6701,81 @@ async function exportReportsView(){
       'Cumulative':N(a.cum_ach),'Achievement %': N(a.total_target)?Math.round(100*N(a.cum_ach)/N(a.total_target)):0 })),
     cols:[{key:'Activity',label:'Activity',type:'text'},{key:'Unit',label:'Unit',type:'text'},{key:'Total Target',label:'Total Target',type:'num'},{key:'Y1 Q1',label:'Y1 Q1',type:'num'},{key:'Y1 Q2',label:'Y1 Q2',type:'num'},{key:'Y1 Q3',label:'Y1 Q3',type:'num'},{key:'Y1 Q4',label:'Y1 Q4',type:'num'},{key:'Y1 Ach',label:'Y1 Ach',type:'num'},{key:'Y2 Target',label:'Y2 Target',type:'num'},{key:'Y2 Ach',label:'Y2 Ach',type:'num'},{key:'Y3 Target',label:'Y3 Target',type:'num'},{key:'Y3 Ach',label:'Y3 Ach',type:'num'},{key:'Cumulative',label:'Cumulative',type:'num'},{key:'Achievement %',label:'Achievement %',type:'pct'}] });
   // 3) Indicator progress
-  if((r.indicator_progress||[]).length) sheets.push({name:'Indicator Progress', title:'Indicator progress', subtitle:nowIST(),
-    rows: r.indicator_progress.map(p=>({Indicator:p.indicator_id, Period:p.reporting_period, Year:p.reporting_year, Quarter:p.quarter,
-      Achievement:N(p.achievement_for_period), Cumulative:N(p.cumulative_achievement), Variance:N(p.variance)})),
-    cols:[{key:'Indicator',label:'Indicator',type:'text'},{key:'Period',label:'Period',type:'text'},{key:'Year',label:'Year',type:'text'},{key:'Quarter',label:'Quarter',type:'text'},{key:'Achievement',label:'Achievement',type:'num'},{key:'Cumulative',label:'Cumulative',type:'num'},{key:'Variance',label:'Variance',type:'num'}] });
+  // ── LOGGED INDICATORS: the eleven fixed indicators, computed, never typed ──
+  { const inds=(li&&li.indicators)||[];
+    if(inds.length) sheets.push({ name:'Logged Indicators',
+      title:'Logged Indicators — the eleven fixed M and E indicators',
+      subtitle:'Computed from entered data. A blank value means the source data has not been entered yet. · '+nowIST(),
+      rows: inds.map(x=>({'#':x.n,'Indicator':x.name,
+        'Unit':x.unit==='₹'?'INR':'Percent',
+        'Value':(x.value==null?'':Number(x.value)),
+        'Before':(x.before==null?'':Number(x.before)),
+        'Now':(x.after==null?'':Number(x.after)),
+        'Records used':x.pairs||0,
+        'Status':(x.value==null?'Waiting for data':'Computed'),
+        'Figures behind it':x.detail||'',
+        'How it is computed':x.formula||''})),
+      cols:[{key:'#',label:'#',type:'num'},{key:'Indicator',label:'Indicator',type:'text'},
+        {key:'Unit',label:'Unit',type:'text'},{key:'Value',label:'Value',type:'num'},
+        {key:'Before',label:'Before',type:'num'},{key:'Now',label:'Now',type:'num'},
+        {key:'Records used',label:'Records used',type:'num'},{key:'Status',label:'Status',type:'text'},
+        {key:'Figures behind it',label:'Figures behind it',type:'text'},
+        {key:'How it is computed',label:'How it is computed',type:'text'}] });
+  }
+  // ── LOCAL GOVERNANCE: Gram Sabha participation ──
+  { const gs=r.gram_sabha||[], gsum=r.gram_sabha_summary||{};
+    if(gs.length){
+      sheets.push({ name:'Gram Sabha Summary', title:'Gram Sabha and VDC — summary',
+        subtitle:'Participation across all recorded meetings · '+nowIST(),
+        rows:[{Measure:'Meetings recorded',Value:N(gsum.meetings)},
+              {Measure:'Total participants',Value:N(gsum.total)},
+              {Measure:'Male participants',Value:N(gsum.male)},
+              {Measure:'Female participants',Value:N(gsum.female)},
+              {Measure:'Women as share of participants (%)',Value:N(gsum.total)?Math.round(1000*N(gsum.female)/N(gsum.total))/10:0},
+              {Measure:'Meetings where the VDP was submitted',Value:N(gsum.vdp_yes)},
+              {Measure:'VDP submission rate (%)',Value:N(gsum.meetings)?Math.round(1000*N(gsum.vdp_yes)/N(gsum.meetings))/10:0}],
+        cols:[{key:'Measure',label:'Measure',type:'text'},{key:'Value',label:'Value',type:'num'}] });
+      sheets.push({ name:'Gram Sabha Records', title:'Gram Sabha and VDC — every meeting',
+        subtitle:gs.length+' meetings · '+nowIST(),
+        rows: gs.map(g=>({District:g.district,Block:g.block,'Gram Panchayat':g.gram_panchayat,Village:g.village,
+          'VDC Name':g.vdc_name,'Meeting Date':g.meeting_date,
+          Male:N(g.male_participants),Female:N(g.female_participants),Total:N(g.total_participants),
+          'Women %':N(g.total_participants)?Math.round(1000*N(g.female_participants)/N(g.total_participants))/10:0,
+          'VDP Submitted':g.vdp_submitted,Remarks:g.remarks})),
+        cols:[{key:'District',label:'District',type:'text'},{key:'Block',label:'Block',type:'text'},
+          {key:'Gram Panchayat',label:'Gram Panchayat',type:'text'},{key:'Village',label:'Village',type:'text'},
+          {key:'VDC Name',label:'VDC Name',type:'text'},{key:'Meeting Date',label:'Meeting Date',type:'text'},
+          {key:'Male',label:'Male',type:'num'},{key:'Female',label:'Female',type:'num'},
+          {key:'Total',label:'Total',type:'num'},{key:'Women %',label:'Women %',type:'pct'},
+          {key:'VDP Submitted',label:'VDP Submitted',type:'text'},{key:'Remarks',label:'Remarks',type:'text'}] });
+    }
+  }
+  // ── LOCAL GOVERNANCE: Convergence, by department and in full ──
+  { const cv=r.convergence||[], csum=r.convergence_summary||{}, byDept=r.convergence_by_dept||[];
+    if(byDept.length) sheets.push({ name:'Convergence by Dept',
+      title:'Convergence — government schemes leveraged, by department',
+      subtitle:'₹'+Math.round(N(csum.amount)).toLocaleString('en-IN')+' mobilised across '+N(csum.records)+' records · '+nowIST(),
+      rows: byDept.map(d=>({Department:d.department,'Schemes':d.scheme_count,'Scheme names':d.schemes,
+        Records:N(d.records),'Households benefited':N(d.hh),'Amount mobilised':N(d.amount),
+        'Share of amount (%)':N(csum.amount)?Math.round(1000*N(d.amount)/N(csum.amount))/10:0})),
+      cols:[{key:'Department',label:'Department',type:'text'},{key:'Schemes',label:'Schemes',type:'num'},
+        {key:'Scheme names',label:'Scheme names',type:'text'},{key:'Records',label:'Records',type:'num'},
+        {key:'Households benefited',label:'Households benefited',type:'num'},
+        {key:'Amount mobilised',label:'Amount mobilised',type:'inr'},
+        {key:'Share of amount (%)',label:'Share of amount (%)',type:'pct'}] });
+    if(cv.length) sheets.push({ name:'Convergence Records',
+      title:'Convergence — every government scheme record',
+      subtitle:cv.length+' records · '+nowIST(),
+      rows: cv.map(c=>({District:c.district,Block:c.block,'Gram Panchayat':c.gram_panchayat,Village:c.village,
+        Department:c.department,Scheme:c.scheme_name,'Type of Work':c.work_type,
+        'Households benefited':N(c.hh_benefited),'Amount mobilised':N(c.amount_mobilised),Remarks:c.remarks})),
+      cols:[{key:'District',label:'District',type:'text'},{key:'Block',label:'Block',type:'text'},
+        {key:'Gram Panchayat',label:'Gram Panchayat',type:'text'},{key:'Village',label:'Village',type:'text'},
+        {key:'Department',label:'Department',type:'text'},{key:'Scheme',label:'Scheme',type:'text'},
+        {key:'Type of Work',label:'Type of Work',type:'text'},
+        {key:'Households benefited',label:'Households benefited',type:'num'},
+        {key:'Amount mobilised',label:'Amount mobilised',type:'inr'},{key:'Remarks',label:'Remarks',type:'text'}] });
+  }
   // 4) Demographics + geography breakdowns
   for(const [arr,name,colA] of [
     [d.caste,'By Social Order','Social Order'],[d.gender,'By Gender','Gender'],[d.religion,'By Religion','Religion'],
@@ -6766,7 +6849,11 @@ async function generateDonorReport(){
 
   // ── Fetch everything in parallel ──
   let r, donorRes, programmesRes, projectsRes, allProgObjRes, allProjObjRes, mappingsRes, villagesRes, indicatorsRes, beneficiariesRes, shgsRes, allMembersRes, loansRes, cropsRes, activitiesRes, progressRes;
+  let loggedInd={};
   try{
+    // The eleven logged indicators come from their own endpoint. It fails soft, so a
+    // missing table can never stop the rest of the workbook from being produced.
+    loggedInd = await apiGet('?action=logged_indicators'+filterQS()).catch(()=>({}));
     [r, donorRes, programmesRes, projectsRes, allProgObjRes, allProjObjRes, mappingsRes, villagesRes, indicatorsRes, beneficiariesRes, shgsRes, allMembersRes, loansRes, cropsRes, activitiesRes, progressRes] = await Promise.all([
       apiGet('?action=report&period='+period+filterQS()),
       donor ? apiGet('?resource=donors&donor_id='+encodeURIComponent(donor)+'&limit=2') : Promise.resolve({rows:[]}),
@@ -6963,7 +7050,8 @@ async function generateDonorReport(){
             {Metric:'Activities — Total Target',       Value:tgt},
             {Metric:'Activities — Cumulative Ach.',    Value:ach},
             {Metric:'Activities — Achievement %',      Value:pct+'%'},
-            {Metric:'Indicator Progress Records',      Value:(pr.indicator_progress||[]).length},
+            {Metric:'Gram Sabha Meetings',            Value:(pr.gram_sabha||[]).length},
+            {Metric:'Convergence Records',            Value:(pr.convergence||[]).length},
             {Metric:'Loan Records',                    Value:(pr.loans||[]).length},
             {Metric:'Output / Production Records',     Value:(pr.crops||[]).length},
           ],
@@ -7352,53 +7440,75 @@ async function generateDonorReport(){
   });
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 19.  INDICATOR MASTER (with baselines + targets)
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  if(indicators.length) sheets.push({
-    name:'Indicator Master', title:'Indicator Master', subtitle:indicators.length+' indicators · '+nowIST(),
-    rows: indicators.map(i=>({
-      'Indicator ID':i.indicator_id, 'Name':i.indicator_name,
-      'Type':i.indicator_type, 'Unit':i.unit,
-      'Baseline':i.baseline_value, 'Project Target':i.project_target,
-      'Data Source':i.data_source, 'Reporting Frequency':i.reporting_frequency,
-      'Thematic Area':i.programme_id__name || i.programme_id,
-      'Project':i.project_id__name || i.project_id,
-      'Donor':i.donor_id__name || i.donor_id,
-      'Remarks':i.remarks,
-    })),
-    cols:[
-      {key:'Indicator ID',label:'Indicator ID',type:'text'},
-      {key:'Name',label:'Indicator Name',type:'text'},
-      {key:'Type',label:'Type',type:'text'},{key:'Unit',label:'Unit',type:'text'},
-      {key:'Baseline',label:'Baseline',type:'num'},{key:'Project Target',label:'Project Target',type:'num'},
-      {key:'Data Source',label:'Data Source',type:'text'},
-      {key:'Reporting Frequency',label:'Reporting Frequency',type:'text'},
-      {key:'Thematic Area',label:'Thematic Area',type:'text'},{key:'Project',label:'Project',type:'text'},
-      {key:'Donor',label:'Donor',type:'text'},{key:'Remarks',label:'Remarks',type:'text'},
-    ],
-  });
+  // 19.  LOGGED INDICATORS — the eleven fixed indicators, computed from entered data
+  { const inds=(loggedInd&&loggedInd.indicators)||[];
+    if(inds.length) sheets.push({ name:'Logged Indicators',
+      title:'Logged Indicators — the eleven fixed M and E indicators',
+      subtitle:'Every value is computed from data already entered. A blank value means the source data has not been entered yet. · '+nowIST(),
+      rows: inds.map(x=>({'#':x.n,'Indicator':x.name,'Unit':x.unit==='₹'?'INR':'Percent',
+        'Value':(x.value==null?'':Number(x.value)),
+        'Before':(x.before==null?'':Number(x.before)),'Now':(x.after==null?'':Number(x.after)),
+        'Records used':x.pairs||0,'Status':(x.value==null?'Waiting for data':'Computed'),
+        'Figures behind it':x.detail||'','How it is computed':x.formula||''})),
+      cols:[{key:'#',label:'#',type:'num'},{key:'Indicator',label:'Indicator',type:'text'},
+        {key:'Unit',label:'Unit',type:'text'},{key:'Value',label:'Value',type:'num'},
+        {key:'Before',label:'Before',type:'num'},{key:'Now',label:'Now',type:'num'},
+        {key:'Records used',label:'Records used',type:'num'},{key:'Status',label:'Status',type:'text'},
+        {key:'Figures behind it',label:'Figures behind it',type:'text'},
+        {key:'How it is computed',label:'How it is computed',type:'text'}] });
+  }
 
-  // 20.  INDICATOR PROGRESS (period-wise)
-  if(progress.length){
-    const indNameById = {}; for(const i of indicators) indNameById[i.indicator_id]=i.indicator_name;
-    sheets.push({
-      name:'Indicator Progress', title:'Indicator Progress — Period-wise', subtitle:progress.length+' progress records · '+nowIST(),
-      rows: progress.map(p=>({
-        'Indicator': indNameById[p.indicator_id] || p.indicator_id,
-        'Year':p.reporting_year, 'Quarter':p.quarter, 'Period':p.reporting_period,
-        'Target':p.target_for_period, 'Achievement':p.achievement_for_period,
-        'Cumulative':p.cumulative_achievement, 'Variance':p.variance,
-        'Verification':p.verification_source, 'Remarks':p.remarks,
-      })),
-      cols:[
-        {key:'Indicator',label:'Indicator',type:'text'},
-        {key:'Year',label:'Year',type:'text'},{key:'Quarter',label:'Quarter',type:'text'},
-        {key:'Period',label:'Period',type:'text'},
-        {key:'Target',label:'Target',type:'num'},{key:'Achievement',label:'Achievement',type:'num'},
-        {key:'Cumulative',label:'Cumulative',type:'num'},{key:'Variance',label:'Variance',type:'num'},
-        {key:'Verification',label:'Verification',type:'text'},{key:'Remarks',label:'Remarks',type:'text'},
-      ],
-    });
+  // 20.  LOCAL GOVERNANCE — Gram Sabha participation and Convergence
+  { const gs=r.gram_sabha||[], gsum=r.gram_sabha_summary||{};
+    if(gs.length){
+      sheets.push({ name:'Gram Sabha Summary', title:'Gram Sabha and VDC — summary',
+        subtitle:'Participation across every recorded meeting · '+nowIST(),
+        rows:[{Measure:'Meetings recorded',Value:N(gsum.meetings)},
+              {Measure:'Total participants',Value:N(gsum.total)},
+              {Measure:'Male participants',Value:N(gsum.male)},
+              {Measure:'Female participants',Value:N(gsum.female)},
+              {Measure:'Women as share of participants (%)',Value:N(gsum.total)?Math.round(1000*N(gsum.female)/N(gsum.total))/10:0},
+              {Measure:'Meetings where the VDP was submitted',Value:N(gsum.vdp_yes)},
+              {Measure:'VDP submission rate (%)',Value:N(gsum.meetings)?Math.round(1000*N(gsum.vdp_yes)/N(gsum.meetings))/10:0}],
+        cols:[{key:'Measure',label:'Measure',type:'text'},{key:'Value',label:'Value',type:'num'}] });
+      sheets.push({ name:'Gram Sabha Records', title:'Gram Sabha and VDC — every meeting',
+        subtitle:gs.length+' meetings · '+nowIST(),
+        rows: gs.map(g=>({District:g.district,Block:g.block,'Gram Panchayat':g.gram_panchayat,Village:g.village,
+          'VDC Name':g.vdc_name,'Meeting Date':g.meeting_date,Male:N(g.male_participants),
+          Female:N(g.female_participants),Total:N(g.total_participants),
+          'Women %':N(g.total_participants)?Math.round(1000*N(g.female_participants)/N(g.total_participants))/10:0,
+          'VDP Submitted':g.vdp_submitted,Remarks:g.remarks})),
+        cols:[{key:'District',label:'District',type:'text'},{key:'Block',label:'Block',type:'text'},
+          {key:'Gram Panchayat',label:'Gram Panchayat',type:'text'},{key:'Village',label:'Village',type:'text'},
+          {key:'VDC Name',label:'VDC Name',type:'text'},{key:'Meeting Date',label:'Meeting Date',type:'text'},
+          {key:'Male',label:'Male',type:'num'},{key:'Female',label:'Female',type:'num'},
+          {key:'Total',label:'Total',type:'num'},{key:'Women %',label:'Women %',type:'pct'},
+          {key:'VDP Submitted',label:'VDP Submitted',type:'text'},{key:'Remarks',label:'Remarks',type:'text'}] });
+    }
+    const cv=r.convergence||[], csum=r.convergence_summary||{}, byDept=r.convergence_by_dept||[];
+    if(byDept.length) sheets.push({ name:'Convergence by Dept',
+      title:'Convergence — government schemes leveraged, by department',
+      subtitle:'₹'+Math.round(N(csum.amount)).toLocaleString('en-IN')+' mobilised across '+N(csum.records)+' records · '+nowIST(),
+      rows: byDept.map(dd=>({Department:dd.department,Schemes:dd.scheme_count,'Scheme names':dd.schemes,
+        Records:N(dd.records),'Households benefited':N(dd.hh),'Amount mobilised':N(dd.amount),
+        'Share of amount (%)':N(csum.amount)?Math.round(1000*N(dd.amount)/N(csum.amount))/10:0})),
+      cols:[{key:'Department',label:'Department',type:'text'},{key:'Schemes',label:'Schemes',type:'num'},
+        {key:'Scheme names',label:'Scheme names',type:'text'},{key:'Records',label:'Records',type:'num'},
+        {key:'Households benefited',label:'Households benefited',type:'num'},
+        {key:'Amount mobilised',label:'Amount mobilised',type:'inr'},
+        {key:'Share of amount (%)',label:'Share of amount (%)',type:'pct'}] });
+    if(cv.length) sheets.push({ name:'Convergence Records',
+      title:'Convergence — every government scheme record',
+      subtitle:cv.length+' records · '+nowIST(),
+      rows: cv.map(c=>({District:c.district,Block:c.block,'Gram Panchayat':c.gram_panchayat,Village:c.village,
+        Department:c.department,Scheme:c.scheme_name,'Type of Work':c.work_type,
+        'Households benefited':N(c.hh_benefited),'Amount mobilised':N(c.amount_mobilised),Remarks:c.remarks})),
+      cols:[{key:'District',label:'District',type:'text'},{key:'Block',label:'Block',type:'text'},
+        {key:'Gram Panchayat',label:'Gram Panchayat',type:'text'},{key:'Village',label:'Village',type:'text'},
+        {key:'Department',label:'Department',type:'text'},{key:'Scheme',label:'Scheme',type:'text'},
+        {key:'Type of Work',label:'Type of Work',type:'text'},
+        {key:'Households benefited',label:'Households benefited',type:'num'},
+        {key:'Amount mobilised',label:'Amount mobilised',type:'inr'},{key:'Remarks',label:'Remarks',type:'text'}] });
   }
 
   // 21.  OUTPUT / PRODUCTION — full detail
@@ -7567,8 +7677,13 @@ async function generateMasterWorkbook(){
   if(typeof XLSX==='undefined'){toast('Excel engine still loading…','t-warn');return;}
   toast('Building master workbook (every section)…');
   const sheets = [];
+  // Retired sections are excluded from every workbook: the free-form Indicators and
+  // Indicator Progress tables (replaced by the eleven Logged Indicators) and the
+  // Thematic Area tables (the organisation runs a single thematic area). Their rows
+  // remain in the database, they are simply no longer part of any export.
+  const RETIRED = ['users','indicators','progress','programmes','objectives'];
   for(const key of Object.keys(RES)){
-    if(key==='users') continue;
+    if(RETIRED.includes(key)) continue;
     try{
       const d = await apiGet('?resource='+key+'&limit=10000');
       const rows = (d.rows||[]); if(!rows.length) continue;
@@ -7593,10 +7708,11 @@ async function generateMasterWorkbook(){
 const XLS = (function(){
   const C = {
     inkDark:'FF0B1220', ink:'FF1E293B', mute:'FF5B6A85',
-    brand:'FF4F46E5', brandSoft:'FFEEF2FF',
-    headerBg:'FF1E293B', headerFg:'FFFFFFFF', headerBor:'FF334155',
-    alt:'FFF8FAFC', border:'FFE4E9F2', good:'FF059669', warn:'FFD97706', bad:'FFDC2626',
-    coverBg:'FF0B3D2E', coverFg:'FFFFFFFF',
+    brand:'FF14547A', brandSoft:'FFE8F1F7',
+    gold:'FFE2A107', goldSoft:'FFFDF5E3', goldInk:'FF5C3F02',
+    headerBg:'FF103B55', headerFg:'FFFFFFFF', headerBor:'FF14547A',
+    alt:'FFF7FAFC', border:'FFE4E9F2', good:'FF059669', warn:'FFD97706', bad:'FFDC2626',
+    coverBg:'FF0B2C41', coverFg:'FFFFFFFF',
   };
   function _safe(s){ return String(s||'Sheet').replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,28).trim() || 'Sheet'; }
   function _fmtType(v, type){
@@ -7690,10 +7806,14 @@ const XLS = (function(){
     if(ws['A1']) ws['A1'].s = _titleStyle();
     if(ws['A2']) ws['A2'].s = _subStyle();
     if(ws['A3']) ws['A3'].s = _filterRowStyle();
-    // header
+    // header row, ruled underneath in gold so the table reads like a printed statement
     for(let c=0;c<=lastCol;c++){
       const a = XLSX.utils.encode_cell({r:4,c});
-      if(ws[a]) ws[a].s = _headerStyle();
+      if(ws[a]){
+        const hs = _headerStyle();
+        hs.border = Object.assign({}, hs.border||{}, {bottom:{style:'medium', color:{rgb:C.gold}}});
+        ws[a].s = hs;
+      }
     }
     // data cells + number formats
     rows.forEach((row, ri)=>{
@@ -7729,12 +7849,16 @@ const XLS = (function(){
     // strings wrap instead of clipping behind the row below
     const fLen=(filters||'').length;
     ws['!rows'] = [{hpt:30},{hpt:18},{hpt: fLen>220?64 : fLen>110?42 : 18},{hpt:6},{hpt:26}];
+    // Print setup: narrow margins, landscape and fit to one page wide, with the
+    // header row repeating on every printed page.
+    ws['!margins'] = {left:0.4, right:0.4, top:0.5, bottom:0.5, header:0.2, footer:0.2};
+    ws['!printHeader'] = [5,5];
     return ws;
   }
 
   function coverSheet({title, subtitle, filters, sheets}){
     const aoa = [
-      ['VIEWS INDIA MIS'], [''], [title || 'Report'], [subtitle || ''], [''],
+      ['VIEWS MIS'], [''], [title || 'Report'], [subtitle || ''], [''],
       ['Filters applied'], ...(filters||[]).map(f=>[f[0]+':', f[1]+'']),
       [''],
       ['Sheets in this workbook'],
@@ -7742,7 +7866,9 @@ const XLS = (function(){
       ...(sheets||[]).map((s,i)=>[i+1, s.name, (s.rows||[]).length]),
       [''],
       ['Generated', nowIST()],
-      ['Software', 'VIEWS MIS · Realtime monitoring & evaluation platform'],
+      ['Software', 'VIEWS MIS · Monitoring and evaluation platform'],
+      ['Figures', 'All amounts in Indian Rupees. Income figures are NET (income less expenditure).'],
+      ['Built by', 'PlanEx Hivers Consulting Private Limited · All rights reserved 2026'],
     ];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = [{wch:8},{wch:36},{wch:14},{wch:30}];
