@@ -76,6 +76,63 @@ $RES = [
   'convergence'=>'convergence',
 ];
 
+/* ════════ ONE livelihood vocabulary, the same eleven the browser uses ════════
+   The beneficiary baseline table and Production & Output share these categories,
+   so a before/after comparison always compares like with like. Every spelling the
+   database has ever held is listed against its category, which is why records
+   entered under an older wording still land in the right column of every report
+   instead of quietly disappearing.  Keep in step with LIVELIHOOD_ALIAS in index.html. */
+$LIVELIHOODS = [
+  'paddy'            => ['label'=>'Paddy',               'crop'=>true,  'alias'=>['paddy','rice','dhan']],
+  'millet'           => ['label'=>'Millet',              'crop'=>true,  'alias'=>['millet','millets','ragi','finger millet']],
+  'vegetable'        => ['label'=>'Vegetable',           'crop'=>true,  'alias'=>['vegetable','vegetables','vegetable crop']],
+  'tuber'            => ['label'=>'Tuber Crop',          'crop'=>true,  'alias'=>['tuber crop','tuber','tuber crops','tubers']],
+  'pulses'           => ['label'=>'Pulses',              'crop'=>true,  'alias'=>['pulses','pulse','dal']],
+  'oilseed'          => ['label'=>'Oilseeds',            'crop'=>true,  'alias'=>['oilseeds','oilseed','oil seed','oil seeds']],
+  'mushroom'         => ['label'=>'Mushroom Cultivation','crop'=>true,  'alias'=>['mushroom cultivation','mushroom']],
+  'goat'             => ['label'=>'Goat Rearing',        'crop'=>false, 'alias'=>['goat rearing','goat','goatery','goatary']],
+  'poultry'          => ['label'=>'Backyard Poultry',    'crop'=>false, 'alias'=>['backyard poultry','poultry']],
+  'micro_enterprise' => ['label'=>'Micro Enterprise',    'crop'=>false, 'alias'=>['micro enterprise','petty shop','tailoring','dairy','bee keeping','beekeeping','enterprise']],
+  'other'            => ['label'=>'Other Income',        'crop'=>false, 'alias'=>['other income','other','others']],
+];
+/* SQL that resolves a crops row to EXACTLY ONE category key — the same rule the
+   browser follows in livelihoodKey(): a specific match on the crop column wins,
+   then a specific match on the older alternative_livelihood column, and anything
+   left over is Other Income.
+   Resolving to a single key matters: a legacy row that carries a value in BOTH
+   columns must be counted once, not once per column, or every income total would
+   be inflated. */
+function liv_key_sql(){
+  global $LIVELIHOODS;
+  static $sql = null;
+  if($sql !== null) return $sql;
+  $cropCase=[]; $altCase=[];
+  foreach($LIVELIHOODS as $k=>$d){
+    if($k==='other') continue;   // the catch-all is the ELSE, never a WHEN
+    $in = implode(',', array_map(fn($a)=>"'".str_replace("'","''",$a)."'", $d['alias']));
+    $cropCase[] = "WHEN LOWER(TRIM(COALESCE(crop,''))) IN ($in) THEN '$k'";
+    $altCase[]  = "WHEN LOWER(TRIM(COALESCE(alternative_livelihood,''))) IN ($in) THEN '$k'";
+  }
+  $sql = "CASE ".implode(' ',$cropCase).' '.implode(' ',$altCase)." ELSE 'other' END";
+  return $sql;
+}
+/* TRUE when a crops row belongs to the given category — one row, one category. */
+function liv_sql($key){
+  global $LIVELIHOODS;
+  if(!isset($LIVELIHOODS[$key])) return '0';
+  return "(".liv_key_sql()." = '".$key."')";
+}
+/* The category's display label, for GROUP BY in the reports. */
+function liv_label_sql(){
+  global $LIVELIHOODS;
+  $parts=[];
+  foreach($LIVELIHOODS as $k=>$d){ $parts[]="WHEN '$k' THEN '".str_replace("'","''",$d['label'])."'"; }
+  return "CASE (".liv_key_sql().") ".implode(' ',$parts)." ELSE 'Other Income' END";
+}
+/* The non-farm categories: no kilograms, no price per kilogram, so their income is
+   typed straight in rather than calculated. */
+function liv_nonfarm_keys(){ global $LIVELIHOODS; return array_keys(array_filter($LIVELIHOODS, fn($v)=>!$v['crop'])); }
+
 /* resource → [id_column, prefix, zero-pad] (auto-generated on POST) */
 $ID_GEN = [
   'programmes'=>['programme_id','PRG',3], 'projects'=>['project_id','PRJ',3],
@@ -792,14 +849,22 @@ if ($action==='logged_indicators') {
       'formula'=>'Households cultivating ≥ 3 crops ÷ households with production records × 100'];
   }
 
-  /* 7 · % households adopting alternative livelihoods */
-  { $altCond="alternative_livelihood IS NOT NULL AND LOWER(TRIM(alternative_livelihood)) NOT IN ('','none')";
-    $y=$one("SELECT COUNT(*) FROM (SELECT beneficiary_id FROM beneficiaries".$AND($wB).$altCond." UNION SELECT beneficiary_id FROM crops".$AND($wC).$altCond." AND beneficiary_id IS NOT NULL AND TRIM(beneficiary_id)<>'') t",array_merge($vB,$vC));
+  /* 7 · % households adopting alternative livelihoods
+        A household counts when it has a NON-FARM livelihood anywhere: a production
+        record in Goat Rearing, Backyard Poultry, Micro Enterprise or Other Income,
+        or baseline income under one of those, or the older free-typed column. All
+        three are read, so the figure does not depend on which one was filled in. */
+  { $nonFarm = liv_nonfarm_keys();
+    $cropCond = '('.liv_key_sql()." IN ('".implode("','", $nonFarm)."'))";
+    $blCols=[]; foreach(['bl_goat_income','bl_poultry_income','bl_micro_enterprise_income','bl_other_income'] as $c){ if(in_array($c,$benCols)) $blCols[]="COALESCE($c,0)>0"; }
+    $altCond="(alternative_livelihood IS NOT NULL AND LOWER(TRIM(alternative_livelihood)) NOT IN ('','none'))";
+    $benCond = $blCols ? '('.$altCond.' OR '.implode(' OR ',$blCols).')' : $altCond;
+    $y=$one("SELECT COUNT(*) FROM (SELECT beneficiary_id FROM beneficiaries".$AND($wB).$benCond." UNION SELECT beneficiary_id FROM crops".$AND($wC).$cropCond." AND beneficiary_id IS NOT NULL AND TRIM(beneficiary_id)<>'') t",array_merge($vB,$vC));
     $t=$one("SELECT COUNT(*) FROM beneficiaries$wB",$vB);
     $IND[]=['n'=>7,'name'=>'Percentage of households adopting alternative livelihoods','unit'=>'%','value'=>$pct($y,$t),
       'before'=>null,'after'=>$y,'pairs'=>$t===null?0:(int)$t,
-      'detail'=>($t)?(((int)$y).' of '.((int)$t).' households have an alternative livelihood recorded (goatery, poultry, tailoring…)'):'Fetched from the Alternative Livelihood option on Beneficiary & Production records',
-      'formula'=>'Households with an alternative livelihood recorded ÷ total households × 100'];
+      'detail'=>($t)?(((int)$y).' of '.((int)$t).' households have a non-farm livelihood: goat rearing, backyard poultry, micro enterprise or other income'):'Counted from the non-farm rows of the beneficiary baseline table and from Production & Output records in those categories',
+      'formula'=>'Households with a non-farm livelihood (baseline or production) ÷ total households × 100'];
   }
 
   /* 8 · % SHG members accessing formal financial services — members of SHGs with loans */
@@ -1118,20 +1183,15 @@ if ($action==='dashboard') {
     $stB->execute($vB); $kpi['baseline_income'] = (float)$stB->fetch()['s'];
   }
   // Current side also uses NET (falling back to gross for rows entered before Net Profit)
+  // and buckets by the SAME eleven categories as the baseline, through liv_sql(), so
+  // the before and after columns of every chart line up by construction.
   $NP="COALESCE(net_profit_inr,income_inr)";
-  $stCA = $pdo->prepare("SELECT
-      COALESCE(SUM($NP),0) total,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='paddy' THEN $NP ELSE 0 END),0) paddy,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='millet' THEN $NP ELSE 0 END),0) millet,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='vegetable' THEN $NP ELSE 0 END),0) vegetable,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop)) IN ('tuber crop','tuber') THEN $NP ELSE 0 END),0) tuber,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop))='pulses' THEN $NP ELSE 0 END),0) pulses,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(crop)) IN ('oilseeds','oilseed') THEN $NP ELSE 0 END),0) oilseed,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('mushroom','mushroom cultivation') OR LOWER(TRIM(crop))='mushroom' THEN $NP ELSE 0 END),0) mushroom,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('goatery','goat','goat rearing') THEN $NP ELSE 0 END),0) goat,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('poultry','backyard poultry') THEN $NP ELSE 0 END),0) poultry,
-      COALESCE(SUM(CASE WHEN LOWER(TRIM(alternative_livelihood)) IN ('micro enterprise','petty shop','tailoring','dairy','bee keeping') THEN $NP ELSE 0 END),0) micro
-    FROM crops$wC");
+  $curKeyFor = ['paddy'=>'paddy','millet'=>'millet','vegetable'=>'vegetable','tuber'=>'tuber',
+                'pulses'=>'pulses','oilseed'=>'oilseed','mushroom'=>'mushroom','goat'=>'goat',
+                'poultry'=>'poultry','micro'=>'micro_enterprise'];
+  $selC = ["COALESCE(SUM($NP),0) total"];
+  foreach($curKeyFor as $alias=>$livKey){ $selC[] = "COALESCE(SUM(CASE WHEN ".liv_sql($livKey)." THEN $NP ELSE 0 END),0) `$alias`"; }
+  $stCA = $pdo->prepare("SELECT ".implode(",\n      ",$selC)." FROM crops$wC");
   $stCA->execute($vC); $cur = $stCA->fetch();
   $curByAct = array_fill_keys($acts, 0.0);
   foreach($acts as $a){ if($a!=='other') $curByAct[$a] = (float)($cur[$a]??0); }
@@ -1330,9 +1390,11 @@ if ($action==='report') {
                        FROM `shgs`$wS");
   $st->execute($pS); $shgT=$st->fetch();
 
-  // 6) Crops / outputs by intervention
+  // 6) Outputs grouped by the ELEVEN shared livelihood categories, so the report
+  //    never lists Goatery and Goat Rearing as two different things.
   [$wC,$pC]=$applyFilter('crops');
-  $st=$pdo->prepare("SELECT COALESCE(NULLIF(TRIM(crop),''),'—') k,
+  $kExpr = liv_label_sql();
+  $st=$pdo->prepare("SELECT $kExpr k,
                             COUNT(*) c,
                             COALESCE(SUM(production_kg),0) qty,
                             COALESCE(SUM(income_inr),0) inc,
@@ -1456,7 +1518,12 @@ if ($action==='charts') {
       if(!$gb){ continue; }
       $useSum = ($measure!=='count' && in_array($measure,$cols));
       $valExpr = $useSum ? "COALESCE(SUM(`$measure`),0)" : "COUNT(*)";
-      $sql="SELECT COALESCE(NULLIF(TRIM(`$gb`),''),'—') k, $valExpr v FROM `$tbl` GROUP BY k ORDER BY v DESC LIMIT 25";
+      // Grouping Production & Output by livelihood groups by CATEGORY, so an older
+      // "Goatery" row sits with "Goat Rearing" instead of forming a bar of its own.
+      $kExprCh = ($src==='crops' && $gb==='crop')
+        ? liv_label_sql()
+        : "COALESCE(NULLIF(TRIM(`$gb`),''),'—')";
+      $sql="SELECT $kExprCh k, $valExpr v FROM `$tbl` GROUP BY k ORDER BY v DESC LIMIT 25";
       $rows=$pdo->query($sql)->fetchAll();
       $labels=[]; $values=[]; $tableRows=[];
       $nameMap=null;
@@ -1526,6 +1593,17 @@ if ($method==='GET') {
   $sWhere=[]; $sParams=[]; $mWhere=[]; $mParams=[]; $bWhere=[]; $bParams=[]; $firstTerm=null; $usedTerms=0;
   foreach($_GET as $k=>$v){
     if(in_array($k,['resource','id','q','limit','offset','action'])) continue;
+    if(in_array($k,['_v'])) continue;   // cache-buster raised on every write, never a filter
+    /* The Livelihood filter on Production & Output matches by CATEGORY, not by the exact
+       letters stored. Choosing "Goat Rearing" therefore also finds rows an officer once
+       saved as "Goatery", and choosing "Other Income" finds the retired categories that
+       are now counted there. Without this, filtering would silently hide older records. */
+    if($k==='crop' && $resource==='crops' && $v!==''){
+      $key=null;
+      foreach($LIVELIHOODS as $lk=>$d){ if(strcasecmp($d['label'],(string)$v)===0){ $key=$lk; break; } }
+      if($key===null){ foreach($LIVELIHOODS as $lk=>$d){ if(in_array(strtolower(trim((string)$v)),$d['alias'],true)){ $key=$lk; break; } } }
+      if($key!==null){ $where[]='('.liv_key_sql()." = '".$key."')"; continue; }
+    }
     if(in_array($k,$cols) && $v!==''){ $where[]="`$k`=?"; $params[]=$v; }
   }
   // 📌 Project-restricted user → only rows of their project(s); rows without any

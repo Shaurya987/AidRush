@@ -157,9 +157,26 @@ Below the bar, a **stat strip** (Districts · Blocks · Villages · Beneficiarie
 
 Further down the page is a special builder for the most demanding audience: a single donor. Pick the donor (and a period if you wish) and generate — you receive a **20+ sheet, submission-ready workbook**: executive summary, donor profile, every funded project, beneficiary analysis with inclusion breakdowns, income impact, activities, indicators, SHGs, loans, budget vs utilisation, and even a glossary so the donor's own staff can read it without calling you.
 
+Three sheets deserve a word of their own:
+
+- **Other & Direct Income** — the four non-farm livelihoods (Goat Rearing, Backyard Poultry, Micro Enterprise, Other Income) and any record whose income was typed directly, listed on their own with the household, the year, the income, the expenditure and the net income. Keeping them apart means nobody compares a tailoring shop against a paddy yield by accident. **Every rupee still counts** in the totals, the charts and the indicators.
+- **Income by Year & Activity** — the same table the screen shows when a household's income is opened, for every household at once: one row per household and activity, the baseline in its own column, then each project year with a matching *vs baseline* column. Years are never added together.
+- **Outputs Detail** now carries the **standardised Livelihood / Crop** beside the words that were actually recorded (*As Recorded*), plus an **Income Basis** column stating whether the figure came from output × rate or was typed directly. A reader can see both what the software counted and what the field officer wrote.
+
 ### The Master Workbook
 
 One click exports **every section of the entire database** into one formatted Excel file. Two uses: a complete offline copy for anyone who asks, and your **do-it-yourself full backup** — a good habit before any big data drive.
+
+### One source of truth: reports are never out of date
+
+**Nothing in this system stores a total.** Every figure on every screen and in every Excel file is calculated from the database at the moment you look at it. That is a deliberate design decision, and it is what makes the following true:
+
+- Delete a production record and the income, net profit, output totals, growth figures, dashboard cards, charts and the eleven indicators all change **in the same instant** — nobody has to refresh anything.
+- Delete a beneficiary and their production records go with them, so an orphaned figure can never inflate a total.
+- Edit an income and every comparison that used it moves with it.
+- There is no situation in which the database holds one value and a report shows another, because there is only ever one value.
+
+Two further safeguards make certain of it: every read is sent with browser caching switched off, and a counter is raised on every save and delete which travels with every later read, so no cache anywhere can answer with the older figures.
 
 ---
 
@@ -285,21 +302,36 @@ Master Data is set up early and touched rarely — but understanding it explains
 - **Geography** — pick the village; district/block/GP fill themselves.
 - **Land & livelihood** — landholding and income source classifications. **Total Land (acres) adds itself up** from the paddy/millet/vegetable areas you type in the baseline section (you can still overtype it if the household holds other land).
 - **Organic Farming (Yes / No)** — required. This is the "before" half of the organic-farming indicator; the "after" comes from the production records.
-- **Baseline livelihood — one table, not a wall of boxes.** Every income source is a row: **crops** (paddy, millet, vegetable, tuber crop, pulses, oilseeds) with *Area · Production kg · Income · Expenditure*, then **other livelihoods** (mushroom, goat, poultry, micro-enterprise, other) with *Income · Expenditure*. Fill only what the household actually had.
+- **Baseline livelihood — one table, not a wall of boxes.** Every income source is a row, and **these eleven rows are the only livelihood categories the whole system knows**: the seven **crops** (Paddy, Millet, Vegetable, Tuber Crop, Pulses, Oilseeds, Mushroom Cultivation) with *Area · Production kg · Income · Expenditure*, then the four **non-farm livelihoods** (Goat Rearing, Backyard Poultry, Micro Enterprise, Other Income) with *Income · Expenditure* only. Fill only what the household actually had.
   - Mushroom Cultivation counts as a crop row — it carries Area and Production (kg) too.
+  - **Production & Output offers exactly these eleven and nothing else.** There is no second list of livelihoods anywhere in the software, so a household can never be given a category at registration that does not exist when their production is recorded, and no report has to guess which is which.
   - **Net is calculated for you** on every row and in the TOTAL line (income − expenditure) — it is never typed and never stored, so the two figures can never disagree.
   - The **Total income must equal the Annual Income at Registration**, and Total Land fills itself from the crop areas.
   - Every source flows into the income views, the dashboard Before-vs-After chart and the Income Impact report. **Take two extra minutes here** — this baseline is the "before" in every Before-vs-After income chart and in the Avg. Income Change headline. Without it, impact cannot be shown for this person.
-- Each beneficiary row later offers an **income view** — their baseline vs current income and a year-by-year trend.
+- Each beneficiary row later offers an **income view** — the household's *complete* history in one table: the activities down the side, **Baseline** and then **every year that has production** across the top. Each year cell carries that year's income for that activity and, beneath it, the change against the baseline for *the same activity*, in ₹ and in %. A **TOTAL / year** line does the same for the household. This view always shows the full history and is deliberately not narrowed by the list's year filter.
+  - **Years are never added together.** The baseline is a single year's income, so each year is compared with it on its own. Summing Year 1 + Year 2 + Year 3 and setting that against one year's baseline would invent growth that never happened.
 
-**Production & Output Progress** — the actuals against HQ's output targets: any intervention output (a harvest, a livelihoods batch, a health camp result…). Pick the beneficiary (the picker can be narrowed by village) and their context fills in; then record the intervention, season/year, quantity, income and net profit (a loss — negative profit — is allowed, because a loss is real data). These records feed the income trend and the outputs sheets of every report.
+**Production & Output Progress** — the actuals against HQ's output targets. Pick the beneficiary (the picker can be narrowed by village) and their context fills in; then record the livelihood, the year, the season and the money (a loss — negative profit — is allowed, because a loss is real data). These records feed the income trend and the outputs sheets of every report.
 
-On the form, **Income = Output Quantity × Rate** and **Net Profit = Income − Expenditure** fill in automatically as you type (type your own figure in either and that box stops auto-filling — a health camp has no kg × rate). **Produce sold? (Yes/No)** replaces the old self-consumption quantity, and **Organic Farming (Yes/No)** is required — it is the "after" half of the organic indicator.
+**Livelihood / Crop is required, and its list is the beneficiary baseline's list** — the same eleven categories, nothing else. If you open an older record saved under a category the list no longer offers (Fruits, Health Camp, Road Safety Training and the like), the original wording is **kept and clearly marked**, counted under *Other Income*, and you can bring it in line by choosing one of the eleven.
+
+**How is the income recorded? — two honest ways, not one forced formula:**
+
+| Mode | For | What you type |
+| :-- | :-- | :-- |
+| **Production (output × rate)** | The weighed crops: Paddy, Millet, Vegetable, Tuber Crop, Pulses, Oilseeds, Mushroom Cultivation | Output Quantity (kg) and Rate (₹/kg). **Income = Output × Rate** fills itself in. |
+| **Direct income** | Goat Rearing, Backyard Poultry, Micro Enterprise, Other Income | The rupee figure for the year, for example **₹25,000**. Output Quantity and Rate are **put away entirely**. |
+
+Choosing a category sets the mode for you, and you can change it whenever the real situation differs — a household that only knows the rupees from their paddy can use Direct income too. **Nobody is ever asked to invent a weight or a price per kilogram just to make a total appear.** A direct figure counts towards that household's income exactly like any other record.
+
+**Net Profit = Income − Expenditure** in both modes, and fills itself in as you type. Type your own figure in any box and that box stops auto-filling.
+
+Three questions only apply to something that is actually grown, so they are **not asked for the four non-farm livelihoods**: *Produce sold?*, *Food security throughout the year?* and *Organic Farming* (the "after" half of the organic indicator, required for every crop record).
 
 > **Income figures are NET everywhere.** Every comparison — dashboard, banners, the income view, reports — uses what the household actually keeps (income − expenditure), on both the baseline and the production side. Records entered before Net Profit existed fall back to their gross income, so nothing breaks.
 
 Two things make this list donor-proof:
-- **A Crop/Intervention or Season filter is required before anything displays.** One beneficiary legitimately has several production rows (Paddy · Kharif, Millet · Rabi…) — the filter shows each person once per view, so nobody ever *looks* duplicated. The records themselves stay together as one person's story; this is display only, and reports are unaffected. The crop & season filters combine with the thematic/project/donor chain like every other filter.
+- **A Livelihood or Season filter is required before anything displays.** One beneficiary legitimately has several production rows (Paddy · Kharif, Millet · Rabi, a goat batch…) — the filter shows each person once per view, so nobody ever *looks* duplicated. The records themselves stay together as one person's story; this is display only, and reports are unaffected. The crop & season filters combine with the thematic/project/donor chain like every other filter.
 - **An Income Change column** (₹ and %) sits beside Net Profit: the beneficiary's cumulative production income across ALL their records versus their total baseline — the same honest figure on every row of that person, and in the section's Excel export too.
 
 **Activity Progress** — delivery tracked year by year in one compact table. Set the activity's total target, then fill each year's row: its target and the **Q1–Q4** achievements (or flip the switch to **Monthly** and type the 12 months — they roll up into the quarters automatically). **＋ Add Year** extends the table up to six years. Each year's achievement and the cumulative total **calculate themselves**, and a live progress bar shows the % achieved against the total target — always arithmetic, never opinion. From the field-office page, the *Activity Progress* card opens this full section (filters, search, **✎ Update progress** on each row, and ＋ New activity) so progress is updated on the existing activity rather than re-created. **The target boxes — and adding or deleting activities — need the 🎯 Targets right (§12):** without it the plan is read-only 🔒 and only the achievements can be typed.
@@ -560,7 +592,12 @@ Every message the system can show is listed here with its meaning and what to do
 |---|---|
 | Select the Donor funding this project | A project cannot exist without naming who pays for it. Choose the donor, or create the donor first. |
 | Select the Project this record belongs to | The record needs a project to reach the dashboard and reports. |
-| Please answer Organic Farming, Yes or No | Required, because it produces the organic farming indicator. |
+| Please answer Organic Farming, Yes or No | Required, because it produces the organic farming indicator. It is not asked for Goat Rearing, Backyard Poultry, Micro Enterprise or Other Income, since nothing is grown in those. |
+| Please choose the Project Year | Every production record must state its year, otherwise it sits outside every year filter and every year-by-year comparison. |
+| Please choose the Livelihood / Crop | The category is required and must be one of the same eleven the beneficiary baseline uses. |
+| Please choose how the income is recorded | Pick *Production (output × rate)* for a weighed crop, or *Direct income* for a livelihood with no kilograms and no price per kilogram. |
+| Direct income was chosen, so please type the Income (₹) | You chose to enter the figure yourself, so the rupee amount for the year is required. |
+| Please enter the Output Quantity and Rate, or switch to Direct income | In Production mode the income comes from a quantity and a rate. Fill both, type the income yourself, or switch the mode. |
 | Baseline income total must equal Annual Income at Registration | The baseline rows and the annual income figure disagree. Correct one of them. |
 | Expenditure looks far larger than its income | Usually an extra zero. Check the figure. |
 | Age must be between 0 and 120 | Check the age entered. |

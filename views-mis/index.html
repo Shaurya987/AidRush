@@ -680,8 +680,23 @@ function getTab(){ try{return sessionStorage.getItem(TAB_KEY)||'';}catch(e){retu
 function setAuth(tok,tab){ try{sessionStorage.setItem(TOK_KEY,tok); sessionStorage.setItem(TAB_KEY,tab);}catch(e){} }
 function clearAuth(){ try{sessionStorage.removeItem(TOK_KEY); sessionStorage.removeItem(TAB_KEY);}catch(e){} }
 
+/* ════════ ONE SOURCE OF TRUTH ════════
+   Every figure in this software is calculated from the database at the moment it
+   is shown, so the instant a record is added, edited or deleted the numbers are
+   already correct on the server. The only way a stale figure could ever reach the
+   screen is a browser or a network cache replaying an older answer to the same
+   web address. Two measures stop that:
+     · every read is sent with caching switched off
+     · a counter is raised on every write and travels with every later read, so
+       the web address itself is different after a change and cannot be answered
+       from a cache
+   This is why a deleted production record disappears from the dashboard, the
+   reports and the indicators without anyone having to refresh the page. */
+let DATA_VERSION = 0;
+function bumpDataVersion(){ DATA_VERSION++; }
 async function api(qs, opts={}, _attempt=0){
   const method=(opts.method||'GET').toUpperCase();
+  if(method==='GET') qs = qs + (qs.indexOf('?')>=0?'&':'?') + '_v=' + DATA_VERSION;
   const headers = {'Content-Type':'application/json'};
   const t=getTok(), tb=getTab();
   if(t) headers['X-Session-Token']=t;
@@ -691,7 +706,7 @@ async function api(qs, opts={}, _attempt=0){
   const timer = ctrl ? setTimeout(()=>{ try{ctrl.abort();}catch(e){} }, 30000) : null;
   let res;
   try{
-    res = await fetch(API+qs,{credentials:'same-origin',headers,signal:ctrl?ctrl.signal:undefined,...opts});
+    res = await fetch(API+qs,{credentials:'same-origin',cache:'no-store',headers,signal:ctrl?ctrl.signal:undefined,...opts});
   }catch(err){
     if(timer) clearTimeout(timer);
     // Network drop / timeout / "Failed to fetch" — silently retry idempotent GETs a few times.
@@ -718,6 +733,9 @@ async function api(qs, opts={}, _attempt=0){
     return api(qs, opts, _attempt+1);
   }
   if(!res.ok) throw new Error(data.error||('HTTP '+res.status));
+  // A write succeeded: raise the counter so every read from here on is guaranteed
+  // to reach the server rather than any cache holding the older figures.
+  if(method!=='GET') bumpDataVersion();
   return data;
 }
 const apiGet=qs=>api(qs);
@@ -804,6 +822,83 @@ function canHQ(){ if(!CU) return false; const r=(CU.role||'').toLowerCase();
   if(m['dataentry'])    return m['dataentry'].v===1;
   return !r.includes('donor') && !r.includes('view'); }
 
+/* ════════ ONE canonical definition of the baseline livelihood sources ════════
+   [key, label, hasLand] — every total, validation, export, chart and report
+   derives from this single list, so the enumerations can never drift apart.
+   Per source we capture: Area (crops) · Production kg (crops) · Income ·
+   Expenditure — and NET (income − expenditure) is always COMPUTED, never
+   stored, so the two can never disagree. */
+const BL_SOURCES=[
+  ['paddy','Paddy',1],['millet','Millet',1],['vegetable','Vegetable',1],
+  ['tuber','Tuber Crop',1],['pulses','Pulses',1],['oilseed','Oilseeds',1],
+  ['mushroom','Mushroom Cultivation',1],['goat','Goat Rearing',0],
+  ['poultry','Backyard Poultry',0],['micro_enterprise','Micro Enterprise',0],['other','Other Income',0],
+];
+/* ════════ ONE livelihood vocabulary for the WHOLE system ════════
+   The eleven rows of the baseline table above are the only livelihood categories
+   the software knows. Production / Output offers exactly the same eleven, so a
+   beneficiary can never be given a category at registration that does not exist
+   when their production is recorded, and no report has to guess which is which.
+     · crop   = true  → the output is weighed, so Output (kg) × Rate makes sense
+     · direct = true  → there is no meaningful kg or rate, so the income is typed
+   Everything (the pickers, the charts, the income breakdown, the Excel reports
+   and the eleven logged indicators) reads this one list. */
+const LIVELIHOODS = BL_SOURCES.map(([key,label,land])=>({key,label,crop:!!land,direct:!land}));
+const LIVELIHOOD_LABELS = LIVELIHOODS.map(l=>l.label);
+const LIVELIHOOD_LABEL  = Object.fromEntries(LIVELIHOODS.map(l=>[l.key,l.label]));
+const LIVELIHOOD_DIRECT = new Set(LIVELIHOODS.filter(l=>l.direct).map(l=>l.key));
+/* Every spelling this database has ever held, folded onto one canonical key, so
+   records entered before the vocabulary was unified keep counting correctly and
+   not one rupee is ever dropped from a total. */
+const LIVELIHOOD_ALIAS = (()=>{
+  const A={};
+  for(const l of LIVELIHOODS) A[l.label.toLowerCase()]=l.key;
+  Object.assign(A,{
+    'rice':'paddy','dhan':'paddy',
+    'millet':'millet','millets':'millet','ragi':'millet','finger millet':'millet',
+    'vegetables':'vegetable','vegetable crop':'vegetable',
+    'tuber':'tuber','tuber crops':'tuber','tubers':'tuber',
+    'pulse':'pulses','dal':'pulses',
+    'oilseed':'oilseed','oil seed':'oilseed','oil seeds':'oilseed',
+    'mushroom':'mushroom',
+    'goat':'goat','goatery':'goat','goatary':'goat',
+    'poultry':'poultry',
+    'petty shop':'micro_enterprise','tailoring':'micro_enterprise','dairy':'micro_enterprise',
+    'bee keeping':'micro_enterprise','beekeeping':'micro_enterprise','enterprise':'micro_enterprise',
+    'other':'other','others':'other',
+    /* categories the pickers no longer offer — folded into Other Income so their
+       money still shows up instead of vanishing from the reports */
+    'alternative livelihood':'other','fruits':'other','fruit':'other','health camp':'other',
+    'immunization':'other','immunisation':'other','road safety training':'other',
+    'sanitation':'other','drinking water':'other','skill training':'other',
+    'tree plantation':'other','tea plantation':'other','plantation':'other',
+  });
+  return A;
+})();
+/* Resolve a production row (or a free-typed value) to its canonical category.
+   The more specific of the two columns wins, so a legacy row that says
+   crop "Other" and livelihood "Goatery" is still counted as Goat Rearing. */
+function livelihoodKey(crop, alt){
+  const R=s=>LIVELIHOOD_ALIAS[String(s==null?'':s).trim().toLowerCase()]||'';
+  const c=R(crop), a=R(alt);
+  if(c && c!=='other') return c;
+  if(a && a!=='other') return a;
+  return c || a || 'other';
+}
+const INCOME_MODES=['Production (output × rate)','Direct income'];
+/* Which mode a category should start in. A crop is weighed; a goat, a shop or
+   any other income is not, so it is typed. */
+function defaultIncomeMode(cropLabel){
+  return LIVELIHOOD_DIRECT.has(livelihoodKey(cropLabel,'')) ? INCOME_MODES[1] : INCOME_MODES[0];
+}
+function isDirectMode(row){
+  const m=String((row&&row.income_mode)||'').trim().toLowerCase();
+  if(m) return m.indexOf('direct')===0;
+  // rows saved before the mode existed: no quantity and no rate but an income = typed
+  const q=+((row&&row.production_kg)||0), r=+((row&&row.rate_inr_per_kg)||0);
+  return (!q && !r) && !!(+((row&&row.income_inr)||0) || +((row&&row.net_profit_inr)||0));
+}
+
 /* ════════ RESOURCE CONFIG (DB snake_case keys) ════════ */
 const SEL_STATUS=['Planned','Ongoing','Completed','On Hold'];
 const RES={
@@ -843,11 +938,11 @@ const RES={
   beneficiaries:{label:'Beneficiaries',sub:'Farmer & household beneficiaries — full demographic & economic profile',icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',badge:true,
     cols:[['beneficiary_id','ID'],['beneficiary_farmer_name','Name'],['gender','Gender','gender'],['caste','Social Order','caste'],['religion','Religion'],['village','Village'],['block','Block'],['_income_view','Income','incyear']],
     filters:['project_id','donor_id','caste','gender',['income_year','Income view: Baseline',['Baseline','Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']]],
-    fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['organic_farming','Organic Farming at registration *','sel',['Yes','No']],['__bl_tbl','Baseline livelihood — at registration','bltable'],['total_land_acre','Total Land (acres) — auto-sums the crop areas','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
-  crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — crops, alternative livelihoods, health, road safety, anything',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
-    cols:[['beneficiary_id','Beneficiary'],['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['production_kg','Output Qty (kg)','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr'],['_incchg','Income Change','incchg']],
-    filters:['project_id','donor_id',['project_year','All Years (baseline comparison)',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Crops / Interventions',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
-    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Crop / Intervention Type','dl',['Paddy','Millet','Vegetable','Tuber Crop','Pulses','Oilseeds','Fruits','Health Camp','Immunization','Road Safety Training','Sanitation','Drinking Water','Skill Training','Tree Plantation','Other']],['alternative_livelihood','Alternative Livelihood','dl',['Goatery','Poultry','Tailoring','Petty Shop','Micro Enterprise','Dairy','Mushroom','Bee Keeping','None']],['project_year','Project Year *','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['area_acre','Area / Scale','num'],['total_expenditure_inr','Expenditure (₹)','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹) — auto: quantity × rate','num'],['net_profit_inr','Net Profit (₹) — auto: income − expenditure','num'],['sold','Produce sold?','sel',['Yes','No']],['organic_farming','Organic Farming *','sel',['Yes','No']],['food_security','Food security throughout the year?','sel',['Yes','No']],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
+    fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['alternative_livelihood','Alternative Livelihood (non-farm)','dl',['Goat Rearing','Backyard Poultry','Micro Enterprise','Mushroom Cultivation','Other Income','None']],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['organic_farming','Organic Farming at registration *','sel',['Yes','No']],['__bl_tbl','Baseline livelihood — at registration','bltable'],['total_land_acre','Total Land (acres) — auto-sums the crop areas','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
+  crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — the same eleven livelihood categories the beneficiary baseline uses, nothing else',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
+    cols:[['beneficiary_id','Beneficiary'],['_livelihood','Livelihood / Crop','liv'],['season','Season'],['production_kg','Output Qty (kg)','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr'],['_incchg','Income Change','incchg']],
+    filters:['project_id','donor_id',['project_year','All Years (baseline comparison)',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Livelihoods / Crops',LIVELIHOOD_LABELS],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
+    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Livelihood / Crop *','liv',LIVELIHOOD_LABELS],['project_year','Project Year *','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['income_mode','How is the income recorded? *','sel',INCOME_MODES],['area_acre','Area / Scale','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹)','num'],['total_expenditure_inr','Expenditure (₹)','num'],['net_profit_inr','Net Profit (₹) — auto: income − expenditure','num'],['sold','Produce sold?','sel',['Yes','No']],['organic_farming','Organic Farming *','sel',['Yes','No']],['food_security','Food security throughout the year?','sel',['Yes','No']],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
   activities:{label:'Activity Progress',sub:'Every activity\'s multi-year targets & quarterly / monthly achievements — totals auto-computed',icon:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
     cols:[['project_activity','Activity'],['unit_of_measurement','Unit'],['total_target','Total Tgt','num'],['target_year_1','Y1 Tgt','num'],['y1_total_achievement','Y1 Ach','num'],['cumulative_achievement','Cum Ach','num']],
     filters:['project_id','donor_id',['unit_of_measurement','Units',['Number','Percentage','INR','Event','Acres','Kilograms']]],
@@ -1117,18 +1212,6 @@ function onProgrammeChange(){
 }
 /* Baseline livelihood income — live-sum the 7 activity incomes into the
    read-only "Total Baseline Income" box on the beneficiary form. */
-/* ════════ ONE canonical definition of the baseline livelihood sources ════════
-   [key, label, hasLand] — every total, validation, export, chart and report
-   derives from this single list, so the enumerations can never drift apart.
-   Per source we capture: Area (crops) · Production kg (crops) · Income ·
-   Expenditure — and NET (income − expenditure) is always COMPUTED, never
-   stored, so the two can never disagree. */
-const BL_SOURCES=[
-  ['paddy','Paddy',1],['millet','Millet',1],['vegetable','Vegetable',1],
-  ['tuber','Tuber Crop',1],['pulses','Pulses',1],['oilseed','Oilseeds',1],
-  ['mushroom','Mushroom Cultivation',1],['goat','Goat Rearing',0],
-  ['poultry','Backyard Poultry',0],['micro_enterprise','Micro Enterprise',0],['other','Other',0],
-];
 const BL_INCOME_KEYS=BL_SOURCES.map(s=>'bl_'+s[0]+'_income');
 const BL_EXP_KEYS   =BL_SOURCES.map(s=>'bl_'+s[0]+'_expenditure');
 const BL_AREA_KEYS  =BL_SOURCES.filter(s=>s[2]).map(s=>'bl_'+s[0]+'_area');
@@ -1545,35 +1628,98 @@ function wireProgressAuto(id){
 /* Beneficiary form: Total Land auto-sums the three baseline crop areas (Paddy +
    Millet + Vegetable) the same way the income total does — still editable, and a
    value the officer typed themselves is never overwritten. */
-/* Production & Output — the two figures that must never be typed wrong:
-     Income     = Output Quantity × Rate
-     Net Profit = Income − Expenditure
-   Both fill themselves live. A value the officer types themselves is respected
-   (some interventions have no kg × rate — a health camp, a training), and the
-   auto-fill simply steps aside for that field. */
+/* Production & Output — TWO honest ways to arrive at an income, never one forced
+   formula:
+     Production mode   Income = Output Quantity (kg) × Rate (₹ / kg)
+     Direct mode       Income is typed as a rupee figure
+   A goat, a poultry batch, a tailoring shop or any other income has no meaningful
+   weight and no price per kilogram, so asking for them would only invite made-up
+   numbers. In Direct mode the Output and Rate boxes are put away altogether.
+   Net Profit is always Income − Expenditure, in both modes. */
+function cropModeIsDirect(){
+  const m=$('ff-income_mode');
+  if(m && String(m.value).trim()) return String(m.value).trim().toLowerCase().indexOf('direct')===0;
+  return LIVELIHOOD_DIRECT.has(livelihoodKey((($('ff-crop')||{}).value)||'',''));
+}
+/* True when the chosen category is a non-farm livelihood (goat, poultry, a shop,
+   any other income) — the questions that only make sense for a crop are put away. */
+function cropIsNonFarm(){
+  return LIVELIHOOD_DIRECT.has(livelihoodKey((($('ff-crop')||{}).value)||'',''));
+}
+/* Show or hide the boxes that only make sense for one kind of livelihood.
+     Output Quantity + Rate  follow the income MODE (weighed or typed)
+     Produce sold · Food security · Organic Farming  follow the CATEGORY,
+       because a goat herd or a tailoring shop grows nothing to be organic about.
+   clearWeighed is true only when the officer has just CHOSEN Direct income. Simply
+   opening an existing record never blanks a stored quantity or rate, because a form
+   must not change data merely by being looked at. */
+function cropApplyMode(clearWeighed){
+  const qty=$('ff-production_kg'), rate=$('ff-rate_inr_per_kg'), inc=$('ff-income_inr'),
+        area=$('ff-area_acre'), sold=$('ff-sold'), org=$('ff-organic_farming'), fs=$('ff-food_security');
+  const direct=cropModeIsDirect(), nonFarm=cropIsNonFarm();
+  const wrap=e=>(e&&e.closest)?e.closest('.f'):null;
+  const show=(e,on)=>{ const w=wrap(e); if(w) w.style.display=on?'':'none'; };
+  show(qty,!direct); show(rate,!direct);
+  show(sold,!nonFarm); show(fs,!nonFarm); show(org,!nonFarm);
+  const relabel=(e,txt)=>{ const w=wrap(e); const l=w&&w.querySelector?w.querySelector('label'):null; if(l) l.textContent=txt; };
+  if(direct){
+    if(clearWeighed){ if(qty) qty.value=''; if(rate) rate.value=''; }
+    if(inc){ inc.dataset.auto=''; inc.readOnly=false; inc.placeholder='e.g. 25000 — the income for this whole year';
+      inc.title='Type the income for this livelihood, for this year'; inc.style.background=''; }
+  } else if(inc){
+    inc.placeholder=''; inc.title='Auto = Output Quantity × Rate — type your own to override'; inc.style.background='var(--bg-soft)';
+  }
+  relabel(area, nonFarm ? 'Scale (herd size, units, batches — optional)' : 'Area / Scale (acre)');
+  const note=$('crop-mode-note');
+  if(note) note.innerHTML = direct
+    ? '💵 <b>Direct income.</b> Type the rupee figure for the year. Output quantity and rate are not asked for, because this livelihood is not weighed in kilograms. Net Profit is still Income − Expenditure.'
+    : '⚖ <b>Production.</b> Income fills itself in as Output Quantity × Rate. Net Profit is Income − Expenditure. Type over either figure if the real number is different.';
+}
+/* The category was changed: move the income mode to the sensible one for it,
+   unless the officer has deliberately set the mode themselves. */
+function cropCategoryChanged(){
+  const m=$('ff-income_mode'), c=$('ff-crop'); if(!m||!c) return;
+  if(m.dataset.touched!=='1') m.value=defaultIncomeMode(c.value);
+  cropApplyMode(true); wireCropTotals();
+}
 function wireCropTotals(){
   const qty=$('ff-production_kg'), rate=$('ff-rate_inr_per_kg'),
-        inc=$('ff-income_inr'), exp=$('ff-total_expenditure_inr'), net=$('ff-net_profit_inr');
+        inc=$('ff-income_inr'), exp=$('ff-total_expenditure_inr'), net=$('ff-net_profit_inr'),
+        mode=$('ff-income_mode'), crop=$('ff-crop');
   if(!inc && !net) return;
   const N=e=>+((e&&e.value)||0);
   const has=e=>!!(e && String(e.value).trim()!=='');
-  // a value already stored that matches the formula is treated as auto (keeps updating)
-  if(inc){ const c=N(qty)*N(rate); if(!has(inc) || (c>0 && Math.abs(N(inc)-c)<0.01)) inc.dataset.auto='1'; }
+  // A record saved before the mode existed, or a brand new one, gets the mode its
+  // category implies — so nobody has to think about it for the ordinary case.
+  if(mode && !String(mode.value).trim()){
+    const chosen=String((crop&&crop.value)||'').trim();
+    // A brand new form with no category yet starts in Production mode, the common case;
+    // choosing a non-farm category switches it. A stored row that has a quantity or a
+    // rate was plainly a weighed production.
+    mode.value = (has(qty)||has(rate)||!chosen) ? INCOME_MODES[0] : defaultIncomeMode(chosen);
+  }
+  if(mode && !mode._wired){ mode._wired=1;
+    mode.addEventListener('change',()=>{ mode.dataset.touched='1'; cropApplyMode(true); wireCropTotals(); }); }
+  const direct=cropModeIsDirect();
+  // In production mode a stored value that matches the formula keeps auto-updating.
+  // In direct mode the income is the officer's own figure and is never overwritten.
+  if(inc){ if(direct) inc.dataset.auto='';
+    else { const c=N(qty)*N(rate); if(!has(inc) || (c>0 && Math.abs(N(inc)-c)<0.01)) inc.dataset.auto='1'; } }
   if(net){ const c=N(inc)-N(exp); if(!has(net) || Math.abs(N(net)-c)<0.01) net.dataset.auto='1'; }
   const calcNet=()=>{ if(!net || net.dataset.auto!=='1') return;
     if(!has(inc) && !has(exp)){ net.value=''; return; }
     net.value=+(N(inc)-N(exp)).toFixed(2); };
-  const calcInc=()=>{ if(inc && inc.dataset.auto==='1'){
+  const calcInc=()=>{ if(!cropModeIsDirect() && inc && inc.dataset.auto==='1'){
       const c=N(qty)*N(rate);
       inc.value=(has(qty)&&has(rate)&&c>0)? +c.toFixed(2) : (has(qty)||has(rate)?'':inc.value);
     } calcNet(); };
-  [qty,rate].forEach(e=>{ if(e) e.addEventListener('input',calcInc); });
-  if(inc) inc.addEventListener('input',()=>{ inc.dataset.auto=''; calcNet(); });   // typed by hand → stop auto
-  if(exp) exp.addEventListener('input',calcNet);
-  if(net) net.addEventListener('input',()=>{ net.dataset.auto=''; });
-  const hint=(e,t)=>{ if(e){ e.title=t; e.style.background='var(--bg-soft)'; } };
-  hint(inc,'Auto = Output Quantity × Rate — type your own to override');
-  hint(net,'Auto = Income − Expenditure — type your own to override');
+  if(!wireCropTotals._bound){ wireCropTotals._bound=1; }
+  [qty,rate].forEach(e=>{ if(e && !e._wired){ e._wired=1; e.addEventListener('input',calcInc); } });
+  if(inc && !inc._wired){ inc._wired=1; inc.addEventListener('input',()=>{ inc.dataset.auto=''; calcNet(); }); }   // typed by hand → stop auto
+  if(exp && !exp._wired){ exp._wired=1; exp.addEventListener('input',calcNet); }
+  if(net && !net._wired){ net._wired=1; net.addEventListener('input',()=>{ net.dataset.auto=''; }); }
+  if(net){ net.title='Auto = Income − Expenditure — type your own to override'; net.style.background='var(--bg-soft)'; }
+  cropApplyMode();
   calcInc();
 }
 /* Gram Sabha: Total participants = Male + Female, live (type your own to override) */
@@ -1837,6 +1983,18 @@ function achvCell(row){
 function cellRender(row,col){
   const [k,l,type]=col;
   if(type==='achv') return achvCell(row);
+  /* The livelihood category, always resolved to the canonical eleven, with a small
+     mark showing whether the income was weighed (kg × rate) or typed directly. */
+  if(type==='liv'){
+    const lk=livelihoodKey(row.crop,row.alternative_livelihood);
+    const raw=String(row.crop||row.alternative_livelihood||'').trim();
+    const canon=LIVELIHOOD_LABEL[lk]||'Other Income';
+    const retired = raw && raw.toLowerCase()!==canon.toLowerCase();
+    const direct=isDirectMode(row);
+    return `<div style="min-width:132px"><span class="t-name">${esc(canon)}</span>`
+      +(retired?` <span class="bdg" style="background:var(--warn-soft);color:var(--warn);font-size:10px" title="Saved under the older category “${esc(raw)}” — counted under ${esc(canon)}">was ${esc(raw)}</span>`:'')
+      +`<div style="font-size:10px;color:var(--t4)">${direct?'💵 income entered directly':'⚖ output × rate'}</div></div>`;
+  }
   if(type==='incyear'){
     // Baseline view shows the registration income. A year view shows that year's
     // income from production, with the change against baseline beneath it.
@@ -2041,8 +2199,15 @@ async function renderIncomeBanner(key){
     </div>`;
   }catch(e){ box.style.display='none'; }
 }
-/* Per-beneficiary income view — baseline (from registration) vs current (summed from
-   that beneficiary's Production/Output records) broken down by activity. */
+/* ════════ Per-beneficiary income — the COMPLETE history ════════
+   One table with the eleven livelihood categories down the side and Baseline,
+   then every year that has production, across the top. Each year cell shows that
+   year's own income for that activity and how it compares with the baseline for
+   the SAME activity, so a rise in paddy is never hidden by a fall in goats.
+   Nothing is added across years: each year stands on its own against the baseline,
+   because the baseline is a single year's income.
+   This view ignores the section's year filter on purpose — the whole point of
+   opening it is to see the entire history in one place. */
 async function openBeneficiaryIncome(bid, name){
   showModal('💰 Income — '+esc(name), '<div class="empty">Loading…</div>');
   try{
@@ -2051,51 +2216,79 @@ async function openBeneficiaryIncome(bid, name){
       apiGet('?resource=crops&beneficiary_id='+encodeURIComponent(bid)+'&limit=2000'),
     ]);
     const b=(bres.rows&&bres.rows[0])||{}; const cs=cres.rows||[];
-    const N=v=>+v||0; const lc=s=>String(s==null?'':s).trim().toLowerCase();
-    const bucketOf=c=>{const cr=lc(c.crop),al=lc(c.alternative_livelihood);
-      if(cr==='paddy')return'paddy'; if(cr==='millet')return'millet'; if(cr==='vegetable')return'vegetable';
-      if(cr==='tuber crop'||cr==='tuber')return'tuber'; if(cr==='pulses')return'pulses'; if(cr==='oilseeds'||cr==='oilseed')return'oilseed';
-      if(cr==='mushroom'||al==='mushroom'||al==='mushroom cultivation')return'mushroom';
-      if(al==='goatery'||al==='goat'||al==='goat rearing')return'goat';
-      if(al==='poultry'||al==='backyard poultry')return'poultry';
-      if(['micro enterprise','petty shop','tailoring','dairy','bee keeping'].includes(al))return'micro'; return'other';};
-    // NET on both sides: production uses Net Profit (falls back to gross for old rows),
-    // baseline uses income − expenditure per source — what the household actually keeps.
+    const N=v=>+v||0;
+    // NET on both sides: production uses Net Profit (falls back to gross for rows
+    // saved before Net Profit existed), baseline uses income − expenditure per source.
     const NP=c=>{ const n=c.net_profit_inr; return (n!=null&&String(n).trim()!=='')?(+n||0):N(c.income_inr); };
     const BL=k=>N(b['bl_'+k+'_income'])-N(b['bl_'+k+'_expenditure']);
-    const cur={paddy:0,millet:0,vegetable:0,tuber:0,pulses:0,oilseed:0,mushroom:0,goat:0,poultry:0,micro:0,other:0};
-    let curTotal=0; for(const c of cs){ const inc=NP(c); curTotal+=inc; cur[bucketOf(c)]+=inc; }
-    const acts=[['paddy','Paddy',BL('paddy')],['millet','Millet',BL('millet')],['vegetable','Vegetable',BL('vegetable')],['tuber','Tuber Crop',BL('tuber')],['pulses','Pulses',BL('pulses')],['oilseed','Oilseeds',BL('oilseed')],['mushroom','Mushroom',BL('mushroom')],['goat','Goat Rearing',BL('goat')],['poultry','Backyard Poultry',BL('poultry')],['micro','Micro Enterprise',BL('micro_enterprise')],['other','Other',BL('other')]];
-    const blSum=acts.reduce((s,a)=>s+a[2],0);
-    const blTotal=blSum>0?blSum:N(b.current_income_per_annum_inr);
-    // The baseline is an ANNUAL income. So "now" is the AVERAGE PER YEAR of the logged
-    // production — never the multi-year running total, which would invent growth that
-    // never happened (Year-3 reading as Y1+Y2+Y3 against one year's baseline).
-    const byYear={}; for(const c of cs){ const y=String(c.project_year||'').trim()||'Unspecified'; byYear[y]=(byYear[y]||0)+NP(c); }
-    const yrsK=Object.keys(byYear).sort();
-    const nY=Math.max(1,yrsK.length);
+    const KEYS=LIVELIHOODS.map(l=>l.key);
+    const bl=Object.fromEntries(KEYS.map(k=>[k,BL(k)]));
+    // Production, split by year AND by activity
+    const yearsSet=new Set(); const cell={}; const recN={}; const modes={};
+    for(const c of cs){
+      const y=String(c.project_year||'').trim()||'Unspecified';
+      const k=livelihoodKey(c.crop,c.alternative_livelihood);
+      yearsSet.add(y);
+      cell[y]=cell[y]||{}; cell[y][k]=(cell[y][k]||0)+NP(c);
+      recN[y]=(recN[y]||0)+1;
+      if(isDirectMode(c)) modes[k]='direct';
+    }
+    // Year-1 … Year-6 in order, anything unusual (e.g. Unspecified) last
+    const years=[...yearsSet].sort((a,z)=>{
+      const na=/^Year-(\d+)$/.exec(a), nz=/^Year-(\d+)$/.exec(z);
+      if(na&&nz) return +na[1]-+nz[1];
+      if(na) return -1; if(nz) return 1; return a.localeCompare(z);
+    });
+    const blTotalRaw=KEYS.reduce((s,k)=>s+bl[k],0);
+    const blTotal=blTotalRaw>0?blTotalRaw:N(b.current_income_per_annum_inr);
+    const yrTotal=y=>KEYS.reduce((s,k)=>s+((cell[y]||{})[k]||0),0);
+    const curTotal=years.reduce((s,y)=>s+yrTotal(y),0);
+    const nY=Math.max(1,years.length);
     const curAvg=curTotal/nY;
-    const enh=curAvg-blTotal; const pct=blTotal>0?Math.round(1000*enh/blTotal)/10:(curAvg>0?100:0); const up=enh>=0;
-    // Sources with nothing on either side stay hidden — the table shows only what this person actually has
-    const rows=acts.filter(a=>a[2]!==0||(cur[a[0]]||0)!==0).map(a=>{const cu=(cur[a[0]]||0)/nY,dd=cu-a[2];return `<tr><td style="padding:6px">${a[1]}</td><td class="mono" style="padding:6px;text-align:right">${fmtINR(a[2])}</td><td class="mono" style="padding:6px;text-align:right;color:var(--ok)">${fmtINR(cu)}</td><td class="mono" style="padding:6px;text-align:right;color:${dd>=0?'var(--ok)':'var(--bad)'}">${dd>=0?'+':'−'}${fmtINR(Math.abs(dd))}</td></tr>`;}).join('');
-    const otherRow='';
-    // Each year shows its OWN income (never cumulative) plus its change vs the baseline
-    const yearRow = yrsK.length ? `<div style="margin-top:16px"><div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px">📈 Income over time — each year on its own, vs baseline</div><div style="display:flex;gap:8px;flex-wrap:wrap"><div style="background:var(--bg-soft);border-radius:8px;padding:7px 13px;text-align:center"><div style="font-size:10.5px;color:var(--t4)">Baseline</div><div class="mono" style="font-weight:700">${fmtINR(blTotal)}</div></div>`+yrsK.map(y=>{
-      const v=byYear[y], dy=v-blTotal, py=blTotal>0?Math.round(1000*dy/blTotal)/10:null, uy=dy>=0;
-      return `<div style="background:${uy?'var(--ok-soft)':'#fee2e2'};border-radius:8px;padding:7px 13px;text-align:center"><div style="font-size:10.5px;color:var(--t4)">${esc(y)}</div><div class="mono" style="font-weight:700;color:${uy?'var(--ok)':'var(--bad)'}">${fmtINR(v)}</div><div class="mono" style="font-size:10px;color:${uy?'var(--ok)':'var(--bad)'}">${uy?'+':'−'}${fmtINR(Math.abs(dy))}${py!=null?` · ${uy?'+':'−'}${Math.abs(py)}%`:''}</div></div>`;
-    }).join('')+`</div></div>` : '';
+    const enh=curAvg-blTotal, pct=blTotal>0?Math.round(1000*enh/blTotal)/10:(curAvg>0?100:0), up=enh>=0;
+    // Only the activities this household actually has, on either side
+    const rows=KEYS.filter(k=>bl[k]!==0 || years.some(y=>((cell[y]||{})[k]||0)!==0));
+    const dCell=(v,base,extra)=>{
+      if(v===0 && base===0) return `<td style="padding:7px 10px;text-align:right;color:var(--t5)">—</td>`;
+      const d=v-base, u=d>=0, p=base>0?Math.round(1000*d/base)/10:null;
+      return `<td style="padding:7px 10px;text-align:right;white-space:nowrap">
+        <span class="mono" style="font-weight:700;color:${v?(u?'var(--ok)':'var(--bad)'):'var(--t4)'}">${fmtINR(v)}</span>
+        <div class="mono" style="font-size:10px;color:${u?'var(--ok)':'var(--bad)'}">${u?'+':'−'}${fmtINR(Math.abs(d))}${p!=null?' · '+(u?'+':'−')+Math.abs(p)+'%':''}</div>
+        ${extra||''}</td>`;
+    };
+    const body=rows.map(k=>{
+      const label=LIVELIHOOD_LABEL[k];
+      const tag=modes[k]==='direct'?` <span class="bdg" style="background:var(--gold-soft);color:var(--gold-ink);font-size:9.5px" title="Income was entered directly, not calculated from a quantity and a rate">direct</span>`:'';
+      return `<tr>
+        <td style="padding:7px 10px;font-weight:600">${esc(label)}${tag}</td>
+        <td class="mono" style="padding:7px 10px;text-align:right;background:var(--bg-soft)">${bl[k]?fmtINR(bl[k]):'<span style="color:var(--t5)">—</span>'}</td>
+        ${years.map(y=>dCell((cell[y]||{})[k]||0, bl[k])).join('')}
+      </tr>`;
+    }).join('');
+    const totalRow=`<tr style="border-top:2px solid var(--navy-800);font-weight:800">
+      <td style="padding:9px 10px">TOTAL / year</td>
+      <td class="mono" style="padding:9px 10px;text-align:right;background:var(--bg-soft)">${fmtINR(blTotal)}</td>
+      ${years.map(y=>dCell(yrTotal(y), blTotal, `<div style="font-size:9.5px;color:var(--t4);font-weight:600">${recN[y]||0} record${(recN[y]||0)===1?'':'s'}</div>`)).join('')}
+    </tr>`;
+    const head=`<tr style="background:var(--navy-800);color:#fff">
+      <th style="padding:8px 10px;text-align:left;position:sticky;left:0;background:var(--navy-800)">Activity</th>
+      <th style="padding:8px 10px;text-align:right">Baseline / yr</th>
+      ${years.map(y=>`<th style="padding:8px 10px;text-align:right;white-space:nowrap">${esc(y)}</th>`).join('')}
+    </tr>`;
+    const table = rows.length||years.length
+      ? `<div style="overflow-x:auto;border:1px solid var(--border);border-radius:12px">
+           <table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:${260+110*(years.length+1)}px">
+             <thead>${head}</thead><tbody>${body}${totalRow}</tbody></table></div>`
+      : `<div class="empty" style="padding:24px">Nothing recorded yet for this household — no baseline livelihood income and no Production / Output records.</div>`;
     const html=`
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
         <div style="flex:1;min-width:110px;background:var(--bg-soft);border-radius:10px;padding:10px 14px"><div style="font-size:11px;color:var(--t3)">BEFORE · baseline / year</div><div class="mono" style="font-size:18px;font-weight:700">${fmtINR(blTotal)}</div></div>
         <div style="flex:1;min-width:110px;background:var(--bg-soft);border-radius:10px;padding:10px 14px"><div style="font-size:11px;color:var(--t3)">NOW · average / year</div><div class="mono" style="font-size:18px;font-weight:700;color:var(--ok)">${fmtINR(curAvg)}</div>${nY>1?`<div style="font-size:10px;color:var(--t4)">${fmtINR(curTotal)} over ${nY} years</div>`:''}</div>
         <div style="flex:1;min-width:110px;background:${up?'var(--ok-soft)':'#fee2e2'};border-radius:10px;padding:10px 14px"><div style="font-size:11px;color:var(--t3)">ENHANCED / year</div><div class="mono" style="font-size:17px;font-weight:800;color:${up?'var(--ok)':'var(--bad)'}">${up?'+':'−'}${fmtINR(Math.abs(enh))} (${up?'+':'−'}${Math.abs(pct)}%)</div></div>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr style="text-align:left;color:var(--t3);border-bottom:1px solid var(--border)"><th style="padding:6px">Activity</th><th style="padding:6px;text-align:right">Before / yr</th><th style="padding:6px;text-align:right">Now / yr</th><th style="padding:6px;text-align:right">Change</th></tr></thead>
-        <tbody>${rows}${otherRow}</tbody>
-      </table>
-      ${yearRow}
-      <div style="font-size:11.5px;color:var(--t4);margin-top:10px">All figures are <b>NET</b> (income − expenditure on both sides; older production rows without a net fall back to gross). Baseline is an annual figure, so "now" is the <b>average per year</b> — ${fmtINR(curTotal)} across ${nY} year${nY===1?'':'s'} of Production / Output (${cs.length} record${cs.length===1?'':'s'}). Each year above is shown on its own, never added up.</div>`;
+      <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px">📊 Every activity, every year, each compared with its own baseline</div>
+      ${table}
+      <div style="font-size:11.5px;color:var(--t4);margin-top:10px;line-height:1.6">All figures are <b>NET</b> (income − expenditure on both sides; production rows saved before Net Profit existed fall back to gross). The small figure under each amount is the change against the baseline for that same activity. <b>Years are never added together</b>: the baseline is one year's income, so each year is compared with it on its own. The averages above cover ${nY} year${nY===1?'':'s'} of Production / Output (${cs.length} record${cs.length===1?'':'s'} in total). Categories marked <b>direct</b> had their income typed in rather than calculated from a quantity and a rate, which is how goat rearing, poultry, micro enterprise and other income are recorded.</div>`;
     showModal('💰 Income — '+esc(name), html);
   }catch(e){ showModal('💰 Income — '+esc(name), '<div class="empty">⚠ '+esc(e.message)+'</div>'); }
 }
@@ -2206,11 +2399,11 @@ async function reloadResource(key){
       const tb=$('res-tbody');
       if(tb) tb.innerHTML=`<tr><td colspan="20"><div class="empty-state" style="padding:34px 16px">
         <div style="font-size:40px;line-height:1;margin-bottom:10px">🌾</div>
-        <div class="empty-title">Pick a Crop / Intervention or a Season to display the records</div>
-        <div class="empty-sub" style="max-width:560px;margin:8px auto 0;line-height:1.7">One beneficiary can have <b>several</b> production entries — Paddy in Kharif, Millet in Rabi, a goatery batch… Choosing a crop or a season shows each person <b>once per view</b>, so nobody ever looks duplicated. Their <b>Income Change</b> always counts every production they have, across all crops &amp; seasons.</div>
+        <div class="empty-title">Pick a Livelihood / Crop or a Season to display the records</div>
+        <div class="empty-sub" style="max-width:560px;margin:8px auto 0;line-height:1.7">One beneficiary can have <b>several</b> production entries — Paddy in Kharif, Millet in Rabi, a goat rearing batch. Choosing a livelihood or a season shows each person <b>once per view</b>, so nobody ever looks duplicated. Their <b>Income Change</b> always counts every production they have, across all livelihoods and seasons.</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:16px">
           ${['Kharif','Rabi','Summer'].map(s=>`<button class="btn btn-primary btn-sm" onclick="cropQuick('season','${s}')">🗓 ${s}</button>`).join('')}
-          ${['Paddy','Millet','Vegetable','Pulses'].map(c=>`<button class="btn btn-ghost btn-sm" onclick="cropQuick('crop','${c}')">🌾 ${c}</button>`).join('')}
+          ${['Paddy','Millet','Vegetable','Goat Rearing','Other Income'].map(c=>`<button class="btn btn-ghost btn-sm" onclick="cropQuick('crop','${c}')">🌾 ${c}</button>`).join('')}
         </div></div></td></tr>`;
       renderPager();
       return;
@@ -2395,8 +2588,21 @@ async function openForm(key,id){
     else if(type==='blinc')inp=`<input id="ff-${k}" type="number" step="any" value="${esc(v)}" oninput="recalcBaselineTotal()">`;
     else if(type==='date')inp=`<input id="ff-${k}" type="date" value="${esc(v)}">`;
     else if(type==='password')inp=`<input id="ff-${k}" type="password" value="" autocomplete="new-password" placeholder="${id?'Leave blank to keep current password':'Min 6 characters'}">`;
-    else if(type==='sel')inp=`<select id="ff-${k}"><option value="">— Select —</option>${opts.map(o=>`<option ${o==v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+    else if(type==='sel')inp=`<select id="ff-${k}"><option value="">— Select —</option>${opts.map(o=>`<option ${o==v?'selected':''}>${esc(o)}</option>`).join('')}</select>`
+      +(k==='income_mode'?`<div id="crop-mode-note" style="font-size:11.5px;color:var(--t3);margin-top:5px;line-height:1.55"></div>`:'');
     else if(type==='dl')inp=`<input id="ff-${k}" list="dl-${k}" value="${esc(v)}"><datalist id="dl-${k}">${opts.map(o=>`<option>${esc(o)}</option>`).join('')}</datalist>`;
+    /* 'liv' — the ONE livelihood list, shared with the beneficiary baseline table.
+       A value saved under an older category is kept and clearly marked, so editing
+       an old record never silently rewrites what the field officer recorded. */
+    else if(type==='liv'){
+      const known=opts.some(o=>String(o).toLowerCase()===String(v).toLowerCase());
+      inp=`<select id="ff-${k}" onchange="cropCategoryChanged()"><option value="">— Select —</option>`
+        +opts.map(o=>`<option ${String(o).toLowerCase()===String(v).toLowerCase()?'selected':''}>${esc(o)}</option>`).join('')
+        +((v && !known)?`<option selected>${esc(v)}</option>`:'')
+        +`</select>`
+        +((v && !known)?`<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ “${esc(v)}” is an older category that the list no longer offers. It is counted under <b>Other Income</b>. Pick one of the eleven categories above to bring this record in line.</div>`:'')
+        +`<div style="font-size:11.5px;color:var(--t4);margin-top:4px">These are the same eleven categories as the beneficiary's baseline table, so before and after always compare like with like.</div>`;
+    }
     else if(type==='ref'&&k==='programme_id')inp=comboHTML('programme_id',(LOOKUPS.programmes||[]),v)+inlineAddBtn('programmes','thematic area');
     else if(type==='ref'&&k==='project_id'){ const _pl=projectListFor(row.programme_id||'');
       const _hidden=(key==='mappings')?0:unmappedProjects().filter(p=>!row.programme_id||!p.programme_id||p.programme_id===row.programme_id).length;
@@ -3335,6 +3541,7 @@ async function saveActivityForm(){
     if(ACT.id){ await apiPut('?resource=activities&id='+ACT.id,payload); toast('✓ Saved'); }
     else { const r=await apiPost('?resource=activities',payload); toast('✓ Created'+(r&&r.business_id?' — ID '+r.business_id:'')); }
     __FORM_INITIAL=null;
+    await syncAfterChange('activities', false);   // targets & achievements feed the indicators at once
     goPage(__formReturn||'activities');
   }catch(e){ toast('⚠ '+e.message,'t-err'); }
   finally{ __SAVE_BUSY=false; const b=document.querySelector('#entry-form button[type=submit]'); if(b){ b.disabled=false; if(b.dataset.lbl) b.innerHTML=b.dataset.lbl; } }
@@ -4082,9 +4289,29 @@ async function saveForm(key,id){
   if(key==='crops' && !String(payload.project_year||'').trim()){
     toast('⚠ Please choose the Project Year — every production record must belong to a year so it can be reported and compared','t-err'); return;
   }
-  // Organic Farming is mandatory on both forms — it is the before/after the indicator counts
+  // The livelihood category is mandatory, and it can only be one of the eleven the
+  // beneficiary baseline uses. Without it the record cannot be compared with anything.
+  if(key==='crops' && !String(payload.crop||'').trim()){
+    toast('⚠ Please choose the Livelihood / Crop — it must be one of the same eleven categories as the beneficiary baseline','t-err'); return;
+  }
+  // Direct income means the officer types the rupee figure themselves, so it has to be there
+  if(key==='crops'){
+    const direct=String(payload.income_mode||'').trim().toLowerCase().indexOf('direct')===0;
+    if(!String(payload.income_mode||'').trim()){
+      toast('⚠ Please choose how the income is recorded — Production (output × rate) or Direct income','t-err'); return;
+    }
+    if(direct && !String(payload.income_inr||'').trim()){
+      toast('⚠ Direct income was chosen, so please type the Income (₹) for this year','t-err'); return;
+    }
+    if(!direct && !String(payload.production_kg||'').trim() && !String(payload.income_inr||'').trim()){
+      toast('⚠ Please enter the Output Quantity and Rate, or switch to Direct income and type the rupee figure','t-err'); return;
+    }
+  }
+  // Organic Farming is mandatory — except for the non-farm livelihoods (goat rearing,
+  // backyard poultry, micro enterprise, other income), where nothing is grown at all.
   if((key==='beneficiaries'||key==='crops') && !String(payload.organic_farming||'').trim()){
-    toast('⚠ Please answer Organic Farming (Yes / No) — the organic-farming indicator counts it','t-err'); return;
+    const nonFarm = key==='crops' && LIVELIHOOD_DIRECT.has(livelihoodKey(payload.crop,payload.alternative_livelihood));
+    if(!nonFarm){ toast('⚠ Please answer Organic Farming (Yes / No) — the organic-farming indicator counts it','t-err'); return; }
   }
   // Baseline income validation — the source breakdown total must match the registration income
   if(key==='beneficiaries'){
@@ -4127,6 +4354,7 @@ async function saveForm(key,id){
       // SPEED: only master-data saves change the picker lookups — field-data saves
       // navigate instantly instead of waiting a full lookup round-trip
       if(MASTER_LK.includes(key)){ LOOKUPS._loaded=false; await ensureLookups(); }
+      await syncAfterChange(key, false);   // every dependent figure follows the edit at once
       goPage(__formReturn||key);
     } else {
       const r=await apiPost('?resource='+key,payload);
@@ -4159,6 +4387,7 @@ async function saveForm(key,id){
       if(key==='beneficiaries') LOOKUPS._benLoaded=false;
       // SPEED: only master-data saves refresh the picker lookups before navigating
       if(MASTER_LK.includes(key)){ LOOKUPS._loaded=false; await ensureLookups(); }
+      await syncAfterChange(key, false);   // every dependent figure follows the new record at once
       // Created via a "＋ New …" redirect? Return to the form we came from and select the new record.
       if(__PENDING.length && __PENDING[__PENDING.length-1].createResource===key){
         const pend=__PENDING.pop();
@@ -4242,18 +4471,27 @@ async function delRow(key,id){
    record is gone the numbers are already correct on the server. This clears the
    caches the browser is holding and redraws whatever is on screen, so the user
    never has to refresh the page to see the truth. */
-async function afterDeleteRefresh(key){
-  // caches that could still describe the deleted record
+async function afterDeleteRefresh(key){ return syncAfterChange(key, true); }
+/* Called after EVERY change — added, edited or deleted. It throws away anything the
+   browser was still holding about the old state and redraws whatever is on screen,
+   so the section list, the income summary, the dashboard, the eleven logged
+   indicators and the data-entry counts all move together. The reports and the
+   Excel files are always built from a fresh server read, so they follow too. */
+async function syncAfterChange(key, redrawList){
+  bumpDataVersion();
+  // caches that could still describe the record as it was
   LOOKUPS._benLoaded=false;
-  if(MASTER_LK.includes(key)){ LOOKUPS._loaded=false; await ensureLookups(); }
-  reloadResource(key);
+  if(MASTER_LK.includes(key)){ LOOKUPS._loaded=false; try{ await ensureLookups(); }catch(e){} }
+  if(redrawList){ try{ reloadResource(key); }catch(e){} }
   // panels that show figures derived from the data
   if(key==='crops'||key==='beneficiaries'){
-    if(CP==='crops'||CP==='beneficiaries') renderIncomeBanner(CP);
+    if(CP==='crops'||CP==='beneficiaries'){ try{ renderIncomeBanner(CP); }catch(e){} }
   }
-  if(CP==='dash') loadDash();
-  if(CP==='indicators10') loadIndicators10();
-  if(CP==='dataentry' && typeof loadEntryCounts==='function') loadEntryCounts();
+  try{
+    if(CP==='dash') loadDash();
+    if(CP==='indicators10') loadIndicators10();
+    if(CP==='dataentry' && typeof loadEntryCounts==='function') loadEntryCounts();
+  }catch(e){}
 }
 
 /* ════════ DASHBOARD ════════ */
@@ -4597,7 +4835,9 @@ async function loadDash(){
       : kpiCard('Avg. Income Change','—',incMeta,'--brand','--brand-soft','M18 20V10M12 20V4M6 20v-6'));
   // Income — Before vs After, by livelihood activity
   const ic=d.income_compare||{baseline:{},current:{}}; const _ib=ic.baseline||{}, _icur=ic.current||{};
-  const incActs=[['paddy','Paddy'],['millet','Millet'],['vegetable','Vegetable'],['tuber','Tuber'],['pulses','Pulses'],['oilseed','Oilseeds'],['mushroom','Mushroom'],['goat','Goat'],['poultry','Poultry'],['micro','Micro Ent.'],['other','Other']];
+  // The chart's activities ARE the eleven shared categories, in the same order as the
+  // baseline table, so the bars line up with what the beneficiary form asked for.
+  const incActs=LIVELIHOODS.map(l=>[(l.key==='micro_enterprise'?'micro':l.key), l.label]);
   __incomeBaData={labels:incActs.map(a=>a[1]),series:[
     {label:'Before (baseline)',data:incActs.map(a=>+_ib[a[0]]||0),color:'#94a3b8'},
     {label:'Now (current)',data:incActs.map(a=>+_icur[a[0]]||0),color:'#10b981'},
@@ -4712,7 +4952,7 @@ async function loadDash(){
 // source → groupable dimensions + measures (count or sum of a numeric column)
 const CHART_SOURCES={
   beneficiaries:{label:'Beneficiaries',dims:[['caste','Social Order'],['gender','Gender'],['religion','Religion'],['block','Block'],['district','District'],['primary_income_source','Income Source'],['source_of_irrigation','Irrigation'],['programme_id','Thematic Area'],['project_id','Project'],['donor_id','Donor']],measures:[['count','Number of beneficiaries'],['current_income_per_annum_inr','Total annual income (₹)'],['total_land_acre','Total land (acre)'],['family_members','Total family members']]},
-  crops:{label:'Production / Outputs',dims:[['crop','Crop / Intervention'],['alternative_livelihood','Alt. Livelihood'],['season','Season'],['project_year','Project Year'],['programme_id','Thematic Area'],['project_id','Project'],['donor_id','Donor']],measures:[['count','Number of records'],['production_kg','Total output'],['income_inr','Total income (₹)'],['net_profit_inr','Total net profit (₹)'],['area_acre','Total area']]},
+  crops:{label:'Production / Outputs',dims:[['crop','Livelihood / Crop'],['income_mode','Income Basis'],['season','Season'],['project_year','Project Year'],['programme_id','Thematic Area'],['project_id','Project'],['donor_id','Donor']],measures:[['count','Number of records'],['production_kg','Total output'],['income_inr','Total income (₹)'],['net_profit_inr','Total net profit (₹)'],['area_acre','Total area']]},
   activities:{label:'Activity Progress',dims:[['project_id','Project'],['donor_id','Donor'],['unit_of_measurement','Unit'],['programme_id','Thematic Area']],measures:[['count','Number of activities'],['total_target','Total target'],['y1_total_achievement','Y1 achievement'],['cumulative_achievement','Cumulative achievement']]},
   shgs:{label:'Self-Help Groups',dims:[['block','Block'],['district','District'],['bank_name','Bank'],['programme_id','Thematic Area'],['project_id','Project'],['donor_id','Donor']],measures:[['count','Number of SHGs'],['no_of_members','Total members'],['monthly_savings_by_members_inr','Total monthly savings (₹)']]},
   loans:{label:'SHG Loans',dims:[['repayment_status','Repayment Status'],['loan_source','Loan Source'],['financial_year','Financial Year'],['donor_id','Donor']],measures:[['count','Number of loans'],['loan_amount_inr','Total loan amount (₹)']]},
@@ -5115,6 +5355,10 @@ const MANUAL_BOOK=[
    ['Sheets you will find','Summary figures. Activities for every year with quarterly detail. Indicator sheets. Loans by financial year. Outputs by intervention. Income Impact with net figures for each source including the change in rupees and in percentage. Organic Farming before and now. Geographies covered. Gram Sabha summary and every meeting. Convergence by department and every record. A glossary.'],
    ['Logged Indicators sheet','All eleven indicators with the computed value, the before and now figures, how many records each is based on, the figures behind it in words, and the exact formula. Where the source data has not been entered the value is left blank and the status column reads Waiting for data, so a reader can never mistake an empty figure for a zero.'],
    ['Local Governance sheets','Gram Sabha Summary gives meetings, participants, the share of women and the rate at which the Village Development Plan was submitted. Gram Sabha Records lists every meeting with its own share of women. Convergence by Department totals households and money for each department with its share of the whole, and Convergence Records lists every scheme entry.'],
+   ['Other and Direct Income sheet','The non-farm livelihoods, which are Goat Rearing, Backyard Poultry, Micro Enterprise and Other Income, and any record whose income was typed directly, are listed on their own sheet with the household, the year, the income, the expenditure and the net income. Keeping them apart means nobody compares a tailoring shop with a paddy yield by accident, while every rupee still counts in the totals.'],
+   ['Income by Year and Activity sheet','The same table the screen shows when a household\'s income is opened, for every household at once. One row for each household and activity, the baseline in its own column, then each project year with a matching column showing the change against that baseline. Years are never added together.'],
+   ['Livelihood Category column','Every production sheet carries the standardised category alongside the words that were actually recorded, and a column stating whether the income came from output times rate or was typed directly. A reader can therefore see both what the software counted and what the field officer wrote.'],
+   ['Reports are always current','Every figure in every workbook is calculated from the database at the moment you press download. There is no stored copy of a total anywhere, so a record you added, edited or deleted a moment ago is already reflected. If production data is deleted, the income, net profit, output totals and growth figures that depended on it change in the same instant.'],
    ['What is no longer in any workbook','The old free form Indicators and Indicator Progress tables, and the Thematic Area tables, have been removed from every report, every export and every import template. Their rows remain in the database and in the Audit Trail.']]},
  {icon:'6',title:'Data Entry: Head Office Setup tab',intro:'This is where the plan and the targets are prepared. It requires the Targets permission.',items:[
    ['Project','Select the project first. The Donor is then filled in automatically.'],
@@ -5137,22 +5381,28 @@ const MANUAL_BOOK=[
    ['Identity fields','Name, father or spouse name, age between 0 and 120, social order, gender and religion. These produce the inclusion charts that donors require.'],
    ['Contact number','Must be a valid ten digit Indian mobile number. A leading zero or a country code is accepted and cleaned automatically.'],
    ['Organic Farming, required','A Yes or No answer recorded at registration. This is the before position for the organic farming indicator.'],
-   ['Baseline livelihood table','One row for each source of income. Crop rows, which are paddy, millet, vegetable, tuber crop, pulses, oilseeds and mushroom cultivation, take Area, Production in kilograms, Income and Expenditure. The other livelihood rows, which are goat rearing, backyard poultry, micro enterprise and other, take Income and Expenditure.'],
+   ['Baseline livelihood table','One row for each source of income, and these eleven rows are the ONLY livelihood categories the software knows. Crop rows, which are Paddy, Millet, Vegetable, Tuber Crop, Pulses, Oilseeds and Mushroom Cultivation, take Area, Production in kilograms, Income and Expenditure. The non-farm rows, which are Goat Rearing, Backyard Poultry, Micro Enterprise and Other Income, take Income and Expenditure only, because nothing about them is weighed.'],
+   ['The same eleven categories everywhere','Production and Output offers exactly these eleven categories and nothing else. A household can never be given a category at registration that does not exist when their production is recorded, so a before and after comparison always compares like with like.'],
    ['The Net column','Calculated for you on every row and on the total line, as income minus expenditure. It is never typed and never stored, so it can never disagree with the figures it comes from.'],
    ['The total must match','The baseline income total must equal the Annual Income at Registration. This check prevents half completed baselines. Total Land is added up from the crop areas automatically.'],
-   ['Income button on each row','Opens that person\'s full income position. It shows the baseline against the current average per year, a table of before, now and change for each source, and each project year listed separately with the change in rupees and in percentage.'],
+   ['Income button on each row','Opens that person\'s complete income history in one table. The activities run down the side and Baseline, then every year that has production, run across the top. Each year cell shows that year\'s income for that activity and, underneath, the change against the baseline for the same activity, in rupees and in percentage. A TOTAL line does the same for the household as a whole. This view always shows the full history and is not narrowed by the year filter on the list, because the purpose of opening it is to see everything at once.'],
+   ['Years are never added together','The baseline is one year\'s income, so each year is compared with it on its own. Adding Year 1, Year 2 and Year 3 together and comparing the sum against a single year would invent growth that never happened. The averages at the top of the income view divide the total by the number of years that actually have production.'],
    ['Lock these fields','Keeps the context fields filled on your own screen while you register many people from one village. It has no effect on any other user.'],
    ['Income view filter','Choose Baseline to see the income recorded at registration. Choose Year 1 through Year 6 to see that person\'s income for that year, calculated from their production records, with the change against the baseline beneath it. Where a person has no records for the chosen year the column says so rather than showing a zero. This is how you follow one household from baseline through each year.'],
    ['Search','Finds a person by name, code, village or telephone number. All columns are searched, and when you type more than one word every word must match.']]},
  {icon:'9',title:'Production and Output Progress',intro:'What actually happened, for each beneficiary, crop and season.',items:[
    ['Project Year is required on the form','Every production record must state its project year. Without one the record would sit outside every year filter and every year by year comparison, so the form will not save until a year is chosen.'],
    ['The Year filter changes the figures','With no year chosen, the Income Change column compares the baseline against the average of every year that has production. Choose Year 1 and it compares the baseline against Year 1 alone, and only Year 1 records are listed. The caption under each figure always names the period it describes, so a year view can never be mistaken for an average. The Income Impact panel above the list follows the same year.'],
-   ['Crop or Season filter, required','No records are shown until you choose a Crop or a Season. One person correctly has several production rows, for example paddy in Kharif and millet in Rabi. Filtering shows each person once in the view, so a donor can never mistake them for a duplicate. This affects the display only. Reports always include every record.'],
-   ['Income, calculated','Output Quantity multiplied by Rate. You may type your own figure to replace it, which is useful for activities such as a health camp that have no quantity or rate.'],
-   ['Net Profit, calculated','Income minus Expenditure. This can also be replaced by your own figure.'],
-   ['Produce sold','A Yes or No answer. It replaces the earlier self consumption quantity.'],
-   ['Organic Farming, required','A Yes or No answer. This is the after position for the organic farming indicator.'],
-   ['Food security throughout the year','A Yes or No answer. This single answer produces logged indicator number two.'],
+   ['Livelihood or Season filter, required','No records are shown until you choose a Livelihood or a Season. One person correctly has several production rows, for example paddy in Kharif and millet in Rabi. Filtering shows each person once in the view, so a donor can never mistake them for a duplicate. This affects the display only. Reports always include every record.'],
+   ['Livelihood or Crop, required','The list holds the same eleven categories as the beneficiary baseline table: Paddy, Millet, Vegetable, Tuber Crop, Pulses, Oilseeds, Mushroom Cultivation, Goat Rearing, Backyard Poultry, Micro Enterprise and Other Income. There is no second list and no other wording. If you open an old record that was saved under a category the list no longer offers, the old wording is kept, marked clearly, and counted under Other Income until you choose one of the eleven.'],
+   ['How is the income recorded, required','Two honest choices. Production, output times rate, is for the weighed crops. Direct income is for a livelihood that has no kilograms and no price per kilogram, such as goat rearing, backyard poultry, a micro enterprise or any other income. Choosing a category sets this for you, and you can change it whenever the real situation differs.'],
+   ['Direct income','Output Quantity and Rate are put away completely and you type the rupee figure for the year, for example twenty five thousand rupees for goat rearing. Nobody is ever asked to invent a weight or a price simply to make a total appear. The amount counts towards that household\'s income exactly like any other record.'],
+   ['Income, calculated','In Production mode the Income fills itself in as Output Quantity multiplied by Rate. You may type your own figure to replace it. In Direct income mode the figure is yours from the start and is never overwritten.'],
+   ['Net Profit, calculated','Income minus Expenditure, in both modes. This can also be replaced by your own figure.'],
+   ['Produce sold','A Yes or No answer. It replaces the earlier self consumption quantity, and it is not asked for the non-farm livelihoods, which produce nothing to sell by weight.'],
+   ['Organic Farming, required','A Yes or No answer, and the after position for the organic farming indicator. It is not asked for Goat Rearing, Backyard Poultry, Micro Enterprise or Other Income, because nothing is grown in those.'],
+   ['Food security throughout the year','A Yes or No answer. This single answer produces logged indicator number two. It is not asked for the non-farm livelihoods.'],
+   ['Other Income is reported separately','Records in the non-farm categories, and any record whose income was typed directly, appear on their own sheet named Other and Direct Income in the donor report, so a reader is never left comparing a tailoring shop against a paddy yield. They still count in every income total, every chart and every indicator.'],
    ['Income Change column','The change in rupees and in percentage from that person\'s total baseline to their production net income, expressed for one year. Every row belonging to the same person shows the same figure, because it describes one person and not one record.'],
    ['Income button','Opens the same income position as in the Beneficiaries section.']]},
  {icon:'10',title:'Activity Progress',intro:'Delivery recorded year by year against the targets set by head office.',items:[
@@ -5232,7 +5482,12 @@ const MANUAL_BOOK=[
    ['You cannot delete yourself','A signed in user cannot remove their own account. Ask another administrator to do it.'],
    ['Select the Donor funding this project','A project cannot be saved without naming who pays for it. This is the rule that lets every later record find its donor. Please choose the donor, or create the donor first.'],
    ['Select the Project this record belongs to','The record needs a project so it can reach the dashboard and the reports. Please choose the project.'],
-   ['Please answer Organic Farming, Yes or No','This answer is required because it produces the organic farming indicator. Please choose Yes or No.'],
+   ['Please answer Organic Farming, Yes or No','This answer is required because it produces the organic farming indicator. Please choose Yes or No. It is not asked for Goat Rearing, Backyard Poultry, Micro Enterprise or Other Income, because nothing is grown in those.'],
+   ['Please choose the Project Year','Every production record must state its project year, otherwise it would sit outside every year filter and every year by year comparison. Please choose the year.'],
+   ['Please choose the Livelihood or Crop','The category is required, and it must be one of the same eleven the beneficiary baseline uses. Please choose one from the list.'],
+   ['Please choose how the income is recorded','Choose Production, output times rate, for a weighed crop, or Direct income for a livelihood that has no kilograms and no price per kilogram.'],
+   ['Direct income was chosen, so please type the Income','You chose to enter the income directly, so the rupee figure for the year is required. Please type it.'],
+   ['Please enter the Output Quantity and Rate, or switch to Direct income','In Production mode the income is calculated from a quantity and a rate. Either fill both of those, or type the income yourself, or switch the mode to Direct income.'],
    ['Baseline income total must equal Annual Income at Registration','The sum of the baseline income rows does not match the annual income you entered above. Please correct one of the two figures so they agree.'],
    ['Expenditure looks far larger than its income','A likely typing mistake, for example an extra zero. Please check the figure. If it is genuinely correct, reduce it or record the explanation in Remarks.'],
    ['Age must be between 0 and 120','Please check the age that was entered.'],
@@ -5446,6 +5701,14 @@ function normalizeSelValue(fieldKey, val, opts){
   }
   if(fieldKey==='gender' && VALUE_NORM.gender[sk]) return {value:VALUE_NORM.gender[sk], fixed:sv!==VALUE_NORM.gender[sk]};
   if(fieldKey==='caste' && VALUE_NORM.caste[sk])  return {value:VALUE_NORM.caste[sk],  fixed:sv!==VALUE_NORM.caste[sk]};
+  /* The livelihood column of an imported sheet: every wording the field has ever
+     carried (Goatery, Rice, Tuber, Others, even a retired category such as Health
+     Camp) is folded onto one of the eleven, so an import can never introduce a
+     twelfth category and break the before/after comparison. */
+  if(fieldKey==='crop' || fieldKey==='alternative_livelihood'){
+    const mapped=LIVELIHOOD_ALIAS[sk];
+    if(mapped){ const lbl=LIVELIHOOD_LABEL[mapped]; return {value:lbl, fixed:sv!==lbl}; }
+  }
   if(opts && opts.length){
     const exact = opts.find(o=>String(o).toLowerCase()===sk);
     if(exact) return {value:exact, fixed:sv!==exact};
@@ -5590,7 +5853,7 @@ function mapRowSmart(key, row, mapping, fkLookup){
       const parsed=parseDateFlex(v);
       if(v!==parsed && parsed) issues.push({level:'ok',field:fkey,msg:`${fdef[1]}: ${v} → ${parsed}`});
       v=parsed;
-    } else if(ftype==='sel' || ftype==='dl'){
+    } else if(ftype==='sel' || ftype==='dl' || ftype==='liv'){
       const opts=fdef[3]||[];
       const norm=normalizeSelValue(fkey, v, opts);
       if(norm.fixed) issues.push({level:'warn',field:fkey,msg:`${fdef[1]}: "${v}" → "${norm.value}"`});
@@ -5646,7 +5909,7 @@ function downloadSmartTemplate(){
       if(k==='programme_id' && LOOKUPS.programmes&&LOOKUPS.programmes[0]) return LOOKUPS.programmes[0].label;
       if(k==='project_id'   && LOOKUPS.projects&&LOOKUPS.projects[0])     return LOOKUPS.projects[0].label;
       if(k==='donor_id'     && LOOKUPS.donors&&LOOKUPS.donors[0])         return LOOKUPS.donors[0].label;
-      if(t==='sel'||t==='dl') return (f[3]||[])[0]||'';
+      if(t==='sel'||t==='dl'||t==='liv') return (f[3]||[])[0]||'';
       if(t==='date') return '2025-04-01';
       if(t==='num'||t==='blinc') return 0;
       if(['beneficiary_farmer_name','shg_name','programme_name','project_name','donor_name','indicator_name','member_name'].includes(k)) return 'Example Name';
@@ -5681,7 +5944,7 @@ function downloadImportTemplate(key){
     if(k==='donor_id'     && LOOKUPS.donors?.length)     return LOOKUPS.donors[0].label;
     if(k==='indicator_id' && LOOKUPS.indicators?.length) return LOOKUPS.indicators[0].label;
     if(k==='shg_id'       && LOOKUPS.shgs?.length)       return LOOKUPS.shgs[0].label;
-    if(type==='sel' || type==='dl') return (f[3]||[])[0] || '';
+    if(type==='sel' || type==='dl' || type==='liv') return (f[3]||[])[0] || '';
     if(type==='date') return '2025-04-01';
     if(type==='num')  return 100;
     if(['member_name','beneficiary_farmer_name','shg_name','programme_name','project_name','donor_name','indicator_name'].includes(k)) return 'Example Name';
@@ -5704,7 +5967,7 @@ function downloadImportTemplate(key){
     };
     let cmt = (req?'⚠ REQUIRED FIELD\n\n':'')+'Field: '+f[1]+'\n';
     const type=f[2];
-    if(type==='sel' || type==='dl') cmt += '\nAllowed values:\n• '+(f[3]||[]).join('\n• ');
+    if(type==='sel' || type==='dl' || type==='liv') cmt += '\nAllowed values:\n• '+(f[3]||[]).join('\n• ');
     else if(type==='num')  cmt += '\nType: Number\n(can use ₹, commas, K/L/Cr suffixes — e.g. "₹10,000" or "5K" or "1.5L")';
     else if(type==='date') cmt += '\nType: Date\nFormats: dd/mm/yyyy, dd-mm-yyyy, yyyy-mm-dd, or Excel date';
     else if(['programme_id','project_id','donor_id','shg_id','indicator_id'].includes(f[0])) cmt += '\nType the NAME (fuzzy matching works).\nWe will auto-link to the right ID.';
@@ -5738,6 +6001,7 @@ function downloadImportTemplate(key){
     else if(type==='date') typeStr='Date';
     else if(type==='sel'){ typeStr='Dropdown'; allowed=(f[3]||[]).join(', '); }
     else if(type==='dl'){ typeStr='Dropdown (free text OK)'; allowed=(f[3]||[]).join(', '); }
+    else if(type==='liv'){ typeStr='Dropdown — one of the eleven livelihood categories'; allowed=(f[3]||[]).join(', '); }
     else if(type==='area') typeStr='Long text';
     else if(['programme_id','project_id','donor_id','shg_id','indicator_id'].includes(f[0])){ typeStr='Link to '+f[0].replace('_id',''); allowed='Type the name'; }
     helpRows.push([f[1], f[2]===1?'Yes':'No', typeStr, allowed]);
@@ -6009,7 +6273,7 @@ async function impRun(){
         </div>
       </div>`;
     toast('✓ '+r.created+' '+cfg.label+' imported');
-    if(CP===IMP_STATE.key) reloadResource(IMP_STATE.key);
+    await syncAfterChange(IMP_STATE.key, CP===IMP_STATE.key);   // imported rows count everywhere immediately
   }catch(e){
     $('modal-body').innerHTML=`<div class="modal-head"><div class="modal-title">⚠ Import Failed</div><div class="modal-close" onclick="closeModal()">×</div></div>
       <div style="padding:20px;color:var(--bad)">${esc(e.message)}</div>
@@ -6224,6 +6488,7 @@ async function smartRun(){
       </div>
     </div>`;
   toast('✓ Smart import complete · '+okTotal+' rows');
+  await syncAfterChange('beneficiaries', false);   // a multi-sheet import touches everything
 }
 /* Every rejected row (pre-validation + server) → a styled Excel, grouped by source sheet,
    with the reason in column A. Fix the reason, delete column A, re-import the same file. */
@@ -7362,24 +7627,12 @@ async function generateDonorReport(){
   //      = Total Current − Total Baseline. Add-only; nothing else changes.
   if(beneficiaries.length){
     const N = v => +v || 0;
-    const lc = s => String(s==null?'':s).trim().toLowerCase();
     const prodByBen = {};
     for(const c of crops){ const bid=c.beneficiary_id||''; if(!bid) continue; (prodByBen[bid]=prodByBen[bid]||[]).push(c); }
-    // map one production row → one of the activity buckets (else 'other')
-    const bucketOf = c => {
-      const cr=lc(c.crop), al=lc(c.alternative_livelihood);
-      if(cr==='paddy') return 'paddy';
-      if(cr==='millet') return 'millet';
-      if(cr==='vegetable') return 'vegetable';
-      if(cr==='tuber crop'||cr==='tuber') return 'tuber';
-      if(cr==='pulses') return 'pulses';
-      if(cr==='oilseeds'||cr==='oilseed') return 'oilseed';
-      if(cr==='mushroom'||al==='mushroom'||al==='mushroom cultivation') return 'mushroom';
-      if(al==='goatery'||al==='goat'||al==='goat rearing') return 'goat';
-      if(al==='poultry'||al==='backyard poultry') return 'poultry';
-      if(['micro enterprise','petty shop','tailoring','dairy','bee keeping'].includes(al)) return 'micro';
-      return 'other';
-    };
+    // One production row → one of the eleven shared categories. The export uses
+    // the very same resolver as the screen, so a figure can never differ between them.
+    const bucketOf = c => { const k=livelihoodKey(c.crop,c.alternative_livelihood);
+      return k==='micro_enterprise' ? 'micro' : k; };
     // NET on both sides — production rows use Net Profit (older rows fall back to gross),
     // baseline uses income − expenditure per source
     const NPx=c=>{ const n=c.net_profit_inr; return (n!=null&&String(n).trim()!=='')?(+n||0):N(c.income_inr); };
@@ -7630,7 +7883,9 @@ async function generateDonorReport(){
       rows: crops.map(c=>({
         'Record ID':c.production_record_id,
         'Beneficiary': byBen[c.beneficiary_id] || c.beneficiary_id,
-        'Crop / Intervention':c.crop, 'Alt. Livelihood':c.alternative_livelihood,
+        'Livelihood / Crop':LIVELIHOOD_LABEL[livelihoodKey(c.crop,c.alternative_livelihood)]||'Other Income',
+        'As Recorded':c.crop||c.alternative_livelihood||'',
+        'Income Basis':isDirectMode(c)?'Direct income (typed)':'Output × rate',
         'Project Year':c.project_year, 'Season':c.season, 'Area / Scale':c.area_acre,
         'Expenditure (₹)':c.total_expenditure_inr,
         'Output Qty':c.production_kg, 'Rate (₹)':c.rate_inr_per_kg,
@@ -7640,8 +7895,9 @@ async function generateDonorReport(){
       cols:[
         {key:'Record ID',label:'Record ID',type:'text'},
         {key:'Beneficiary',label:'Beneficiary',type:'text'},
-        {key:'Crop / Intervention',label:'Crop / Intervention',type:'text'},
-        {key:'Alt. Livelihood',label:'Alt. Livelihood',type:'text'},
+        {key:'Livelihood / Crop',label:'Livelihood / Crop',type:'text'},
+        {key:'As Recorded',label:'As Recorded',type:'text'},
+        {key:'Income Basis',label:'Income Basis',type:'text'},
         {key:'Project Year',label:'Project Year',type:'text'},
         {key:'Season',label:'Season',type:'text'},
         {key:'Area / Scale',label:'Area / Scale',type:'num'},
@@ -7664,6 +7920,83 @@ async function generateDonorReport(){
           {key:'Quantity',label:'Quantity',type:'num'},{key:'Income (₹)',label:'Income (₹)',type:'inr'},
           {key:'Net Profit (₹)',label:'Net Profit (₹)',type:'inr'}],
   });
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 21c.  OTHER & DIRECT INCOME — the non-farm livelihoods on their own sheet.
+  //       Goat rearing, backyard poultry, micro enterprise and other income have
+  //       no weight in kilograms and no price per kilogram, so mixing them into
+  //       the crop production figures would make both harder to read. They are
+  //       reported here, separately, and still counted in every income total.
+  {
+    const NPd=c=>{ const n=c.net_profit_inr; return (n!=null&&String(n).trim()!=='')?(+n||0):(+c.income_inr||0); };
+    const byBenN={}, byBenB={}; for(const b of beneficiaries){ byBenN[b.beneficiary_id]=b.beneficiary_farmer_name; byBenB[b.beneficiary_id]=b; }
+    const nonFarm=crops.filter(c=>LIVELIHOOD_DIRECT.has(livelihoodKey(c.crop,c.alternative_livelihood)) || isDirectMode(c));
+    if(nonFarm.length) sheets.push({
+      name:'Other & Direct Income', title:'Other & Direct Income — non-farm livelihoods',
+      subtitle:nonFarm.length+' records · income entered as a rupee figure, not calculated from a quantity · '+nowIST(),
+      rows: nonFarm.map(c=>({
+        'Record ID':c.production_record_id,
+        'Beneficiary': byBenN[c.beneficiary_id] || c.beneficiary_id,
+        'Livelihood':LIVELIHOOD_LABEL[livelihoodKey(c.crop,c.alternative_livelihood)]||'Other Income',
+        'As Recorded':c.crop||c.alternative_livelihood||'',
+        'Income Basis':isDirectMode(c)?'Direct income (typed)':'Output × rate',
+        'Project Year':c.project_year, 'Scale / Units':c.area_acre,
+        'Income (₹)':c.income_inr, 'Expenditure (₹)':c.total_expenditure_inr,
+        'Net Income (₹)':NPd(c),
+        'Village':((byBenB[c.beneficiary_id]||{}).village)||'', 'Block':((byBenB[c.beneficiary_id]||{}).block)||'',
+        'Project':c.project_id__name || c.project_id, 'Donor':c.donor_id__name || c.donor_id,
+        'Remarks':c.remarks,
+      })),
+      cols:[{key:'Record ID',label:'Record ID',type:'text'},{key:'Beneficiary',label:'Beneficiary',type:'text'},
+            {key:'Livelihood',label:'Livelihood',type:'text'},{key:'As Recorded',label:'As Recorded',type:'text'},
+            {key:'Income Basis',label:'Income Basis',type:'text'},{key:'Project Year',label:'Project Year',type:'text'},
+            {key:'Scale / Units',label:'Scale / Units',type:'num'},
+            {key:'Income (₹)',label:'Income (₹)',type:'inr'},{key:'Expenditure (₹)',label:'Expenditure (₹)',type:'inr'},
+            {key:'Net Income (₹)',label:'Net Income (₹)',type:'inr'},
+            {key:'Village',label:'Village',type:'text'},{key:'Block',label:'Block',type:'text'},
+            {key:'Project',label:'Project',type:'text'},{key:'Donor',label:'Donor',type:'text'},
+            {key:'Remarks',label:'Remarks',type:'text'}],
+    });
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 21d.  INCOME BY YEAR & ACTIVITY — the same matrix the screen shows when a
+  //       beneficiary's income is opened: baseline down one column, then every
+  //       year on its own. Years are never added together, because the baseline
+  //       is a single year's income.
+  if(crops.length && beneficiaries.length){
+    const NPy=c=>{ const n=c.net_profit_inr; return (n!=null&&String(n).trim()!=='')?(+n||0):(+c.income_inr||0); };
+    const yrs=[...new Set(crops.map(c=>String(c.project_year||'').trim()||'Unspecified'))].sort((a,z)=>{
+      const na=/^Year-(\d+)$/.exec(a), nz=/^Year-(\d+)$/.exec(z);
+      if(na&&nz) return +na[1]-+nz[1]; if(na) return -1; if(nz) return 1; return a.localeCompare(z);
+    });
+    const prodBy={}; for(const c of crops){ const bid=c.beneficiary_id||''; if(!bid) continue; (prodBy[bid]=prodBy[bid]||[]).push(c); }
+    const mRows=[];
+    for(const b of beneficiaries){
+      const recs=prodBy[b.beneficiary_id]||[]; if(!recs.length) continue;
+      for(const l of LIVELIHOODS){
+        const blNet=(+b['bl_'+l.key+'_income']||0)-(+b['bl_'+l.key+'_expenditure']||0);
+        const perYr={}; let any=0;
+        for(const c of recs){ if(livelihoodKey(c.crop,c.alternative_livelihood)!==l.key) continue;
+          const y=String(c.project_year||'').trim()||'Unspecified';
+          perYr[y]=(perYr[y]||0)+NPy(c); any=1; }
+        if(!any && !blNet) continue;
+        const row={'Beneficiary ID':b.beneficiary_id,'Name':b.beneficiary_farmer_name,
+                   'Village':b.village,'Block':b.block,'Activity':l.label,'Baseline / yr (₹)':blNet};
+        for(const y of yrs){ row[y+' (₹)'] = (perYr[y]!=null)? +perYr[y].toFixed(2) : '';
+          row[y+' vs baseline'] = (perYr[y]!=null)? +(perYr[y]-blNet).toFixed(2) : ''; }
+        mRows.push(row);
+      }
+    }
+    if(mRows.length){
+      const mCols=[{key:'Beneficiary ID',label:'Beneficiary ID',type:'text'},{key:'Name',label:'Name',type:'text'},
+                   {key:'Village',label:'Village',type:'text'},{key:'Block',label:'Block',type:'text'},
+                   {key:'Activity',label:'Activity',type:'text'},{key:'Baseline / yr (₹)',label:'Baseline / yr (₹)',type:'inr'}];
+      for(const y of yrs){ mCols.push({key:y+' (₹)',label:y+' (₹)',type:'inr'},{key:y+' vs baseline',label:y+' vs baseline',type:'inr'}); }
+      sheets.push({ name:'Income by Year', title:'Income by Year & Activity — NET, each year against its own baseline',
+        subtitle:mRows.length+' rows · '+yrs.length+' year'+(yrs.length===1?'':'s')+' · '+nowIST(), rows:mRows, cols:mCols });
+    }
+  }
 
   // 22.  SHGs + 23.  MEMBERS
   if(shgs.length){
@@ -8042,8 +8375,11 @@ function prettyCols(key, sample){
              {key:'bl_'+k+'_expenditure',label:'Baseline · '+label+' Expenditure (₹)',type:'inr'},
              {key:'bl_'+k+'_net',label:'Baseline · '+label+' NET (₹)',type:'inr'});
   }
-  // Production export: the beneficiary's income change (baseline → all productions) rides along
-  if(key==='crops') out.push({key:'_incchg_amt',label:'Income Change (₹) — baseline → till now',type:'inr'},
+  // Production export: the standardised category, how the income was arrived at, and the
+  // beneficiary's income change (baseline → all productions) all ride along
+  if(key==='crops') out.push({key:'_liv_canon',label:'Livelihood Category (standardised)',type:'text'},
+                             {key:'_income_basis',label:'Income Basis',type:'text'},
+                             {key:'_incchg_amt',label:'Income Change (₹) — baseline → till now',type:'inr'},
                              {key:'_incchg_pct',label:'Income Change (%)',type:'num'});
   return out;
 }
@@ -8064,6 +8400,8 @@ function prettyRow(row, key){
   if(key==='crops'){
     const bl=+row._bl_total||0, tot=+row._cum_income||0, ny=Math.max(1,+row._years_n||1);
     const cur=tot/ny;
+    o._liv_canon    = LIVELIHOOD_LABEL[livelihoodKey(row.crop,row.alternative_livelihood)]||'Other Income';
+    o._income_basis = isDirectMode(row) ? 'Direct income (typed)' : 'Output × rate';
     o._incchg_amt = (bl||tot) ? +(cur-bl).toFixed(2) : '';
     o._incchg_pct = bl>0 ? Math.round((cur-bl)/bl*1000)/10 : '';
   }
