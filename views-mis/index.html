@@ -184,6 +184,17 @@ select.r-inp{padding-right:32px}
 .act-achin{background:var(--bg-soft);font-weight:700;color:var(--ok)}
 .act-ach{background:var(--ok-soft)}
 .act-ach span{display:block;font-size:9px;color:var(--ok)}
+/* Balance = target − achieved. Green once the target is met, red while it is short,
+   neutral when no target has been set for that year. */
+.act-bal{background:#fbfcfe;text-align:center;white-space:nowrap;min-width:96px}
+.act-bal span{display:block;font-size:9px;color:var(--t4)}
+.act-bal-v{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;display:block}
+.act-bal-p{font-family:'JetBrains Mono',monospace;font-size:10px;display:block;margin-top:1px}
+.act-bal-ok{color:var(--ok)}
+.act-bal-short{color:var(--bad)}
+.act-sum-bal{font-weight:800;font-size:12.5px;border-radius:7px;padding:3px 10px;margin-left:4px}
+.act-sum-bal.act-bal-ok{background:var(--ok-soft)}
+.act-sum-bal.act-bal-short{background:#fee2e2}
 .act-sum{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--t3);flex-wrap:wrap}
 .act-sum b{font-family:'JetBrains Mono';font-size:15px;color:var(--t1)}
 .act-sum-bar{width:130px;height:7px;border-radius:99px;background:var(--bg-soft);overflow:hidden;display:inline-block;border:1px solid var(--border)}
@@ -1095,7 +1106,7 @@ async function ensureBeneficiaries(){
   if(LOOKUPS._benLoaded && LOOKUPS.beneficiaries) return;
   try{
     const d=await apiGet('?action=blist');
-    LOOKUPS.beneficiaries=(d.rows||[]).map(x=>({id:x.id,label:x.name||x.id,geography_id:x.geography_id})).sort((a,b)=>String(a.label).localeCompare(String(b.label),'en',{numeric:true,sensitivity:'base'}));
+    LOOKUPS.beneficiaries=(d.rows||[]).map(x=>({id:x.id,label:x.name||x.id,geography_id:x.geography_id,project_id:x.project_id||'',district:x.district||'',block:x.block||''})).sort((a,b)=>String(a.label).localeCompare(String(b.label),'en',{numeric:true,sensitivity:'base'}));
     LOOKUPS._benLoaded=true;
   }catch(e){ LOOKUPS.beneficiaries=LOOKUPS.beneficiaries||[]; }
 }
@@ -1357,14 +1368,41 @@ function comboHTML(key, options, value){
 function comboFilter(key){
   const c=__COMBO[key]; if(!c) return;
   const ci=$('cin-'+key), list=$('clist-'+key); if(!ci||!list) return;
-  const q=ci.value.trim().toLowerCase();
+  /* The typed text is cleaned the same way the server cleans a search: a name pasted
+     from a document carries non-breaking spaces, zero-width characters or doubled
+     spaces, and a plain match would never succeed. */
+  const q=String(ci.value||'').replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
   const all=c.opts||[];
-  const filtered = q ? all.filter(o=>String(o.label).toLowerCase().includes(q)) : all;
+  // Match on every word, in any order, so "behera gopal" finds "Gopal Behera"
+  const words=q?q.split(' ').filter(Boolean):[];
+  const filtered = words.length
+    ? all.filter(o=>{ const l=String(o.label).toLowerCase(); return words.every(w=>l.includes(w)); })
+    : all;
   const shown=filtered.slice(0,50);
-  list.innerHTML = shown.length
-    ? shown.map(o=>`<div class="combo-item" data-l="${esc(o.label)}" onmousedown="comboPick('${key}','${String(o.id).replace(/'/g,"\\'")}',this.dataset.l)">${esc(o.label)}</div>`).join('')
-      + (filtered.length>50?`<div class="combo-more">+${filtered.length-50} more — keep typing to narrow…</div>`:'')
-    : '<div class="combo-more">No match</div>';
+  const item=o=>`<div class="combo-item" data-l="${esc(o.label)}" onmousedown="comboPick('${key}','${String(o.id).replace(/'/g,"\\'")}',this.dataset.l)">${esc(o.label)}</div>`;
+  let html = shown.map(item).join('')
+    + (filtered.length>50?`<div class="combo-more">+${filtered.length-50} more — keep typing to narrow…</div>`:'');
+  const s=c.benScope;
+  if(!shown.length){
+    /* Say WHY there is nothing, never just "No match". The commonest reason by far is
+       that the person belongs to another project or another village. */
+    if(s && (s.pid||s.gid)){
+      const elsewhere=(LOOKUPS.beneficiaries||[]).filter(o=>{ const l=String(o.label).toLowerCase(); return words.every(w=>l.includes(w)); });
+      const where = s.gid ? esc(s.gLabel) : esc(s.pLabel);
+      html = elsewhere.length
+        ? `<div class="combo-more" style="line-height:1.6">Nobody in <b>${where}</b> matches “${esc(ci.value.trim())}”.<br>${elsewhere.length} matching ${elsewhere.length===1?'person belongs':'people belong'} to <b>another project or village</b>. A production record must be about a beneficiary of the same project, so register this person under <b>${esc(s.pLabel||'this project')}</b> first, or change the project on this form.</div>`
+        : `<div class="combo-more" style="line-height:1.6">No beneficiary anywhere matches “${esc(ci.value.trim())}”. Check the spelling, or add them in <b>Beneficiaries</b> first.</div>`;
+    } else {
+      html = `<div class="combo-more">No match for “${esc(ci.value.trim())}” — check the spelling, or clear the box to see the full list</div>`;
+    }
+  } else if(s && (s.pid||s.gid) && !q){
+    const where = s.gid ? esc(s.gLabel) : esc(s.pLabel);
+    const hid=(c.hiddenOther||0)+(c.hiddenNone||0);
+    html = `<div class="combo-more" style="font-weight:700;color:var(--t3);line-height:1.55">📍 ${filtered.length} beneficiar${filtered.length===1?'y':'ies'} in ${where}`
+      + (hid?`<div style="font-weight:500;color:var(--t4)">${c.hiddenOther||0} belong to other projects${(c.hiddenNone||0)?` · ${c.hiddenNone} have no project linked`:''} — not offered here</div>`:'')
+      + `</div>` + html;
+  }
+  list.innerHTML = html;
   list.classList.add('open');
 }
 function comboPick(key,id,label){
@@ -1372,7 +1410,9 @@ function comboPick(key,id,label){
   const ci=$('cin-'+key); if(ci) ci.value=label;
   comboClose(key);
   if(key==='programme_id') onProgrammeComboChange();
-  else if(key==='project_id'){ autofillDonorFromProject(id); if(__COMBO['indicator_id']) filterIndicatorsByProject(id); }
+  else if(key==='project_id'){ autofillDonorFromProject(id); if(__COMBO['indicator_id']) filterIndicatorsByProject(id);
+    // A production record belongs to the project, so only that project's people may be offered
+    if(__COMBO['beneficiary_id']) refreshBeneficiaryScope(); }
   else if(key==='geography_id'){ autofillFromGeography(id); if(__COMBO['beneficiary_id']) filterBeneficiaryByGeography(id); }
   else if(key==='beneficiary_id') autofillFromBeneficiary(id);
   else if(key==='indicator_id') autofillFromIndicator(id);
@@ -1405,14 +1445,49 @@ function filterIndicatorsByProject(pid){
   const h=$('ff-indicator_id');
   if(h && h.value && !(__COMBO['indicator_id'].opts||[]).some(x=>String(x.id)===String(h.value))){ h.value=''; const ci=$('cin-indicator_id'); if(ci) ci.value=''; }
 }
-/* Production: restrict the beneficiary picker to a chosen geography (find people by place). */
-function filterBeneficiaryByGeography(gid){
-  if(!__COMBO['beneficiary_id']) return;
-  const all=LOOKUPS.beneficiaries||[];
-  __COMBO['beneficiary_id'].opts = gid ? all.filter(b=>String(b.geography_id||'')===String(gid)) : all;
-  const h=$('ff-beneficiary_id');
-  if(h && h.value && !(__COMBO['beneficiary_id'].opts||[]).some(b=>String(b.id)===String(h.value))){ h.value=''; const ci=$('cin-beneficiary_id'); if(ci) ci.value=''; }
+/* ════════ The beneficiary picker only ever offers THIS project's people ════════
+   A production record belongs to a project, so the person it is about must belong to
+   the same project. Listing every beneficiary in the database — people registered
+   under entirely different projects — was wrong, and it made the form look as though
+   nothing was linked to anything.
+   The scope is now:
+     · Project chosen (from the workspace or the form)  → only that project's people
+     · Village also chosen                              → only that village as well
+   Anyone outside the scope is not offered, and the picker says plainly how many were
+   kept out and why, so a name that is genuinely missing is never a mystery. */
+function benScopeOf(){
+  const pid=String((($('ff-project_id')||{}).value)||'').trim();
+  const gid=String((($('ff-geography_id')||{}).value)||'').trim();
+  return {pid, gid,
+    pLabel: pid?(lblOf(LOOKUPS.projects,pid)||'this project'):'',
+    gLabel: gid?(lblOf(LOOKUPS.geographies,gid)||'this village'):''};
 }
+/* Rebuild the beneficiary picker for the project + village currently on the form. */
+function refreshBeneficiaryScope(){
+  const c=__COMBO['beneficiary_id']; if(!c) return;
+  const all=LOOKUPS.beneficiaries||[];
+  const s=benScopeOf();
+  c.benScope=s;
+  let list=all;
+  if(s.pid) list=list.filter(b=>String(b.project_id||'')===s.pid);
+  if(s.gid) list=list.filter(b=>String(b.geography_id||'')===s.gid);
+  c.opts=list;
+  c.hiddenOther = s.pid ? all.filter(b=>String(b.project_id||'').trim() && String(b.project_id||'')!==s.pid).length : 0;
+  c.hiddenNone  = s.pid ? all.filter(b=>!String(b.project_id||'').trim()).length : 0;
+  const ci=$('cin-beneficiary_id');
+  if(ci) ci.placeholder = s.gid ? ('🔎 Search within '+s.gLabel)
+                        : s.pid ? ('🔎 Search within '+s.pLabel)
+                                : '🔎 Type to search…';
+  // A selection that falls outside the new scope is released, and the officer is told why
+  const h=$('ff-beneficiary_id');
+  if(h && h.value && !list.some(b=>String(b.id)===String(h.value))){
+    h.value=''; if(ci) ci.value='';
+    toast('That beneficiary does not belong to '+(s.gid?s.gLabel:s.pLabel)+' — please choose one from here','t-warn');
+  }
+}
+/* Kept as the name the rest of the app already calls; the village is now only one
+   half of the scope, the project being the other. */
+function filterBeneficiaryByGeography(gid){ refreshBeneficiaryScope(); }
 /* "Add another with the same data" — keep the shared context, blank the record-specific fields. */
 function pickCarryOver(key, payload){
   const KEEP = key==='beneficiaries'
@@ -1466,8 +1541,13 @@ function comboBlur(key){ setTimeout(()=>{ comboClose(key);
   const cur=(c.opts||[]).find(o=>String(o.id)===String(h.value)); ci.value=cur?cur.label:''; }, 160); }
 function comboKey(e,key){ const c=__COMBO[key]; if(!c) return;
   if(e.key==='Escape'){ comboClose(key); return; }
-  if(e.key==='Enter'){ e.preventDefault(); const ci=$('cin-'+key); const q=(ci.value||'').trim().toLowerCase();
-    const m=(c.opts||[]).filter(o=>String(o.label).toLowerCase().includes(q)); if(m.length) comboPick(key,m[0].id,m[0].label); } }
+  if(e.key==='Enter'){ e.preventDefault(); const ci=$('cin-'+key);
+    // Same cleaning and word matching the list uses, so Enter always picks what is shown
+    const q=String(ci.value||'').replace(/[ ​‌‍﻿]/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+    const words=q?q.split(' ').filter(Boolean):[];
+    const m=(c.opts||[]).filter(o=>{ const l=String(o.label).toLowerCase(); return words.every(w=>l.includes(w)); });
+    if(m.length) comboPick(key,m[0].id,m[0].label);
+    else if(q) toast('No match for “'+ci.value.trim()+'” in this list','t-warn'); } }
 function onProgrammeComboChange(){
   const pid=($('ff-programme_id')||{}).value||'';
   if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(pid);
@@ -2671,6 +2751,9 @@ async function openForm(key,id){
   }
   if(key==='beneficiaries'){ wireLandTotal(); recalcBaselineTotal(); }   // land auto-sum + baseline table totals
   if(key==='crops') wireCropTotals();                   // Income = qty × rate · Net Profit = income − expenditure
+  // The beneficiary picker is scoped to the project (and village) on the form, whether
+  // those came from the workspace, from an edited record or from a carry-over
+  if(__COMBO['beneficiary_id']) refreshBeneficiaryScope();
   if(key==='gramsabha') wireGSTotal();                  // Total participants = Male + Female (auto)
   // Only one thematic area? Fill it in and hide the picker — it is the same answer every time.
   // The single thematic area is filled silently and never shown — the Project pins
@@ -2815,17 +2898,30 @@ function foDerive(pid){
   const prj=(LOOKUPS.projects||[]).find(p=>String(p.id)===String(pid));
   return { programme_id: prj?(prj.programme_id||''):'', donor_id:(LOOKUPS.project_donor||{})[pid]||'' };
 }
-function foGeoIn(flt){ return (LOOKUPS.geographies||[]).filter(g=>
-  (!flt.district || String(g.district||'')===flt.district) &&
-  (!flt.block || String(g.block||'')===flt.block) &&
-  (!flt.gram_panchayat || String(g.gram_panchayat||'')===flt.gram_panchayat)); }
-function foDistinct(list,field){ const s=new Set(); (list||[]).forEach(g=>{ const v=String(g[field]||'').trim(); if(v) s.add(v); }); return [...s].sort((a,b)=>a.localeCompare(b,'en',{numeric:true,sensitivity:'base'})); }
+/* Place names are compared FOLDED — trimmed, case-insensitive, inner spaces
+   collapsed. The lists above are built from trimmed values, so comparing them with
+   the raw stored text used to fail whenever a district or block had been typed with
+   a trailing space or different capitalisation: the district selected happily and
+   the Block list then came back empty, because nothing matched. Folding both sides
+   means a place entered as "New Delhi " is the same place as "new delhi". */
+function placeFold(v){ return String(v==null?'':v).replace(/\s+/g,' ').trim().toLowerCase(); }
+function placeEq(a,b){ return placeFold(a)===placeFold(b); }
+function foGeoIn(flt){ return foGeoPool(LOOKUPS.geographies||[], flt); }
+/* Distinct place names for a picker. Values differing only by spacing or case are
+   ONE entry (the first spelling seen is shown), so a picker never lists Gajapati
+   twice and every entry is guaranteed to match records again. */
+function foDistinct(list,field){
+  const seen=new Map();
+  (list||[]).forEach(g=>{ const raw=String(g[field]||'').trim(); if(!raw) return;
+    const k=placeFold(raw); if(!seen.has(k)) seen.set(k,raw); });
+  return [...seen.values()].sort((a,b)=>a.localeCompare(b,'en',{numeric:true,sensitivity:'base'}));
+}
 /* Places assigned to a project (Projects → 🌍 Geographies). No project chosen → all places. */
 function projectGeoPool(pid){ const all=LOOKUPS.geographies||[]; if(!pid) return all; return all.filter(g=>String(g.project_id||'')===String(pid)); }
 function foGeoPool(pool,flt){ return (pool||[]).filter(g=>
-  (!flt.district || String(g.district||'')===flt.district) &&
-  (!flt.block || String(g.block||'')===flt.block) &&
-  (!flt.gram_panchayat || String(g.gram_panchayat||'')===flt.gram_panchayat)); }
+  (!flt.district || placeEq(g.district, flt.district)) &&
+  (!flt.block || placeEq(g.block, flt.block)) &&
+  (!flt.gram_panchayat || placeEq(g.gram_panchayat, flt.gram_panchayat))); }
 
 /* ── Workspace ⇄ server sync — workspaces live in the DB (upgrade9) so admins see
    everyone's in MIS Status, HQ can assign them, and officers get theirs on any device.
@@ -2933,7 +3029,17 @@ function foSetupHTML(){
         : `<div style="margin-top:10px;font-size:12.5px;color:var(--warn);background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;padding:8px 12px">⚠ <b>No geographies assigned to this project yet.</b> Assign them in <b>Projects → 🌍 Geographies</b> and they will appear here.</div>`)
     : `<div style="margin-top:10px;font-size:12px;color:var(--t4)">Tip: pick the <b>Project</b> first — the District/Block/Village lists then show only its assigned places.</div>`;
   const der=foDerive(d.project_id);
-  const opt=(v,sel)=>`<option value="${esc(v)}" ${String(sel)===String(v)?'selected':''}>${esc(v)}</option>`;
+  // Place options compare FOLDED, so a district saved as "New Delhi " still shows as chosen
+  const opt=(v,sel)=>`<option value="${esc(v)}" ${placeEq(sel,v)?'selected':''}>${esc(v)}</option>`;
+  /* When a list is empty the officer is told exactly why, instead of being left with a
+     dropdown that will not open. Silence here is what made this feel broken. */
+  const emptyHint=(msg)=>`<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ ${msg}</div>`;
+  const blockHint = (d.district && !blocks.length)
+    ? emptyHint(`No block recorded yet under <b>${esc(d.district)}</b> for this project. Add one with <b>＋ New block</b> below, or open <b>Geography</b> and check the block is filled in and the place is assigned to this project.`) : '';
+  const gpHint = (d.block && !gps.length)
+    ? emptyHint(`No gram panchayat recorded yet under <b>${esc(d.block)}</b>. Village and GP are optional, so you can save the workspace without them.`) : '';
+  const villageHint = (d.district && !villages.length)
+    ? emptyHint('No village recorded yet for this place. Village is optional, so you can save and pick it per record.') : '';
   const ready=d.district&&d.project_id;   // Village is optional — it can be picked per record
   const nb=(res,label)=> canWriteResource(res)?`<button type="button" class="fo-newbtn" onclick="deNewRecord('${res}')">＋ ${esc(label)}</button>`:'';
   return `<div class="card" style="background:linear-gradient(135deg,#f3f8ff,#fff);border:1.5px solid var(--brand-soft)">
@@ -2955,11 +3061,11 @@ function foSetupHTML(){
       <div class="f"><label>Thematic Area <span class="fo-auto">auto</span></label>
         <input class="r-inp" readonly value="${esc(der.programme_id?lblOf(LOOKUPS.programmes,der.programme_id):'')}" placeholder="— shown after project —" style="background:var(--bg-soft)">${nb('programmes','New thematic area')}</div>
       <div class="f"><label>Block</label>
-        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('block',this.value)"><option value="">${d.district?'— Select block —':'pick district first'}</option>${blocks.map(b=>opt(b,d.block)).join('')}</select>${nb('geographies','New block')}</div>
+        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('block',this.value)"><option value="">${d.district?'— Select block —':'pick district first'}</option>${blocks.map(b=>opt(b,d.block)).join('')}</select>${blockHint}${nb('geographies','New block')}</div>
       <div class="f"><label>Gram Panchayat</label>
-        <select class="r-inp" ${d.block?'':'disabled'} onchange="foDraftSet('gram_panchayat',this.value)"><option value="">${d.block?'— Select GP —':'pick block first'}</option>${gps.map(g=>opt(g,d.gram_panchayat)).join('')}</select>${nb('geographies','New gram panchayat')}</div>
+        <select class="r-inp" ${d.block?'':'disabled'} onchange="foDraftSet('gram_panchayat',this.value)"><option value="">${d.block?'— Select GP —':'pick block first'}</option>${gps.map(g=>opt(g,d.gram_panchayat)).join('')}</select>${gpHint}${nb('geographies','New gram panchayat')}</div>
       <div class="f"><label>Village / Ward <span class="fo-auto">optional</span></label>
-        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('geography_id',this.value)"><option value="">${d.district?'— All villages (pick per record) —':'pick district first'}</option>${villages.map(v=>`<option value="${esc(v.id)}" ${String(d.geography_id)===String(v.id)?'selected':''}>${esc(v.village||v.label)}</option>`).join('')}</select>${nb('geographies','New village / ward')}</div>
+        <select class="r-inp" ${d.district?'':'disabled'} onchange="foDraftSet('geography_id',this.value)"><option value="">${d.district?'— All villages (pick per record) —':'pick district first'}</option>${villages.map(v=>`<option value="${esc(v.id)}" ${String(d.geography_id)===String(v.id)?'selected':''}>${esc(v.village||v.label)}</option>`).join('')}</select>${villageHint}${nb('geographies','New village / ward')}</div>
       <div class="f"><label>Workspace name</label>
         <input class="r-inp" id="fo-ws-name" value="${esc(d.name||'')}" placeholder="auto from project · village"></div>
     </div>
@@ -3089,7 +3195,7 @@ function applyFieldOfficeContext(key){
   const f=getFO(); if(!f.active) return;
   const present=new Set((RES[key].fields||[]).map(x=>x[0]));
   if(present.has('programme_id') && f.programme_id){ comboSet('programme_id',f.programme_id); if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(f.programme_id); }
-  if(present.has('project_id') && f.project_id){ comboSet('project_id',f.project_id); if(__COMBO['indicator_id']) filterIndicatorsByProject(f.project_id); }
+  if(present.has('project_id') && f.project_id){ comboSet('project_id',f.project_id); if(__COMBO['indicator_id']) filterIndicatorsByProject(f.project_id); if(__COMBO['beneficiary_id']) refreshBeneficiaryScope(); }
   if(present.has('donor_id') && f.donor_id) comboSet('donor_id',f.donor_id);
   if(present.has('geography_id') && f.geography_id){ if(__COMBO['geography_id']) __COMBO['geography_id'].opts=LOOKUPS.geographies||[]; comboSet('geography_id',f.geography_id); autofillFromGeography(f.geography_id); if(__COMBO['beneficiary_id']) filterBeneficiaryByGeography(f.geography_id); }
   // Workspace saved WITHOUT a village → the Village picker stays on the form,
@@ -3441,25 +3547,55 @@ function actRenderTable(){
   let head,rows='';
   if(ACT.freq==='Q'){
     const Q=[['Q1','Apr–Jun'],['Q2','Jul–Sep'],['Q3','Oct–Dec'],['Q4','Jan–Mar']];
-    head='<th class="act-yr">Year</th><th>Target<span>'+(lockT?'🔒 set by HQ':'for the year')+'</span></th>'+Q.map(q=>`<th>${q[0]}<span>${q[1]}</span></th>`).join('')+'<th class="act-ach">Achieved<span>auto = Q1+Q2+Q3+Q4</span></th>';
+    head='<th class="act-yr">Year</th><th>Target<span>'+(lockT?'🔒 set by HQ':'for the year')+'</span></th>'+Q.map(q=>`<th>${q[0]}<span>${q[1]}</span></th>`).join('')+'<th class="act-ach">Achieved<span>auto = Q1+Q2+Q3+Q4</span></th><th class="act-bal">Balance<span>target − achieved</span></th>';
     for(let y=1;y<=ACT.years;y++){ const d=ACT.d[y];
       rows+=`<tr><td class="act-yr">Year ${y}</td>
         <td><input class="act-in act-tgt" type="number" step="any" min="0" value="${d.target}" oninput="actT(${y},this.value)"${tLock}></td>
         ${[0,1,2,3].map(i=>`<td><input class="act-in" type="number" step="any" min="0" value="${d.q[i]}" oninput="actQ(${y},${i},this.value)"></td>`).join('')}
-        <td class="act-ach"><input class="act-in act-achin" id="at-a-${y}" type="number" step="any" min="0" value="${d.ach}" oninput="actA(${y},this.value)" title="Auto = Q1+Q2+Q3+Q4 — type here only if you have no quarterly split"></td></tr>`;
+        <td class="act-ach"><input class="act-in act-achin" id="at-a-${y}" type="number" step="any" min="0" value="${d.ach}" oninput="actA(${y},this.value)" title="Auto = Q1+Q2+Q3+Q4 — type here only if you have no quarterly split"></td>
+        <td class="act-bal" id="at-b-${y}">${actBalCell(y)}</td></tr>`;
     }
   } else {
-    head='<th class="act-yr">Year</th><th>Target<span>'+(lockT?'🔒 set by HQ':'for the year')+'</span></th>'+ACT_MONTHS.map(m=>`<th class="act-moh">${m.slice(0,3)}</th>`).join('')+'<th class="act-ach">Achieved<span>auto</span></th>';
+    head='<th class="act-yr">Year</th><th>Target<span>'+(lockT?'🔒 set by HQ':'for the year')+'</span></th>'+ACT_MONTHS.map(m=>`<th class="act-moh">${m.slice(0,3)}</th>`).join('')+'<th class="act-ach">Achieved<span>auto</span></th><th class="act-bal">Balance<span>target − achieved</span></th>';
     for(let y=1;y<=ACT.years;y++){ const d=ACT.d[y];
       rows+=`<tr><td class="act-yr">Year ${y}</td>
         <td><input class="act-in act-tgt act-mi" type="number" step="any" min="0" value="${d.target}" oninput="actT(${y},this.value)"${tLock}></td>
         ${ACT_MONTHS.map(m=>`<td><input class="act-in act-mi" type="number" step="any" min="0" value="${d.m[m]!=null?d.m[m]:''}" oninput="actM(${y},'${m}',this.value)" title="${m}"></td>`).join('')}
-        <td class="act-ach"><input class="act-in act-achin act-mi" id="at-a-${y}" type="number" step="any" min="0" value="${d.ach}" oninput="actA(${y},this.value)" title="Auto = sum of the 12 months"></td></tr>`;
+        <td class="act-ach"><input class="act-in act-achin act-mi" id="at-a-${y}" type="number" step="any" min="0" value="${d.ach}" oninput="actA(${y},this.value)" title="Auto = sum of the 12 months"></td>
+        <td class="act-bal" id="at-b-${y}">${actBalCell(y)}</td></tr>`;
     }
   }
   host.innerHTML=`<div class="act-tblwrap"><table class="act-tbl"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`
     +(ACT.freq==='M'?'<div style="font-size:11.5px;color:var(--t4);margin-top:7px">Months roll up into the quarterly columns automatically (Apr–Jun → Q1 …) so every quarterly report stays correct.</div>':'');
 }
+/* ════════ BALANCE — how much of the year's target is still to be done ════════
+   Balance = Target − Achieved.
+     achieved ≥ target   green, and the amount over is shown as a surplus
+     achieved < target   red, this is what is still outstanding
+     no target set       neutral, because there is nothing to measure against
+   It is calculated, never typed, so it can never disagree with the two figures
+   it comes from. */
+function actBalance(y){
+  const d=ACT&&ACT.d[y]; if(!d) return null;
+  const t=d.target, a=d.ach;
+  if(!actHas(t) && !actHas(a)) return null;
+  if(!actHas(t)) return {noTarget:true, bal:0, tgt:0, ach:actNum(a)};
+  const tgt=actNum(t), ach=actNum(a), bal=+(tgt-ach).toFixed(2);
+  return {noTarget:false, bal, tgt, ach, met: bal<=0, pct: tgt>0?Math.round(ach/tgt*1000)/10:null};
+}
+function actBalCell(y){
+  const b=actBalance(y);
+  if(!b) return '<span style="color:var(--t5)">—</span>';
+  if(b.noTarget) return '<span style="color:var(--t4);font-size:11.5px" title="No target set for this year, so there is nothing to compare against">no target</span>';
+  if(b.met){
+    const over=Math.abs(b.bal);
+    return `<span class="act-bal-v act-bal-ok" title="Target met${over?' with '+fmt(over)+' to spare':''}">✓ ${over?('+'+fmt(over)):'0'}</span>`
+      + (b.pct!=null?`<span class="act-bal-p act-bal-ok">${b.pct}%</span>`:'');
+  }
+  return `<span class="act-bal-v act-bal-short" title="Still to be done">${fmt(b.bal)}</span>`
+    + (b.pct!=null?`<span class="act-bal-p act-bal-short">${b.pct}%</span>`:'');
+}
+function actBalSync(){ if(!ACT) return; for(let y=1;y<=ACT.years;y++){ const c=$('at-b-'+y); if(c) c.innerHTML=actBalCell(y); } }
 function actT(y,v){ if(ACT&&ACT.d[y]){ ACT.d[y].target=v; actSummary(); } }
 function actQ(y,i,v){ const d=ACT&&ACT.d[y]; if(!d) return; d.q[i]=v; actAutoAch(y); }
 function actM(y,m,v){ const d=ACT&&ACT.d[y]; if(!d) return;
@@ -3473,17 +3609,67 @@ function actAutoAch(y){ const d=ACT&&ACT.d[y]; if(!d) return;
   if(d.auto){ const any=d.q.some(x=>x!==''&&x!=null); const s=d.q.reduce((s2,x)=>s2+actNum(x),0);
     d.ach=any? +s.toFixed(2) : ''; const e=$('at-a-'+y); if(e) e.value=d.ach; }
   actSummary(); }
-function actFreq(f){ if(!ACT||ACT.freq===f) return; ACT.freq=f; actRenderTable(); actSegSync(); actSummary(); }
+/* ════════ Quarterly OR Monthly — one or the other, never both ════════
+   An activity is reported EITHER by quarter OR by month. Keeping both sets would
+   let the same delivery be counted twice, and nobody could tell which figure was
+   the real one. So switching clears the set being left behind, and it says so
+   first — clearly, with the numbers that will be lost — rather than wiping the
+   officer's work without warning. */
+function actHasQ(){ if(!ACT) return false;
+  for(let y=1;y<=ACT.years;y++){ const d=ACT.d[y]; if(d && d.q.some(x=>actHas(x))) return true; } return false; }
+function actHasM(){ if(!ACT) return false;
+  for(let y=1;y<=ACT.years;y++){ const d=ACT.d[y]; if(d && Object.keys(d.m||{}).some(k=>actHas(d.m[k]))) return true; } return false; }
+function actFreq(f){
+  if(!ACT||ACT.freq===f) return;
+  const leavingM = (ACT.freq==='M' && f==='Q');
+  const filled = leavingM ? actHasM() : actHasQ();
+  if(filled){
+    const what = leavingM ? 'monthly' : 'quarterly';
+    const to   = leavingM ? 'Quarterly' : 'Monthly';
+    showModal('⚠ Switch to '+to+' reporting?', `
+      <div style="padding:4px 2px 0;line-height:1.75;font-size:13.5px">
+        <p>An activity is reported <b>either by quarter or by month</b>, never both, so that the same delivery can never be counted twice.</p>
+        <p>You have ${what} figures filled in. Switching to <b>${to}</b> will <b>clear them</b>, and the year achievements will be recalculated from the ${to.toLowerCase()} figures you enter instead.</p>
+        <p style="color:var(--t3)">Nothing is saved until you press ${ACT.id?'Update':'Save'}, so you can leave this form without changing the stored record.</p>
+      </div>
+      <div class="form-actions" style="margin-top:14px">
+        <button class="btn btn-primary" type="button" onclick="actFreqConfirm('${f}')">Yes, switch to ${to} and clear the ${what} figures</button>
+        <button class="btn btn-ghost" type="button" onclick="closeModal()">Cancel — keep ${what}</button>
+      </div>`);
+    return;
+  }
+  actFreqApply(f);
+}
+function actFreqConfirm(f){ closeModal(); actFreqApply(f); }
+function actFreqApply(f){
+  if(!ACT) return;
+  for(let y=1;y<=ACT.years;y++){ const d=ACT.d[y]; if(!d) continue;
+    if(f==='Q'){ d.m={}; }                       // leaving monthly → the months go
+    else { d.q=['','','','']; }                   // leaving quarterly → the quarters go
+    if(d.auto) d.ach='';                          // the year total is rebuilt from what is typed next
+  }
+  ACT.freq=f; actRenderTable(); actSegSync(); actSummary();
+  toast(f==='M' ? '📅 Monthly reporting — type the twelve months; they roll up into the quarters automatically'
+                : '🗓 Quarterly reporting — type Q1 to Q4');
+}
 function actSegSync(){ if(!ACT) return; document.querySelectorAll('#act-seg .act-seg-btn').forEach(b=>b.classList.toggle('on',b.dataset.f===ACT.freq)); }
 function actAddYear(){ if(!ACT||ACT.years>=ACT_MAX_YEARS) return; ACT.years++; actRenderTable();
   const b=$('act-addyear'); if(b){ b.style.display=ACT.years>=ACT_MAX_YEARS?'none':''; b.textContent='＋ Add Year '+(ACT.years+1); }
   actSummary(); }
-function actSummary(){ if(!ACT) return; const box=$('act-summary'); if(!box) return;
+function actSummary(){ if(!ACT) return; actBalSync(); const box=$('act-summary'); if(!box) return;
   let cum=0; for(let y=1;y<=ACT.years;y++) cum+=actNum(ACT.d[y]&&ACT.d[y].ach);
   cum=+cum.toFixed(2);
   const tgt=actNum((($('ff-total_target')||{}).value));
   const pct=tgt>0? Math.round(cum/tgt*1000)/10 : null;
-  box.innerHTML=`<div class="act-sum"><span>Cumulative achievement</span><b>${fmt(cum)}</b>${pct!=null?`<span class="act-sum-bar"><span style="width:${Math.min(100,pct)}%;background:${pct>=100?'var(--ok)':'var(--brand)'}"></span></span><b style="color:${pct>=100?'var(--ok)':'var(--brand)'};font-size:13px">${pct}%</b><span>of ${fmt(tgt)} total target</span>`:''}</div>`; }
+  // The overall Balance sits beside the bar: what is still to be done against the
+  // whole-project target, green once the target is reached, red while it is short.
+  const bal = tgt>0 ? +(tgt-cum).toFixed(2) : null;
+  const balHTML = bal===null
+    ? ''
+    : (bal<=0
+        ? `<span class="act-sum-bal act-bal-ok">✓ Target met${bal<0?(' · +'+fmt(Math.abs(bal))+' over'):''}</span>`
+        : `<span class="act-sum-bal act-bal-short">Balance ${fmt(bal)} to go</span>`);
+  box.innerHTML=`<div class="act-sum"><span>Cumulative achievement</span><b>${fmt(cum)}</b>${pct!=null?`<span class="act-sum-bar"><span style="width:${Math.min(100,pct)}%;background:${pct>=100?'var(--ok)':'var(--brand)'}"></span></span><b style="color:${pct>=100?'var(--ok)':'var(--brand)'};font-size:13px">${pct}%</b><span>of ${fmt(tgt)} total target</span>`:''}${balHTML}</div>`; }
 /* ── Activity Progress LIST — Year / Quarter display filter ──
    The overview shows Y1; pick a Year (and optionally a Quarter) and the table's
    columns switch to THAT year's target & achievement — every year you entered is
@@ -5355,6 +5541,10 @@ const MANUAL_BOOK=[
    ['Sheets you will find','Summary figures. Activities for every year with quarterly detail. Indicator sheets. Loans by financial year. Outputs by intervention. Income Impact with net figures for each source including the change in rupees and in percentage. Organic Farming before and now. Geographies covered. Gram Sabha summary and every meeting. Convergence by department and every record. A glossary.'],
    ['Logged Indicators sheet','All eleven indicators with the computed value, the before and now figures, how many records each is based on, the figures behind it in words, and the exact formula. Where the source data has not been entered the value is left blank and the status column reads Waiting for data, so a reader can never mistake an empty figure for a zero.'],
    ['Local Governance sheets','Gram Sabha Summary gives meetings, participants, the share of women and the rate at which the Village Development Plan was submitted. Gram Sabha Records lists every meeting with its own share of women. Convergence by Department totals households and money for each department with its share of the whole, and Convergence Records lists every scheme entry.'],
+   ['District and Block filters reach every figure','Choosing a District or a Block now narrows everything on the page and in the workbook: households, production, income, groups, loans, activities, projects, donors and the thematic area count. Tables that hold no district column of their own, such as Production and Loans, are reached through the household or the group that belongs to the place. Before this, those figures described the whole programme while the household count described one block, and the two could not be compared.'],
+   ['District-wise and Block-wise sheets','Every workbook now contains a row for each district and each block in scope, with the households, the women among them, the land, the baseline income, how many production records exist and the net income those records represent.'],
+   ['The two budget figures','Approved amount for the projects in this report is the amount approved for those projects in Donor Mapping, and it narrows properly with a project, district or block filter. Approved budget for the donors in this report is each donor\'s whole budget, which is an organisation level figure and does not divide between districts. Both are labelled in full so neither can be mistaken for the other.'],
+   ['Organic Farming sheet','Each row states the group it is measured against, because the before figures cover all households while the now figures can only cover households that have production recorded. Those are different groups, and saying so prevents the sheet being read as an error. The rows are stages rather than records, so they are never added into a total.'],
    ['Other and Direct Income sheet','The non-farm livelihoods, which are Goat Rearing, Backyard Poultry, Micro Enterprise and Other Income, and any record whose income was typed directly, are listed on their own sheet with the household, the year, the income, the expenditure and the net income. Keeping them apart means nobody compares a tailoring shop with a paddy yield by accident, while every rupee still counts in the totals.'],
    ['Income by Year and Activity sheet','The same table the screen shows when a household\'s income is opened, for every household at once. One row for each household and activity, the baseline in its own column, then each project year with a matching column showing the change against that baseline. Years are never added together.'],
    ['Livelihood Category column','Every production sheet carries the standardised category alongside the words that were actually recorded, and a column stating whether the income came from output times rate or was typed directly. A reader can therefore see both what the software counted and what the field officer wrote.'],
@@ -5375,6 +5565,7 @@ const MANUAL_BOOK=[
    ['Pause','Lets you enter a record without any workspace. Forms then open blank.'],
    ['HQ Targets for this workspace','Shows the planned figures for your project and district, so you always know what you are working towards.'],
    ['Entry cards','New Beneficiary, Production and Output, Activity Progress, New SHG, New SHG Loan, Gram Sabha and Convergence. Each card shows a live count of existing records. The cards appear faded until a workspace is active, which is a reminder and not a restriction.'],
+   ['Workspace place lists','Choosing the Project narrows District, Block, Gram Panchayat and Village to that project\'s assigned places. Place names are matched ignoring capital letters and extra spaces, so a district saved as New Delhi with a trailing space is the same place as new delhi. If a list is empty the form says why and what to do, instead of leaving a dropdown that will not open.'],
    ['Import cards','Upload a section from an Excel or CSV file. The importer recognises your column headings even when the wording differs, converts names into codes, corrects number and date formats, and returns an Excel file listing any rows it could not accept together with the reason.']]},
  {icon:'8',title:'Beneficiaries',intro:'The people you serve, and the baseline that makes impact provable.',items:[
    ['New button','Registration Date is filled with today\'s date and can never be set in the future. Choosing the Geography fills in District, Block, Gram Panchayat and Village.'],
@@ -5393,6 +5584,7 @@ const MANUAL_BOOK=[
  {icon:'9',title:'Production and Output Progress',intro:'What actually happened, for each beneficiary, crop and season.',items:[
    ['Project Year is required on the form','Every production record must state its project year. Without one the record would sit outside every year filter and every year by year comparison, so the form will not save until a year is chosen.'],
    ['The Year filter changes the figures','With no year chosen, the Income Change column compares the baseline against the average of every year that has production. Choose Year 1 and it compares the baseline against Year 1 alone, and only Year 1 records are listed. The caption under each figure always names the period it describes, so a year view can never be mistaken for an average. The Income Impact panel above the list follows the same year.'],
+   ['Beneficiary, search by name','The list offers ONLY the people who belong to the project on the form, and only that village when a village is chosen. A production record belongs to a project, so the household it is about must belong to the same project. If a name cannot be found the list says why, and how many people were kept out because they belong to another project or have no project linked. Words may be typed in any order, and a name pasted from a document is cleaned before it is matched.'],
    ['Livelihood or Season filter, required','No records are shown until you choose a Livelihood or a Season. One person correctly has several production rows, for example paddy in Kharif and millet in Rabi. Filtering shows each person once in the view, so a donor can never mistake them for a duplicate. This affects the display only. Reports always include every record.'],
    ['Livelihood or Crop, required','The list holds the same eleven categories as the beneficiary baseline table: Paddy, Millet, Vegetable, Tuber Crop, Pulses, Oilseeds, Mushroom Cultivation, Goat Rearing, Backyard Poultry, Micro Enterprise and Other Income. There is no second list and no other wording. If you open an old record that was saved under a category the list no longer offers, the old wording is kept, marked clearly, and counted under Other Income until you choose one of the eleven.'],
    ['How is the income recorded, required','Two honest choices. Production, output times rate, is for the weighed crops. Direct income is for a livelihood that has no kilograms and no price per kilogram, such as goat rearing, backyard poultry, a micro enterprise or any other income. Choosing a category sets this for you, and you can change it whenever the real situation differs.'],
@@ -5407,7 +5599,8 @@ const MANUAL_BOOK=[
    ['Income button','Opens the same income position as in the Beneficiaries section.']]},
  {icon:'10',title:'Activity Progress',intro:'Delivery recorded year by year against the targets set by head office.',items:[
    ['New activity','Available to holders of the Targets permission. One table is used. Each year has its target and its four quarters. The Add Year button extends the table up to six years.'],
-   ['Quarterly and Monthly switch','Monthly replaces the four quarters with twelve months, from April to March. The months are added into the correct quarters automatically, so quarterly reports remain correct either way.'],
+   ['Quarterly and Monthly switch','An activity is reported either by quarter or by month, never both, so the same delivery can never be counted twice. Monthly replaces the four quarters with twelve months, from April to March, and the months are added into the correct quarters automatically so quarterly reports stay correct. If figures are already filled in, the software asks before switching and tells you exactly what will be cleared. Nothing is saved until you press Save or Update.'],
+   ['Balance column','Target minus achieved, for each year and for the whole project. It is green when the target has been met, showing anything achieved above it as a surplus, and red when work is still outstanding, showing how much is left. Where no target has been set for a year the column reads no target, because there is nothing to measure against. The figure is calculated, never typed, so it can never disagree with the target and the achievement it comes from.'],
    ['Achieved column, calculated','Each year\'s achievement is the total of its quarters or months. The cumulative total and the percentage bar against the overall target are calculated for you.'],
    ['Update progress','The everyday field task. Quarters and months can be edited. The target cells stay locked unless you hold the Targets permission.'],
    ['Year and Quarter switch on the list','The list shows Year 1 by default. Choosing a year changes the columns to that year\'s target and achievement. Adding a quarter shows that quarter alone. This keeps unused year columns off the screen.']]},
@@ -6708,7 +6901,7 @@ function misOnProject(){ const pid=($('mis-project')||{}).value||''; const der=f
   misOnDistrict();
 }
 function misOnDistrict(){ const di=($('mis-district')||{}).value||'', pid=($('mis-project')||{}).value||'';
-  const vs=projectGeoPool(pid).filter(g=>!di||String(g.district||'')===di);
+  const vs=projectGeoPool(pid).filter(g=>!di||placeEq(g.district,di));
   const e=$('mis-village'); if(e) e.innerHTML='<option value="">— Officer picks later —</option>'+vs.map(g=>`<option value="${esc(g.id)}">${esc(g.label)}</option>`).join(''); }
 async function misAssign(){
   const u=($('mis-user')||{}).value, pid=($('mis-project')||{}).value, di=($('mis-district')||{}).value;
@@ -6918,8 +7111,11 @@ function rcOnDurationChange(){
 
 /* Distinct District / Block list, derived from the Geography master, for the report dimension dropdowns */
 function rptGeoList(field){
+  // Folded, so a district typed twice with different spacing or capitalisation is
+  // offered ONCE and the report it produces covers every spelling of that place.
   const seen=new Set(), out=[];
-  (LOOKUPS.geographies||[]).forEach(g=>{ const v=String(g[field]||'').trim(); if(v && !seen.has(v)){ seen.add(v); out.push({id:v,label:v}); } });
+  (LOOKUPS.geographies||[]).forEach(g=>{ const v=String(g[field]||'').trim(); if(!v) return;
+    const k=placeFold(v); if(!seen.has(k)){ seen.add(k); out.push({id:v,label:v}); } });
   return out.sort((a,b)=>String(a.label).localeCompare(String(b.label),'en',{numeric:true,sensitivity:'base'}));
 }
 /* Reports & Analytics body — choose a dimension (Donor / Thematic / Project / District / Block / Village / SHG),
@@ -7044,7 +7240,12 @@ async function exportReportsView(){
       {Metric:'Beneficiaries', Value:N((r.beneficiaries||{}).total)},{Metric:'SHGs', Value:N(k.shgs)},
       {Metric:'Thematic Areas', Value:N(k.programmes)},{Metric:'Projects', Value:N(k.projects)},{Metric:'Active Donors', Value:N(k.active_donors==null?k.donors:k.active_donors)},
       {Metric:'Activities', Value:N(k.activities)},{Metric:'Activity achievement %', Value:overall},
-      {Metric:'Approved budget (₹)', Value:N(k.budget)},{Metric:'Loan amount (₹)', Value:N(k.loan_total)},
+      /* TWO budget figures, because they answer two different questions and quoting
+         only one of them was misleading. The project amount is the one that genuinely
+         narrows with a district or block filter. */
+      {Metric:'Approved amount — projects in this report (₹)', Value:N(k.project_amount)},
+      {Metric:'Approved budget — donors in this report, whole budget (₹)', Value:N(k.budget)},
+      {Metric:'Loan amount (₹)', Value:N(k.loan_total)},
       {Metric:'Beneficiary annual income — total (₹)', Value:N((r.beneficiaries||{}).income_total)},
       {Metric:'Total land (acre)', Value:N((r.beneficiaries||{}).land_total)},
       ...(()=>{ const o=r.organic||{}; const bY=N(o.before_yes), bT=N(o.before_total), nY=N(o.now_yes), nT=N(o.now_total);
@@ -7059,16 +7260,58 @@ async function exportReportsView(){
     ],
     cols:[{key:'Metric',label:'Metric',type:'text'},{key:'Value',label:'Value',type:'num'}] });
   // 1b) Organic farming — before vs now, its own sheet so the donor sees the shift at a glance
+  /* Every row states the population it is measured against IN WORDS, because the
+     "before" figures cover all households while the "now" figures can only cover the
+     households that have production recorded. Those are genuinely different
+     denominators, and leaving that unsaid made the sheet look wrong. The rows are
+     stages, not records, so they are never added into a TOTAL. */
   { const o=r.organic||{}; const bY=N(o.before_yes),bN=N(o.before_no),bT=N(o.before_total),nY=N(o.now_yes),nT=N(o.now_total);
-    if(bT||nT) sheets.push({ name:'Organic Farming', title:'Organic farming — before vs now',
-      subtitle:'BEFORE = answer recorded at registration · NOW = beneficiaries with at least one organic production record · '+nowIST(),
+    const pc=(a,b)=>b?Math.round(1000*a/b)/10:0;
+    if(bT||nT) sheets.push({ name:'Organic Farming', title:'Organic farming — before vs now', noTotals:true,
+      subtitle:'BEFORE = the answer recorded at registration · NOW = households with at least one organic production record · each row shows the group it is measured against · '+nowIST(),
       rows:[
-        {Stage:'Before — practising organic', Beneficiaries:bY, 'Of total':bT, 'Share %':bT?Math.round(1000*bY/bT)/10:0},
-        {Stage:'Before — not practising',      Beneficiaries:bN, 'Of total':bT, 'Share %':bT?Math.round(1000*bN/bT)/10:0},
-        {Stage:'Now — practising organic',     Beneficiaries:nY, 'Of total':nT, 'Share %':nT?Math.round(1000*nY/nT)/10:0},
-        {Stage:'Newly adopted (now − before)', Beneficiaries:Math.max(0,nY-bY), 'Of total':nT, 'Share %':nT?Math.round(1000*Math.max(0,nY-bY)/nT)/10:0},
+        {Stage:'Households in this report',                Beneficiaries:bT, 'Measured against':'All households — '+bT, 'Share %':bT?100:0},
+        {Stage:'Before — practising organic',              Beneficiaries:bY, 'Measured against':'All households — '+bT, 'Share %':pc(bY,bT)},
+        {Stage:'Before — not practising',                  Beneficiaries:bN, 'Measured against':'All households — '+bT, 'Share %':pc(bN,bT)},
+        {Stage:'Households with production recorded',      Beneficiaries:nT, 'Measured against':'All households — '+bT, 'Share %':pc(nT,bT)},
+        {Stage:'Now — practising organic',                 Beneficiaries:nY, 'Measured against':'Households with production — '+nT, 'Share %':pc(nY,nT)},
+        {Stage:'Newly adopted (now − before)',             Beneficiaries:Math.max(0,nY-bY), 'Measured against':'Households with production — '+nT, 'Share %':pc(Math.max(0,nY-bY),nT)},
       ],
-      cols:[{key:'Stage',label:'Stage',type:'text'},{key:'Beneficiaries',label:'Beneficiaries',type:'num'},{key:'Of total',label:'Of total',type:'num'},{key:'Share %',label:'Share %',type:'pct'}] }); }
+      cols:[{key:'Stage',label:'Stage',type:'text'},{key:'Beneficiaries',label:'Households',type:'num'},{key:'Measured against',label:'Measured against',type:'text'},{key:'Share %',label:'Share %',type:'pct'}] }); }
+
+  /* 1c) DISTRICT-WISE and BLOCK-WISE breakdowns. A district-wise report has to contain
+     district rows and a block-wise report has to contain block rows, and neither of
+     them did. Each row carries the households, the women among them, the land, the
+     baseline income, how many production records exist and the NET income those
+     records represent, so a place can be read on its own. */
+  {
+    const placeSheet=(rows,label,name)=>{
+      const list=(rows||[]).filter(x=>x && String(x.k||'').trim()!=='');
+      if(!list.length) return;
+      sheets.push({ name:name, title:label+'-wise breakdown',
+        subtitle:list.length+' '+label.toLowerCase()+(list.length===1?'':'s')+' · households are counted from Beneficiaries, income is NET from Production / Output · '+nowIST(),
+        rows:list.map(x=>({
+          [label]: x.k,
+          'Households': N(x.hh),
+          'Women': N(x.women),
+          'Women %': N(x.hh)?Math.round(1000*N(x.women)/N(x.hh))/10:0,
+          'Land (acre)': N(x.land),
+          'Baseline income (₹)': N(x.baseline_income),
+          'Production records': N(x.prod),
+          'Net income from production (₹)': N(x.net_income),
+        })),
+        cols:[{key:label,label:label,type:'text'},
+              {key:'Households',label:'Households',type:'num'},
+              {key:'Women',label:'Women',type:'num'},
+              {key:'Women %',label:'Women %',type:'pct'},
+              {key:'Land (acre)',label:'Land (acre)',type:'num'},
+              {key:'Baseline income (₹)',label:'Baseline income (₹)',type:'inr'},
+              {key:'Production records',label:'Production records',type:'num'},
+              {key:'Net income from production (₹)',label:'Net income from production (₹)',type:'inr'}] });
+    };
+    placeSheet(r.by_district_full,'District','District-wise');
+    placeSheet(r.by_block_full,'Block','Block-wise');
+  }
   // 2) Activity performance (quarterly, from the report action)
   if((r.activities||[]).length) sheets.push({name:'Activities', title:'Activity performance', subtitle:nowIST(),
     rows: r.activities.map(a=>({Activity:a.nm, Unit:a.unit, 'Total Target':N(a.total_target),
@@ -8213,7 +8456,7 @@ const XLS = (function(){
     };
   }
 
-  function buildSheet(rows, cols, {title='Report', subtitle='', filters=''}={}){
+  function buildSheet(rows, cols, {title='Report', subtitle='', filters='', noTotals=false}={}){
     if(!cols || !cols.length){
       const sample = rows[0] || {};
       cols = Object.keys(sample).map(k=>({key:k, label:k, type:'text'}));
@@ -8227,9 +8470,12 @@ const XLS = (function(){
     aoa.push(new Array(cols.length).fill(''));         // row 3 — gap
     aoa.push(cols.map(c=>c.label));                    // row 4 — header
     rows.forEach(r => aoa.push(cols.map(c => _fmtType(r[c.key], c.type))));
-    // Totals row — only for data tables with ≥2 numeric columns (skips key/value & glossary sheets)
+    // Totals row — only for data tables with ≥2 numeric columns (skips key/value & glossary sheets).
+    // A sheet whose rows are STAGES rather than records (before / now / newly adopted)
+    // sets noTotals, because adding those rows together would produce a figure that
+    // means nothing and reads as though it were a real count.
     const numCols = cols.filter(c=>c.type==='num'||c.type==='inr');
-    const showTotals = rows.length>=2 && numCols.length>=2;
+    const showTotals = !noTotals && rows.length>=2 && numCols.length>=2;
     let totalsRow = -1;
     if(showTotals){
       aoa.push(cols.map((c,ci)=> ci===0 ? 'TOTAL' : ((c.type==='num'||c.type==='inr') ? rows.reduce((s,r)=>s+(Number(r[c.key])||0),0) : '')));
@@ -8341,7 +8587,7 @@ const XLS = (function(){
     for(const sh of (sheets||[])){
       let name = _safe(sh.name || sh.title || 'Sheet');
       let n=name, i=2; while(used.has(n)){ n = (name.slice(0,24)+' '+i); i++; } used.add(n);
-      const ws = buildSheet(sh.rows||[], sh.cols||null, {title:sh.title||title, subtitle:sh.subtitle||'', filters: sh.filters || (filters||[]).map(f=>f[0]+': '+f[1]).join(' · ')});
+      const ws = buildSheet(sh.rows||[], sh.cols||null, {title:sh.title||title, subtitle:sh.subtitle||'', noTotals:!!sh.noTotals, filters: sh.filters || (filters||[]).map(f=>f[0]+': '+f[1]).join(' · ')});
       XLSX.utils.book_append_sheet(wb, ws, n);
     }
     XLSX.writeFile(wb, filename || (title.replace(/[^\w]+/g,'_') + '_' + todayIST() + '.xlsx'));

@@ -133,6 +133,89 @@ function liv_label_sql(){
    typed straight in rather than calculated. */
 function liv_nonfarm_keys(){ global $LIVELIHOODS; return array_keys(array_filter($LIVELIHOODS, fn($v)=>!$v['crop'])); }
 
+/* ════════ PLACE SCOPE — a District / Block / Village filter reaches EVERYTHING ════════
+   A place filter used to be applied only to tables that physically hold a district
+   column. Production, loans, activities, projects, donors and thematic areas hold no
+   such column, so they were left completely unfiltered: a Block-wise report could show
+   one beneficiary in that block beside the production, budget and project counts of the
+   entire programme. Every figure on the page was then describing a different population,
+   which is worse than showing nothing.
+   Each table is now scoped through the shortest TRUE relationship to a place:
+     geographies                              its own district / block / id
+     beneficiaries · shgs · gram_sabha ·      its own district / block, OR the place its
+       convergence · villages                   geography_id points at
+     crops                                    its own geography, or its beneficiary's place
+     loans · shg_members                      their group's place
+     activities · indicators · progress ·     the projects that operate in that place
+       donor_mappings · project_objectives
+     projects                                 the projects that operate in that place
+     donors                                   the donors funding those projects
+     programmes                               the thematic areas of those projects
+   Place names are compared TRIMMED and CASE-INSENSITIVELY, so "New Delhi " and
+   "new delhi" are one place, exactly as the pickers now treat them. */
+function place_scope($table, $district='', $block='', $geo=''){
+  $district=trim((string)$district); $block=trim((string)$block); $geo=trim((string)$geo);
+  if($district==='' && $block==='' && $geo==='') return ['', []];
+  try{ $cols=table_columns($table); }catch(Exception $e){ return ['', []]; }
+
+  // The geographies that answer this filter, as a subquery (no huge IN list)
+  $gC=[]; $gV=[];
+  if($geo!==''){      $gC[]="geography_id=?";                                  $gV[]=$geo; }
+  if($district!==''){ $gC[]="TRIM(LOWER(COALESCE(district,'')))=TRIM(LOWER(?))"; $gV[]=$district; }
+  if($block!==''){    $gC[]="TRIM(LOWER(COALESCE(block,'')))=TRIM(LOWER(?))";    $gV[]=$block; }
+  $gW=implode(' AND ',$gC);
+  $GEO="SELECT geography_id FROM geographies WHERE $gW";
+  $PRJ="SELECT DISTINCT project_id FROM geographies WHERE $gW AND project_id IS NOT NULL AND TRIM(project_id)<>''";
+
+  // Does this table name the place itself?
+  $own=[]; $ownV=[];
+  if($district!=='' && in_array('district',$cols)){ $own[]="TRIM(LOWER(COALESCE(`$table`.`district`,'')))=TRIM(LOWER(?))"; $ownV[]=$district; }
+  if($block!==''    && in_array('block',$cols)){    $own[]="TRIM(LOWER(COALESCE(`$table`.`block`,'')))=TRIM(LOWER(?))";    $ownV[]=$block; }
+  $hasGeo = in_array('geography_id',$cols);
+  $hasPrj = in_array('project_id',$cols);
+
+  switch($table){
+    case 'geographies':
+      return [$gW, $gV];
+
+    case 'beneficiaries': case 'shgs': case 'gram_sabha': case 'convergence': case 'villages':
+      if($own && $hasGeo) return ['(('.implode(' AND ',$own).") OR `$table`.`geography_id` IN ($GEO))", array_merge($ownV,$gV)];
+      if($own)            return ['('.implode(' AND ',$own).')', $ownV];
+      if($hasGeo)         return ["`$table`.`geography_id` IN ($GEO)", $gV];
+      return ['', []];
+
+    case 'crops': {
+      [$bw,$bv] = place_scope('beneficiaries',$district,$block,$geo);
+      $parts=[]; $vals=[];
+      if($hasGeo){ $parts[]="`crops`.`geography_id` IN ($GEO)"; $vals=array_merge($vals,$gV); }
+      if($bw!==''){ $parts[]="`crops`.`beneficiary_id` IN (SELECT beneficiary_id FROM beneficiaries WHERE $bw)"; $vals=array_merge($vals,$bv); }
+      return $parts ? ['('.implode(' OR ',$parts).')', $vals] : ['', []];
+    }
+
+    case 'loans': case 'shg_members': {
+      [$sw,$sv] = place_scope('shgs',$district,$block,$geo);
+      $parts=[]; $vals=[];
+      if($hasGeo){ $parts[]="`$table`.`geography_id` IN ($GEO)"; $vals=array_merge($vals,$gV); }
+      if($sw!==''){ $parts[]="`$table`.`shg_id` IN (SELECT shg_id FROM shgs WHERE $sw)"; $vals=array_merge($vals,$sv); }
+      return $parts ? ['('.implode(' OR ',$parts).')', $vals] : ['', []];
+    }
+
+    case 'projects':
+      return ["`projects`.`project_id` IN ($PRJ)", $gV];
+
+    case 'donors':
+      return ["`donors`.`donor_id` IN (SELECT DISTINCT donor_id FROM donor_mappings WHERE project_id IN ($PRJ) AND donor_id IS NOT NULL AND TRIM(donor_id)<>'')", $gV];
+
+    case 'programmes':
+      return ["`programmes`.`programme_id` IN (SELECT DISTINCT programme_id FROM projects WHERE project_id IN ($PRJ) AND programme_id IS NOT NULL AND TRIM(programme_id)<>'')", $gV];
+
+    default:
+      if($hasGeo) return ["`$table`.`geography_id` IN ($GEO)", $gV];
+      if($hasPrj) return ["`$table`.`project_id` IN ($PRJ)", $gV];
+      return ['', []];
+  }
+}
+
 /* resource → [id_column, prefix, zero-pad] (auto-generated on POST) */
 $ID_GEN = [
   'programmes'=>['programme_id','PRG',3], 'projects'=>['project_id','PRJ',3],
@@ -710,7 +793,17 @@ if ($action==='options') {
    keeping ~2,700 rows OUT of the common ?action=options keeps login/dashboard/saves fast). */
 if ($action==='blist') {
   require_session(); $pdo=db();
-  try{ $rows=$pdo->query("SELECT beneficiary_id id, CONCAT_WS(' · ', beneficiary_farmer_name, NULLIF(father_or_spouse_name,''), NULLIF(village,''), beneficiary_id) name, geography_id FROM beneficiaries WHERE beneficiary_id IS NOT NULL AND beneficiary_id<>'' ORDER BY beneficiary_farmer_name, father_or_spouse_name")->fetchAll(); }catch(Exception $e){ $rows=[]; }
+  /* project_id, district and block travel with every beneficiary so the pickers can
+     show ONLY the people who belong to the project and place being worked on. Without
+     these the Production form listed every beneficiary in the database, including
+     people belonging to entirely different projects. */
+  try{ $rows=$pdo->query("SELECT beneficiary_id id,
+              CONCAT_WS(' · ', beneficiary_farmer_name, NULLIF(father_or_spouse_name,''), NULLIF(village,''), beneficiary_id) name,
+              geography_id, project_id, district, block
+         FROM beneficiaries
+        WHERE beneficiary_id IS NOT NULL AND beneficiary_id<>''
+        ORDER BY beneficiary_farmer_name, father_or_spouse_name")->fetchAll(); }
+  catch(Exception $e){ $rows=[]; }
   out(['rows'=>$rows]);
 }
 
@@ -738,12 +831,19 @@ if ($action==='logged_indicators') {
   require_session();
   $pdo=db();
   $p=[];
-  foreach(['programme_id','project_id','donor_id','district','block'] as $k){ if(!empty($_GET[$k])) $p[$k]=$_GET[$k]; }
+  foreach(['programme_id','project_id','donor_id','district','block','geography_id'] as $k){ if(!empty($_GET[$k])) $p[$k]=$_GET[$k]; }
   $ap=assigned_projects();
   $W=function($table) use($p,$ap){
     try{
       $cols=table_columns($table); $cl=[]; $vals=[];
-      foreach($p as $k=>$v){ if(in_array($k,$cols)){ $cl[]="`$k`=?"; $vals[]=$v; } }
+      foreach($p as $k=>$v){
+        if(in_array($k,['district','block','geography_id'])) continue;   // → place_scope
+        if(in_array($k,$cols)){ $cl[]="`$k`=?"; $vals[]=$v; }
+      }
+      // A District or Block filter reaches production, groups and loans as well,
+      // through the household or the group that belongs to the place.
+      [$pw,$pv]=place_scope($table, $p['district']??'', $p['block']??'', $p['geography_id']??'');
+      if($pw!==''){ $cl[]=$pw; $vals=array_merge($vals,$pv); }
       if($ap && in_array('project_id',$cols)){
         $ph=implode(',',array_fill(0,count($ap),'?'));
         $cl[]="(project_id IN ($ph) OR project_id IS NULL OR TRIM(project_id)='')";
@@ -960,11 +1060,18 @@ if ($action==='dashboard') {
   foreach(['programme_id','project_id','donor_id','geography_id','district','block','shg_id','crop','season','project_year'] as $k){
     if(!empty($_GET[$k])){ $f[]="$k=?"; $p[$k]=$_GET[$k]; }
   }
-  $whereFor=function($table) use($f,$p){
-    if(!$f) return ['',[]];
+  /* District / Block / Village are handled by place_scope(), which reaches tables
+     that hold no place column of their own. Everything else still matches on the
+     table's own column. */
+  $whereFor=function($table) use($p){
     $cols=table_columns($table);
     $cl=[]; $vals=[];
-    foreach($p as $k=>$v){ if(in_array($k,$cols)){ $cl[]="`$k`=?"; $vals[]=$v; } }
+    foreach($p as $k=>$v){
+      if(in_array($k,['district','block','geography_id'])) continue;   // → place_scope
+      if(in_array($k,$cols)){ $cl[]="`$table`.`$k`=?"; $vals[]=$v; }
+    }
+    [$pw,$pv]=place_scope($table, $p['district']??'', $p['block']??'', $p['geography_id']??'');
+    if($pw!==''){ $cl[]=$pw; $vals=array_merge($vals,$pv); }
     return $cl? [' WHERE '.implode(' AND ',$cl), $vals] : ['',[]];
   };
   $count=function($table) use($pdo,$whereFor){
@@ -985,7 +1092,21 @@ if ($action==='dashboard') {
     'programmes'=>$count('programmes'),'projects'=>$count('projects'),'donors'=>$count('donors'),
     'beneficiaries'=>$count('beneficiaries'),'shgs'=>$count('shgs'),'activities'=>$count('activities'),
     'villages'=>$count('villages'),'loans'=>$count('loans'),
+    // The DONOR's whole approved budget, for the donors in scope. Useful at the top of
+    // the organisation, but it is an organisation-level figure: a donor funding four
+    // districts carries the same total into each of them.
     'budget'=>$sum('donors','total_approved_budget_inr'),
+    // The amount actually approved for the PROJECTS in scope (Donor Mapping). This is
+    // the figure that genuinely narrows with a project, district or block filter, and
+    // it is the one a place-wise report should be read against.
+    'project_amount'=>(function() use($pdo,$whereFor){
+      try{
+        [$w,$v]=$whereFor('projects');
+        $st=$pdo->prepare("SELECT COALESCE(SUM(approved_amount_inr),0) s FROM donor_mappings
+                            WHERE project_id IN (SELECT project_id FROM `projects`$w)");
+        $st->execute($v); return (float)$st->fetch()['s'];
+      }catch(Exception $e){ return 0.0; }
+    })(),
     'loan_total'=>$sum('loans','loan_amount_inr'),
     'ach'=>$sum('activities','cumulative_achievement'),
     'tgt'=>$sum('activities','total_target'),
@@ -1319,16 +1440,19 @@ if ($action==='report') {
   $to     = trim($_GET['to']   ?? '');
 
   // Build WHERE that applies only to tables that have the column — supports every report dimension
+  /* Donor / Thematic / Project / SHG match on the table's own column when it has one.
+     District / Block / Village go through place_scope(), so they reach production,
+     loans, activities, projects, donors and thematic areas as well — the tables that
+     hold no place column and were therefore left entirely unfiltered before. */
   $applyFilter = function($table) use($pdo,$donor,$prog,$proj,$district,$block,$geo,$shg){
     $cols = table_columns($table);
     $w=[]; $vals=[];
     if($donor && in_array('donor_id',$cols))       { $w[]="`$table`.`donor_id`=?";     $vals[]=$donor; }
     if($prog  && in_array('programme_id',$cols))   { $w[]="`$table`.`programme_id`=?"; $vals[]=$prog; }
     if($proj  && in_array('project_id',$cols))     { $w[]="`$table`.`project_id`=?";   $vals[]=$proj; }
-    if($district && in_array('district',$cols))    { $w[]="`$table`.`district`=?";     $vals[]=$district; }
-    if($block && in_array('block',$cols))          { $w[]="`$table`.`block`=?";        $vals[]=$block; }
-    if($geo && in_array('geography_id',$cols))     { $w[]="`$table`.`geography_id`=?"; $vals[]=$geo; }
     if($shg && in_array('shg_id',$cols))           { $w[]="`$table`.`shg_id`=?";       $vals[]=$shg; }
+    [$pw,$pv]=place_scope($table,$district,$block,$geo);
+    if($pw!==''){ $w[]=$pw; $vals=array_merge($vals,$pv); }
     return [$w? ' WHERE '.implode(' AND ',$w) : '', $vals];
   };
 
@@ -1351,6 +1475,41 @@ if ($action==='report') {
   $st->execute($pB); $byGender=$st->fetchAll();
   $st=$pdo->prepare("SELECT COALESCE(NULLIF(TRIM(block),''),'—') k, COUNT(*) c FROM `beneficiaries`$wB GROUP BY k ORDER BY c DESC");
   $st->execute($pB); $byBlock=$st->fetchAll();
+
+  /* 1b) PLACE BREAKDOWN — a district-wise or block-wise report has to contain
+     district and block rows, and it did not. For each place: how many households,
+     how many of them are women, how much land, how many production records and the
+     NET income those records represent. Place names are grouped folded, so a district
+     typed as "Ganjam" and "ganjam " is ONE row rather than two half-rows. */
+  $placeRows=function($field) use($pdo,$wB,$pB){
+    try{
+      $st=$pdo->prepare("SELECT TRIM(`beneficiaries`.`$field`) k,
+              COUNT(*) hh,
+              COALESCE(SUM(CASE WHEN LOWER(TRIM(gender))='female' THEN 1 ELSE 0 END),0) women,
+              COALESCE(SUM(COALESCE(total_land_acre,0)),0) land,
+              COALESCE(SUM(COALESCE(current_income_per_annum_inr,0)),0) baseline_income
+         FROM `beneficiaries`$wB
+        GROUP BY TRIM(LOWER(`beneficiaries`.`$field`)), TRIM(`beneficiaries`.`$field`)
+        ORDER BY hh DESC");
+      $st->execute($pB); $rows=$st->fetchAll();
+    }catch(Exception $e){ return []; }
+    // Net production income per place, computed separately so one heavy correlated
+    // sub-select does not slow the whole report down.
+    foreach($rows as &$r){
+      if(trim((string)$r['k'])===''){ $r['k']='—'; }
+      try{
+        $s2=$pdo->prepare("SELECT COALESCE(SUM(COALESCE(net_profit_inr,income_inr)),0) s, COUNT(*) n
+                             FROM crops WHERE beneficiary_id IN
+                             (SELECT beneficiary_id FROM `beneficiaries`".($wB?($wB." AND "):" WHERE ")."TRIM(LOWER(COALESCE(`beneficiaries`.`$field`,'')))=TRIM(LOWER(?)))");
+        $s2->execute(array_merge($pB,[$r['k']==='—'?'':$r['k']]));
+        $g=$s2->fetch(); $r['net_income']=(float)$g['s']; $r['prod']=(int)$g['n'];
+      }catch(Exception $e){ $r['net_income']=0; }
+    }
+    unset($r);
+    return $rows;
+  };
+  $byDistrictFull = $placeRows('district');
+  $byBlockFull    = $placeRows('block');
 
   // 2) Activities — quarterly performance (already columnised in the table)
   [$wA,$pA]=$applyFilter('activities');
@@ -1493,6 +1652,7 @@ if ($action==='report') {
     'organic'=>$organic,
     'beneficiaries'=>['total'=>(int)$bn['c'],'income_total'=>(float)$bn['inc'],'land_total'=>(float)$bn['land']],
     'by_caste'=>$byCaste,'by_gender'=>$byGender,'by_block'=>$byBlock,
+    'by_district_full'=>$byDistrictFull,'by_block_full'=>$byBlockFull,
     'activities'=>$acts,
     'loans'=>$loanRows,
     'indicator_progress'=>$indProg,

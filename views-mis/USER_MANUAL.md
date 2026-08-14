@@ -167,6 +167,17 @@ Three sheets deserve a word of their own:
 
 One click exports **every section of the entire database** into one formatted Excel file. Two uses: a complete offline copy for anyone who asks, and your **do-it-yourself full backup** — a good habit before any big data drive.
 
+### District and Block filters now reach every figure
+
+A place filter used to be applied only to the tables that physically hold a district column. Production, loans, activities, projects, donors and thematic areas hold no such column, so they were left **completely unfiltered**: a Block-wise report could show one beneficiary in that block beside the production, budget and project counts of the **entire programme**. Every figure on the page then described a different population.
+
+Each table is now scoped through its true relationship to a place — production through the household, loans through the group, activities and projects through the places they operate in, donors through the projects they fund. Place names are matched ignoring capitals and stray spaces, so "New Delhi " and "new delhi" are one place.
+
+Two consequences worth knowing:
+
+- **District-wise and Block-wise sheets** now exist in every workbook, with households, women, land, baseline income, production records and net income for each place.
+- **Two budget figures**, both labelled in full. *Approved amount — projects in this report* comes from Donor Mapping and narrows properly with a project, district or block filter. *Approved budget — donors in this report* is each donor's whole budget, an organisation-level figure that does not divide between districts. Quoting only one of them was misleading.
+
 ### One source of truth: reports are never out of date
 
 **Nothing in this system stores a total.** Every figure on every screen and in every Excel file is calculated from the database at the moment you look at it. That is a deliberate design decision, and it is what makes the following true:
@@ -313,6 +324,8 @@ Master Data is set up early and touched rarely — but understanding it explains
 
 **Production & Output Progress** — the actuals against HQ's output targets. Pick the beneficiary (the picker can be narrowed by village) and their context fills in; then record the livelihood, the year, the season and the money (a loss — negative profit — is allowed, because a loss is real data). These records feed the income trend and the outputs sheets of every report.
 
+**The Beneficiary picker only offers this project's people.** A production record belongs to a project, so the household it is about must belong to the same project — and, when a village is chosen, to that village. Anyone registered under a different project is not offered, and the list says how many were kept out and why. Words may be typed in any order ("behera gopal" finds *Gopal Behera*) and a name pasted from a document is cleaned of hidden characters before matching. If a name genuinely cannot be found, the list explains whether the person exists elsewhere or not at all.
+
 **Livelihood / Crop is required, and its list is the beneficiary baseline's list** — the same eleven categories, nothing else. If you open an older record saved under a category the list no longer offers (Fruits, Health Camp, Road Safety Training and the like), the original wording is **kept and clearly marked**, counted under *Other Income*, and you can bring it in line by choosing one of the eleven.
 
 **How is the income recorded? — two honest ways, not one forced formula:**
@@ -334,7 +347,7 @@ Two things make this list donor-proof:
 - **A Livelihood or Season filter is required before anything displays.** One beneficiary legitimately has several production rows (Paddy · Kharif, Millet · Rabi, a goat batch…) — the filter shows each person once per view, so nobody ever *looks* duplicated. The records themselves stay together as one person's story; this is display only, and reports are unaffected. The crop & season filters combine with the thematic/project/donor chain like every other filter.
 - **An Income Change column** (₹ and %) sits beside Net Profit: the beneficiary's cumulative production income across ALL their records versus their total baseline — the same honest figure on every row of that person, and in the section's Excel export too.
 
-**Activity Progress** — delivery tracked year by year in one compact table. Set the activity's total target, then fill each year's row: its target and the **Q1–Q4** achievements (or flip the switch to **Monthly** and type the 12 months — they roll up into the quarters automatically). **＋ Add Year** extends the table up to six years. Each year's achievement and the cumulative total **calculate themselves**, and a live progress bar shows the % achieved against the total target — always arithmetic, never opinion. From the field-office page, the *Activity Progress* card opens this full section (filters, search, **✎ Update progress** on each row, and ＋ New activity) so progress is updated on the existing activity rather than re-created. **The target boxes — and adding or deleting activities — need the 🎯 Targets right (§12):** without it the plan is read-only 🔒 and only the achievements can be typed.
+**Activity Progress** — delivery tracked year by year in one compact table. A **Balance** column sits at the end of every year's row and beside the cumulative total: **target − achieved**, shown **green** once the target is met (with anything above it as a surplus) and **red** while work is outstanding (showing exactly how much is left). Where no target has been set for a year it reads *no target*. **Quarterly and Monthly are mutually exclusive** — an activity is reported one way or the other, never both, so the same delivery can never be counted twice; switching asks first and says exactly which figures will be cleared. Set the activity's total target, then fill each year's row: its target and the **Q1–Q4** achievements (or flip the switch to **Monthly** and type the 12 months — they roll up into the quarters automatically). **＋ Add Year** extends the table up to six years. Each year's achievement and the cumulative total **calculate themselves**, and a live progress bar shows the % achieved against the total target — always arithmetic, never opinion. From the field-office page, the *Activity Progress* card opens this full section (filters, search, **✎ Update progress** on each row, and ＋ New activity) so progress is updated on the existing activity rather than re-created. **The target boxes — and adding or deleting activities — need the 🎯 Targets right (§12):** without it the plan is read-only 🔒 and only the achievements can be typed.
 
 On the list, the **Year / Quarter switcher** in the filter bar changes what the columns show: the overview shows Year 1; pick *Year 3* and the table shows Y3's target and achievement; add *Q2* and that quarter's figure appears too — every year you entered is one click away, with no blank Y2–Y6 columns cluttering the default view (the quarter picker unlocks only after a year is chosen).
 
