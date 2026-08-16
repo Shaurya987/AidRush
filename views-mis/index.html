@@ -103,8 +103,22 @@ select.r-inp{padding-right:32px}
 .li10-name{font-family:'Plus Jakarta Sans';font-weight:700;font-size:13.5px;color:var(--navy-800);line-height:1.4}
 .li10-val{font-family:'JetBrains Mono';font-weight:800;font-size:26px;letter-spacing:-.5px;display:flex;align-items:baseline;gap:10px}
 .li10-nodata{font-size:11px;color:var(--gold-ink);font-family:'Inter',sans-serif;font-weight:700;background:rgba(226,161,7,.16);border-radius:999px;padding:3px 10px}
-.li10-detail{font-size:12.5px;color:var(--t2);margin-top:8px;line-height:1.55}
-.li10-formula{font-size:11px;color:var(--gold-ink);opacity:.75;margin-top:10px;border-top:1px dashed #e6cf9d;padding-top:8px;font-family:'JetBrains Mono'}
+/* Each indicator card carries a picture of its own figure instead of a written
+   formula, so the page reads as a result rather than a calculation. */
+.li10-chart{margin-top:12px;border-top:1px dashed #e6cf9d;padding-top:11px}
+.li10-chart-empty{font-size:11.5px;color:var(--t4);font-style:italic;border-top:1px dashed var(--border);padding-top:9px}
+.li10-bar-row{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.li10-bar-row:last-child{margin-bottom:0}
+.li10-bar-lab{font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;width:48px;flex-shrink:0}
+.li10-bar{flex:1;height:9px;border-radius:99px;background:#eef2f7;overflow:hidden;display:block}
+.li10-bar>span{display:block;height:100%;border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.li10-bar-v{font-family:'JetBrains Mono';font-size:12px;font-weight:800;color:var(--t2);min-width:56px;text-align:right}
+.li10-bar-foot{font-size:11px;color:var(--t4);margin-top:6px;padding-left:57px}
+.li10-dial{display:flex;align-items:center;gap:13px}
+.li10-dial svg{flex-shrink:0}
+.li10-dial-txt{font-size:12.5px;color:var(--t2);line-height:1.5}
+.li10-dial-txt b{font-family:'JetBrains Mono';font-size:14px}
+.li10-dial-txt span{display:block;font-size:11px;color:var(--t4);margin-top:2px}
 /* In-app User Manual */
 .man-jump{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
 .man-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 14px 6px 6px;font-size:12.5px;font-weight:600;color:var(--navy-800);cursor:pointer;font-family:inherit;transition:all .14s;box-shadow:var(--sh-1)}
@@ -158,6 +172,13 @@ select.r-inp{padding-right:32px}
 .f .bl-in[type=number]{-moz-appearance:textfield}
 .f .bl-tot{background:var(--brand-soft);color:var(--brand);font-weight:800;border-color:var(--brand-soft)}
 .bl-na{color:var(--t5)}
+/* A non-farm row asks HOW MANY instead of area and weight — one wide cell across
+   the two columns that do not apply to it, so the table stays a clean grid. */
+.f .bl-cnt{width:100%;max-width:150px;background:var(--gold-soft);border-color:#f0dcae;font-weight:700;color:var(--gold-ink)}
+.f .bl-cnt::placeholder{color:#b08a3a;font-weight:500;font-size:11.5px}
+.bl-count{padding-right:8px}
+.f .bl-inc{background:var(--bg-soft);font-weight:700}
+.f .bl-rate{background:#f7fbff}
 .bl-tbl .bl-net{font-family:'JetBrains Mono';font-weight:700;color:var(--ok);white-space:nowrap;padding-right:12px;text-align:right}
 .bl-tbl th.bl-net{text-align:right;color:var(--t3)}
 /* Activity Progress — year × quarter/month plan table */
@@ -313,34 +334,40 @@ a{color:inherit;text-decoration:none}
 .login-error{display:none;background:var(--bad-soft);color:var(--bad);font-size:12.5px;padding:10px 14px;border-radius:10px;margin-top:12px;border:1px solid #fecaca;font-weight:500}
 #app{display:none;min-height:100vh}
 /* ═══ SIDEBAR — solid NAVY. Gold is the only accent on it, used alone. ═══ */
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sb-w);background:var(--navy-900);display:flex;flex-direction:column;z-index:50;box-shadow:4px 0 24px rgba(11,44,65,.18)}
-.sb-head{padding:20px 18px 17px;border-bottom:1px solid rgba(255,255,255,.10);position:relative;background:linear-gradient(180deg,rgba(255,255,255,.05),transparent)}
+/* ════════ LEFT NAVIGATION — light, as the client asked ════════
+   A near-white panel with a hairline rule against the page, navy for the text and
+   gold reserved for the one item you are on. Lighter reads as cleaner, and the
+   gold marker is far easier to find on white than it was on navy. */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sb-w);background:linear-gradient(180deg,#ffffff 0%,#f7f9fc 100%);display:flex;flex-direction:column;z-index:50;border-right:1px solid #e3e9f2;box-shadow:2px 0 18px rgba(16,59,85,.06)}
+.sb-head{padding:20px 18px 17px;border-bottom:1px solid #e8edf5;position:relative;background:#fff}
 .sb-head::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--gold) 0%,var(--gold) 34%,transparent 34%)}
 .sb-brand{display:flex;flex-direction:column;gap:11px}
-.sb-logo{background:#fff;border-radius:11px;padding:9px 12px;box-shadow:0 4px 16px rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center}
+.sb-logo{background:#fff;border-radius:11px;padding:6px 8px;display:flex;align-items:center;justify-content:center}
 .sb-logo img{width:100%;max-width:140px;height:auto;display:block}
 .sb-titles{min-width:0;padding-left:2px}
-.sb-name{font-family:'Plus Jakarta Sans';font-size:16.5px;font-weight:800;letter-spacing:.4px;color:#fff;text-transform:uppercase}
-.sb-sub{font-size:11px;color:var(--gold-3);font-weight:600;margin-top:3px;letter-spacing:.55px;text-transform:uppercase}
+.sb-name{font-family:'Plus Jakarta Sans';font-size:16.5px;font-weight:800;letter-spacing:.4px;color:var(--navy-900);text-transform:uppercase}
+.sb-sub{font-size:11px;color:var(--gold-ink);font-weight:700;margin-top:3px;letter-spacing:.55px;text-transform:uppercase}
 .sb-nav{flex:1;padding:14px 12px;overflow-y:auto}
 .sb-nav::-webkit-scrollbar{width:6px}
-.sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:99px}
-.nav-section{font-size:10.5px;font-weight:800;color:rgba(255,255,255,.42);text-transform:uppercase;letter-spacing:1.2px;padding:15px 10px 7px;margin-top:4px}
+.sb-nav::-webkit-scrollbar-thumb{background:#d8e0ec;border-radius:99px}
+.nav-section{font-size:10.5px;font-weight:800;color:#8b9ab0;text-transform:uppercase;letter-spacing:1.2px;padding:15px 10px 7px;margin-top:4px}
 .nav-section:first-child{margin-top:0}
-.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;color:rgba(255,255,255,.80);font-size:14.5px;font-weight:500;cursor:pointer;transition:all .14s;margin-bottom:2px;position:relative}
-.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
-.nav-item.active{background:rgba(226,161,7,.16);color:var(--gold-3);font-weight:700}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;color:var(--navy-800);font-size:14.5px;font-weight:600;cursor:pointer;transition:all .14s;margin-bottom:2px;position:relative}
+.nav-item svg{color:#6b7f96}
+.nav-item:hover{background:#eef3fa;color:var(--navy-900)}
+.nav-item:hover svg{color:var(--brand)}
+.nav-item.active{background:var(--gold-soft);color:var(--gold-ink);font-weight:800}
 .nav-item.active::before{content:'';position:absolute;left:-12px;top:5px;bottom:5px;width:3px;border-radius:0 4px 4px 0;background:var(--gold)}
-.nav-item.active svg{color:var(--gold)}
+.nav-item.active svg{color:var(--gold-ink)}
 .nav-item svg{width:18px;height:18px;flex-shrink:0}
 .nav-badge{margin-left:auto;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;letter-spacing:.4px;background:var(--gold);color:var(--navy-900)}
-.sb-foot{padding:14px;border-top:1px solid rgba(255,255,255,.09)}
-.sb-user{display:flex;align-items:center;gap:11px;padding:9px;border-radius:10px;background:rgba(255,255,255,.07)}
+.sb-foot{padding:14px;border-top:1px solid #e8edf5;background:#fff}
+.sb-user{display:flex;align-items:center;gap:11px;padding:9px;border-radius:10px;background:#f2f6fb;border:1px solid #e6ecf5}
 .sb-avatar{width:36px;height:36px;border-radius:9px;background:var(--gold);color:var(--navy-900);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
-.sb-uname{font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-urole{font-size:11.5px;color:rgba(255,255,255,.55);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-logout{margin-top:10px;width:100%;padding:9px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.13);border-radius:9px;font-size:13.5px;font-weight:600;transition:all .14s}
-.sb-logout:hover{background:rgba(239,68,68,.18);color:#fecaca;border-color:rgba(239,68,68,.35)}
+.sb-uname{font-size:14px;font-weight:700;color:var(--navy-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-urole{font-size:11.5px;color:#7b8aa0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-logout{margin-top:10px;width:100%;padding:9px;background:#fff;color:var(--navy-800);border:1px solid #dfe6f0;border-radius:9px;font-size:13.5px;font-weight:700;transition:all .14s}
+.sb-logout:hover{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
 .main{margin-left:var(--sb-w);min-height:100vh;padding:26px 32px}
 .page{display:none;animation:fadeIn .25s}
 .page.active{display:block}
@@ -367,6 +394,33 @@ a{color:inherit;text-decoration:none}
 .kpi-label{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.9px;margin-bottom:8px}
 .kpi-value{font-family:'Plus Jakarta Sans';font-size:31px;font-weight:800;color:var(--navy-800);line-height:1;letter-spacing:-.7px}
 .kpi-meta{font-size:12.5px;color:var(--t3);margin-top:9px;font-weight:500}
+/* ════════ Interactive KPI cards ════════
+   A card that holds a list says so, shows the list on hover, and opens the section
+   it belongs to when clicked. The panel is anchored to the card and scrolls, so a
+   long list of donors or villages never runs off the screen. */
+.kpi-live{cursor:pointer}
+.kpi-live::after{content:'';position:absolute;right:14px;top:16px;width:7px;height:7px;border-radius:50%;background:var(--c-accent,var(--brand));opacity:.55;animation:kpiPulse 2.4s ease-in-out infinite}
+@keyframes kpiPulse{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:.8;transform:scale(1.35)}}
+.kpi-live:hover{border-color:var(--c-accent,var(--brand));box-shadow:0 10px 30px rgba(16,59,85,.16)}
+.kpi-go{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:11.5px;font-weight:800;color:var(--c-accent,var(--brand));opacity:0;transform:translateY(3px);transition:all .18s}
+.kpi-live:hover .kpi-go{opacity:1;transform:none}
+.kpi-pop{position:absolute;z-index:120;min-width:260px;max-width:340px;background:#fff;border:1px solid var(--border-2);border-radius:13px;box-shadow:0 18px 46px rgba(11,44,65,.20);padding:0;overflow:hidden;display:none}
+.kpi-pop.show{display:block;animation:kpiPop .16s ease-out}
+@keyframes kpiPop{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.kpi-pop-head{background:var(--navy-800);color:#fff;padding:9px 13px;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.kpi-pop-head b{color:var(--gold-3);font-family:'JetBrains Mono';font-size:13px}
+.kpi-pop-body{max-height:270px;overflow-y:auto;padding:7px}
+.kpi-pop-body::-webkit-scrollbar{width:6px}
+.kpi-pop-body::-webkit-scrollbar-thumb{background:#d8e0ec;border-radius:99px}
+.kpi-pop-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:13px;color:var(--t1);line-height:1.35}
+.kpi-pop-item:nth-child(odd){background:#f8fafc}
+.kpi-pop-item i{font-style:normal;font-family:'JetBrains Mono';font-size:10.5px;color:var(--t4);margin-left:auto;flex-shrink:0}
+.kpi-pop-more{padding:8px 12px;font-size:11.5px;color:var(--t4);font-style:italic;border-top:1px dashed var(--border)}
+.kpi-pop-foot{border-top:1px solid var(--border);padding:9px 11px;display:flex;gap:7px;flex-wrap:wrap;background:#fbfcfe}
+.kpi-pop-btn{font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;border:1px solid var(--brand);background:var(--brand);color:#fff;cursor:pointer;transition:filter .15s}
+.kpi-pop-btn:hover{filter:brightness(1.1)}
+.kpi-pop-btn.ghost{background:#fff;color:var(--brand)}
+.kpi-pop-empty{padding:16px 14px;font-size:12.5px;color:var(--t4);text-align:center;line-height:1.6}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;box-shadow:var(--sh-2);margin-bottom:18px}
 .card>.card-title:first-child{position:relative;padding-bottom:9px;margin-bottom:12px}
 .card>.card-title:first-child::after{content:'';position:absolute;left:0;bottom:0;width:34px;height:2px;background:var(--gold);border-radius:2px}
@@ -432,6 +486,9 @@ tbody tr:last-child td{border-bottom:none}
 .fg-2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .fg-3{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 .f label{display:block;font-size:12.5px;font-weight:600;color:var(--t2);margin-bottom:5px}
+/* Required marker — red and clearly larger, so a compulsory field is obvious at a
+   glance rather than something you discover when the form refuses to save. */
+.req-star{color:#dc2626;font-size:17px;font-weight:800;line-height:0;vertical-align:middle;margin-left:2px}
 .f input,.f textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14.5px;background:#fff;outline:none;transition:all .15s}
 .f select{width:100%;font-size:14.5px}
 .f input:focus,.f select:focus,.f textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow)}
@@ -945,7 +1002,16 @@ const RES={
   villages:{label:'Village Demographics',sub:'Total HHs, project coverage & social-order breakdown',icon:'M3 21h18M5 21V9l7-6 7 6v12M9 21v-7h6v7',
     cols:[['district','District'],['block','Block'],['village','Village'],['total_hhs','Total HHs','num'],['hhs_covered_under_project','Covered','num'],['sc_hhs','SC','num'],['st_hhs','ST','num'],['obc_hhs','OBC','num'],['general_hhs','Gen','num']],
     filters:['donor_id','project_id'],
-    fields:[['demographic_id','Demographic ID',1],['geography_id','Geography','ref','geographies'],['district','District',1],['block','Block',1],['gram_panchayat','Gram Panchayat'],['village','Village',1],['total_hhs','Total HHs','num'],['hhs_covered_under_project','HHs Covered','num'],['sc_hhs','SC HHs','num'],['st_hhs','ST HHs','num'],['obc_hhs','OBC HHs','num'],['general_hhs','General HHs','num'],['village_contact_person','Contact Person'],['village_contact_person_cell_no','Contact Phone'],['responsible_staff','Responsible Staff'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['remarks','Remarks']]},
+    fields:[['demographic_id','Demographic ID',1],
+      ['__g_link','Link — the project this village belongs to','group'],
+      ['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['programme_id','Thematic Area','ref','programmes'],
+      ['geography_id','Geography — pick the village','ref','geographies'],
+      ['district','District',1],['block','Block',1],['gram_panchayat','Gram Panchayat'],['village','Village',1],
+      ['__g_hh','Households','group'],
+      ['total_hhs','Total HHs','num'],['hhs_covered_under_project','HHs Covered','num'],['sc_hhs','SC HHs','num'],['st_hhs','ST HHs','num'],['obc_hhs','OBC HHs','num'],['general_hhs','General HHs','num'],
+      ['__g_contact','Contact','group'],
+      ['village_contact_person','Contact Person'],['village_contact_person_cell_no','Contact Phone'],['responsible_staff','Responsible Staff'],
+      ['remarks','Remarks']]},
   beneficiaries:{label:'Beneficiaries',sub:'Farmer & household beneficiaries — full demographic & economic profile',icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',badge:true,
     cols:[['beneficiary_id','ID'],['beneficiary_farmer_name','Name'],['gender','Gender','gender'],['caste','Social Order','caste'],['religion','Religion'],['village','Village'],['block','Block'],['_income_view','Income','incyear']],
     filters:['project_id','donor_id','caste','gender',['income_year','Income view: Baseline',['Baseline','Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']]],
@@ -953,7 +1019,17 @@ const RES={
   crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — the same eleven livelihood categories the beneficiary baseline uses, nothing else',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
     cols:[['beneficiary_id','Beneficiary'],['_livelihood','Livelihood / Crop','liv'],['season','Season'],['production_kg','Output Qty (kg)','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr'],['_incchg','Income Change','incchg']],
     filters:['project_id','donor_id',['project_year','All Years (baseline comparison)',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Livelihoods / Crops',LIVELIHOOD_LABELS],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
-    fields:[['production_record_id','Record ID',1],['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['crop','Livelihood / Crop *','liv',LIVELIHOOD_LABELS],['project_year','Project Year *','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['income_mode','How is the income recorded? *','sel',INCOME_MODES],['area_acre','Area / Scale','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹)','num'],['total_expenditure_inr','Expenditure (₹)','num'],['net_profit_inr','Net Profit (₹) — auto: income − expenditure','num'],['sold','Produce sold?','sel',['Yes','No']],['organic_farming','Organic Farming *','sel',['Yes','No']],['food_security','Food security throughout the year?','sel',['Yes','No']],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
+    /* The client's required order: Project → Donor → District → Block → GP → Village →
+       Beneficiary. Each step narrows the next, so by the time the officer reaches the
+       person, only the right people are on offer. */
+    fields:[['production_record_id','Record ID',1],
+      ['__g_where','Where — project, donor and place','group'],
+      ['project_id','Project *','ref','projects'],['donor_id','Donor','ref','donors'],['programme_id','Thematic Area','ref','programmes'],
+      ['geography_id','Geography — District · Block · GP · Village','ref','geographies'],
+      ['__g_who','Who — the household this record is about','group'],
+      ['beneficiary_id','Beneficiary — search by name','ref','beneficiaries'],
+      ['__g_what','What was produced or earned','group'],
+      ['crop','Livelihood / Crop *','liv',LIVELIHOOD_LABELS],['project_year','Project Year *','sel',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['season','Season / Period','dl',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']],['income_mode','How is the income recorded? *','sel',INCOME_MODES],['area_acre','Area / Scale','num'],['production_kg','Output Quantity (kg)','num'],['rate_inr_per_kg','Rate (₹ / kg)','num'],['income_inr','Income (₹)','num'],['total_expenditure_inr','Expenditure (₹)','num'],['net_profit_inr','Net Profit (₹) — auto: income − expenditure','num'],['sold','Produce sold?','sel',['Yes','No']],['organic_farming','Organic Farming *','sel',['Yes','No']],['food_security','Food security throughout the year?','sel',['Yes','No']],['data_source','Data Source'],['evidence_link','Evidence Link'],['remarks','Remarks']]},
   activities:{label:'Activity Progress',sub:'Every activity\'s multi-year targets & quarterly / monthly achievements — totals auto-computed',icon:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
     cols:[['project_activity','Activity'],['unit_of_measurement','Unit'],['total_target','Total Tgt','num'],['target_year_1','Y1 Tgt','num'],['y1_total_achievement','Y1 Ach','num'],['cumulative_achievement','Cum Ach','num']],
     filters:['project_id','donor_id',['unit_of_measurement','Units',['Number','Percentage','INR','Event','Acres','Kilograms']]],
@@ -977,14 +1053,55 @@ const RES={
     cols:[['shg_id','SHG'],['_shg_village','Village'],['_shg_block','Block'],['financial_year','FY'],['loan_amount_inr','Amount','inr'],['loan_source','Source'],['repayment_status','Status','status']],
     filters:[['financial_year','FY',['2023-24','2024-25','2025-26','2026-27','2027-28','2028-29','2029-30','2030-31']],['repayment_status','Status',['Ongoing','Repaid','Overdue','Not applicable']],['loan_source','Source',['Bank linkage','Donor','Government scheme','Other']]],
     fields:[['loan_record_id','Loan ID',1],['shg_id','SHG — search by name','ref','shgs'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['financial_year','Financial Year','sel',['2023-24','2024-25','2025-26','2026-27','2027-28','2028-29','2029-30','2030-31']],['loan_receiving_date','Loan Date','date'],['loan_amount_inr','Loan Amount (₹)','num'],['loan_source','Loan Source','sel',['Bank linkage','Donor','Government scheme','Other']],['purpose_of_loan','Purpose'],['repayment_status','Repayment Status','sel',['Ongoing','Repaid','Overdue','Not applicable']],['remarks','Remarks']]},
+  /* ════════ FPO — Farmer Producer Organisations ════════
+     Built field for field from the client's FPO Information sheet: where it is,
+     how it is registered, who runs it, how many shareholders it has, what support
+     it has received and five years of audited turnover. */
+  fpos:{label:'FPO',sub:'Farmer Producer Organisations — registration, office bearers, shareholders, support & audited turnover',icon:'M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5M9 12h6',
+    cols:[['fpo_name','FPO Name'],['registration_type','Registration','status'],['village','Village'],['block','Block'],['no_of_shareholders','Shareholders','num'],['no_of_women_shareholders','Women','num'],['turnover_y5','Latest Turnover','inr'],['agm_conducted','AGM','status']],
+    filters:['project_id','donor_id',['registration_type','Registration Type',['Cooperative','Company','Producer Company','Society','Trust','Other']],['agm_conducted','AGM Conducted',['Yes','No']]],
+    fields:[['fpo_id','FPO ID',1],
+      ['__g_link','Link — where this FPO belongs','group'],
+      ['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['programme_id','Thematic Area','ref','programmes'],
+      ['geography_id','Geography — pick the village','ref','geographies'],
+      ['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],
+      ['__g_id','Identity & registration','group'],
+      ['fpo_name','Name of FPO',1],
+      ['registration_type','Type of Registration','sel',['Cooperative','Company','Producer Company','Society','Trust','Other']],
+      ['date_of_incorporation','Date of Incorporation','date'],
+      ['address','Address'],
+      ['cin','CIN'],['pan','PAN'],['tan','TAN'],['gst_number','GST Number'],
+      ['__g_people','Office bearers & contact','group'],
+      ['no_of_bod_members','Number of BoD Members','num'],
+      ['managing_director','Name of Managing Director'],
+      ['chairperson','Name of Chairperson'],
+      ['ceo_name','Name of CEO'],
+      ['contact_number','FPO Contact Number'],
+      ['mail_id','Mail ID'],
+      ['__g_share','Shareholders & governance','group'],
+      ['no_of_shareholders','Number of Shareholders','num'],
+      ['no_of_women_shareholders','Number of Women Shareholders','num'],
+      ['agm_conducted','AGM Conducted','sel',['Yes','No']],
+      ['awards_received','Awards / Recognition received by the FPO','area'],
+      ['__g_support','Support received','group'],
+      ['supported_by','Supported By'],
+      ['scheme_name','Name of Scheme'],
+      ['amount_supported','Amount Supported (₹)','num'],
+      ['__g_turn','Audited turnover — one row per year','group'],
+      ['turnover_y1','Audited Turnover — Year 1 (₹)','num'],['turnover_y1_remarks','Year 1 Remarks'],
+      ['turnover_y2','Audited Turnover — Year 2 (₹)','num'],['turnover_y2_remarks','Year 2 Remarks'],
+      ['turnover_y3','Audited Turnover — Year 3 (₹)','num'],['turnover_y3_remarks','Year 3 Remarks'],
+      ['turnover_y4','Audited Turnover — Year 4 (₹)','num'],['turnover_y4_remarks','Year 4 Remarks'],
+      ['turnover_y5','Audited Turnover — Year 5 (₹)','num'],['turnover_y5_remarks','Year 5 Remarks'],
+      ['remarks','Remarks','area']]},
   gramsabha:{label:'Gram Sabha / VDC',sub:'Village Development Committee & Gram Sabha participation — who attended, and was the VDP submitted',icon:'M3 21h18M5 21V9l7-6 7 6v12M9 21v-6h6v6',
     cols:[['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['vdc_name','VDC Name'],['total_participants','Total Participants','num'],['male_participants','Male','num'],['female_participants','Female','num'],['vdp_submitted','VDP Submitted','status']],
     filters:['project_id','donor_id',['vdp_submitted','VDP',['Yes','No']]],
     fields:[['gramsabha_id','Record ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography — pick the village','ref','geographies'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['vdc_name','VDC Name',1],['meeting_date','Gram Sabha Date','date'],['male_participants','Male Participants','num'],['female_participants','Female Participants','num'],['total_participants','Total Participants — auto: male + female','num'],['vdp_submitted','VDP submitted at Gram Sabha?','sel',['Yes','No']],['remarks','Remarks']]},
   convergence:{label:'Convergence — Govt Schemes',sub:'Government schemes leveraged — department, scheme, households benefited & amount mobilised',icon:'M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
     cols:[['district','District'],['block','Block'],['village','Village'],['department','Department'],['scheme_name','Scheme'],['work_type','Type of Work'],['hh_benefited','HHs Benefited','num'],['amount_mobilised','Amount Mobilised','inr']],
-    filters:['project_id','donor_id',['department','Departments',['Agriculture & Farmers\' Empowerment','Electronics & Information Technology','Co-operation','Energy','Excise','Finance','Fisheries & Animal Resources Development','Food Supplies & Consumer Welfare','Forest, Environment and Climate Change Department','Handlooms, Textiles & Handicrafts','Health & Family Welfare','Housing & Urban Development','Micro, Small & Medium Enterprise','Odia Language Literature & Culture Department','Panchayati Raj & Drinking Water','Planning & Convergence','Public Enterprises','Revenue & Disaster Management','Rural Development','Skill Development & Technical Education','Science & Technology','Social Security & Empowerment of Persons with Disabilities','ST & SC Development, Minorities & Backward Classes Welfare','Tourism','Water Resources','Women & Child Development','Works','Mission Shakti']]],
-    fields:[['convergence_id','Record ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography — pick the village','ref','geographies'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['department','Name of the Department','sel',['Agriculture & Farmers\' Empowerment','Electronics & Information Technology','Co-operation','Energy','Excise','Finance','Fisheries & Animal Resources Development','Food Supplies & Consumer Welfare','Forest, Environment and Climate Change Department','Handlooms, Textiles & Handicrafts','Health & Family Welfare','Housing & Urban Development','Micro, Small & Medium Enterprise','Odia Language Literature & Culture Department','Panchayati Raj & Drinking Water','Planning & Convergence','Public Enterprises','Revenue & Disaster Management','Rural Development','Skill Development & Technical Education','Science & Technology','Social Security & Empowerment of Persons with Disabilities','ST & SC Development, Minorities & Backward Classes Welfare','Tourism','Water Resources','Women & Child Development','Works','Mission Shakti']],['scheme_name','Name of the Government Scheme',1],['work_type','Type of Work'],['hh_benefited','Number of HHs Benefited','num'],['amount_mobilised','Amount Mobilised (₹)','num'],['remarks','Remarks']]},
+    filters:['project_id','donor_id',['department','Departments',['Agriculture & Farmers\' Empowerment','Electronics & Information Technology','Co-operation','Energy','Excise','Finance','Fisheries & Animal Resources Development','Food Supplies & Consumer Welfare','Forest, Environment and Climate Change Department','Handlooms, Textiles & Handicrafts','Health & Family Welfare','Housing & Urban Development','Micro, Small & Medium Enterprise','Odia Language Literature & Culture Department','Panchayati Raj & Drinking Water','Planning & Convergence','Public Enterprises','Revenue & Disaster Management','Rural Development','Skill Development & Technical Education','Science & Technology','Social Security & Empowerment of Persons with Disabilities','ST & SC Development, Minorities & Backward Classes Welfare','Tourism','Water Resources','Women & Child Development','Works','Mission Shakti','Other']]],
+    fields:[['convergence_id','Record ID',1],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography — pick the village','ref','geographies'],['district','District',1],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['department','Name of the Department','sel',['Agriculture & Farmers\' Empowerment','Electronics & Information Technology','Co-operation','Energy','Excise','Finance','Fisheries & Animal Resources Development','Food Supplies & Consumer Welfare','Forest, Environment and Climate Change Department','Handlooms, Textiles & Handicrafts','Health & Family Welfare','Housing & Urban Development','Micro, Small & Medium Enterprise','Odia Language Literature & Culture Department','Panchayati Raj & Drinking Water','Planning & Convergence','Public Enterprises','Revenue & Disaster Management','Rural Development','Skill Development & Technical Education','Science & Technology','Social Security & Empowerment of Persons with Disabilities','ST & SC Development, Minorities & Backward Classes Welfare','Tourism','Water Resources','Women & Child Development','Works','Mission Shakti','Other']],['scheme_name','Name of the Government Scheme',1],['work_type','Type of Work'],['hh_benefited','Number of HHs Benefited','num'],['amount_mobilised','Amount Mobilised (₹)','num'],['remarks','Remarks']]},
   indicators:{label:'Indicators',sub:'Add UNLIMITED indicators for ANY sector — Output / Outcome / Process / Financial',icon:'M22 12h-4l-3 9L9 3l-3 9H2',
     cols:[['indicator_name','Name'],['indicator_type','Type'],['unit','Unit'],['baseline_value','Baseline','num'],['project_target','Target','num']],
     filters:[['indicator_type','Types',['Output','Outcome','Process','Financial']],'project_id','donor_id'],
@@ -1002,7 +1119,7 @@ const SECTIONS=[
   ['Overview',[['dash','Dashboard','M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z'],['reports','Reports & Analytics','M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6'],['dataentry','Data Entry','M12 5v14M5 12h14']]],
   ['Master Data',[['mappings'],['donors'],['projects'],['geographies'],['villages']]],
   ['Field Data',[['beneficiaries'],['crops'],['activities']]],
-  ['SHG & Finance',[['shgs'],['loans']]],
+  ['SHG & Finance',[['shgs'],['loans'],['fpos']]],
   ['Local Governance',[['gramsabha','Local Governance','M3 21h18M5 21V9l7-6 7 6v12M9 21v-6h6v6']]],
   ['Monitoring and Evaluation (MNE)',[['indicators10','Logged Indicators','M22 12h-4l-3 9L9 3l-3 9H2']]],
   ['Admin',[['misstatus','MIS Status','M2 3h20v14H2zM8 21h8M12 17v4'],['users'],['manual','User Manual','M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z'],['audit','Audit Trail','M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11']]],
@@ -1011,12 +1128,12 @@ const SECTIONS=[
 /* resource → its business-ID column (auto-generated by the server, never typed by users) */
 /* Sensible pre-fills for NEW records (editable — the user can change/clear them).
    A function value is called at form-open time (e.g. today's date, always fresh). */
-const RES_DEFAULTS={ geographies:{country:'India'}, beneficiaries:{registration_date:()=>todayIST()}, projects:{implementation_partner:'VIEWS India'} };
+const RES_DEFAULTS={ geographies:{country:'India'}, beneficiaries:{registration_date:()=>todayIST()}, projects:{implementation_partner:'VIEWS'} };
 const AUTO_ID={programmes:'programme_id',projects:'project_id',donors:'donor_id',mappings:'mapping_id',
   geographies:'geography_id',villages:'demographic_id',beneficiaries:'beneficiary_id',crops:'production_record_id',
   activities:'activity_id',shgs:'shg_id',loans:'loan_record_id',indicators:'indicator_id',progress:'progress_id',
   objectives:'objective_id',project_objectives:'objective_id',shg_members:'member_id',
-  gramsabha:'gramsabha_id',convergence:'convergence_id'};
+  gramsabha:'gramsabha_id',convergence:'convergence_id',fpos:'fpo_id'};
 
 /* ════════ AUTH ════════ */
 async function doLogin(){
@@ -1227,15 +1344,32 @@ const BL_INCOME_KEYS=BL_SOURCES.map(s=>'bl_'+s[0]+'_income');
 const BL_EXP_KEYS   =BL_SOURCES.map(s=>'bl_'+s[0]+'_expenditure');
 const BL_AREA_KEYS  =BL_SOURCES.filter(s=>s[2]).map(s=>'bl_'+s[0]+'_area');
 const BL_KG_KEYS    =BL_SOURCES.filter(s=>s[2]).map(s=>'bl_'+s[0]+'_kg');
+/* Rate per kilogram for the crops, so the baseline income works itself out as
+   Production × Rate — the same arithmetic Production & Output uses. */
+const BL_RATE_KEYS  =BL_SOURCES.filter(s=>s[2]).map(s=>'bl_'+s[0]+'_rate');
+/* Number of livestock or units for the non-farm livelihoods: how many goats, how
+   many birds, how many enterprise units. Nothing is weighed there, so a count is
+   the honest measure of the holding. */
+const BL_COUNT_KEYS =BL_SOURCES.filter(s=>!s[2]).map(s=>'bl_'+s[0]+'_count');
 /* Every baseline field the form owns — used by the form builder & the exports */
-const BL_ALL_KEYS=[].concat(BL_AREA_KEYS,BL_KG_KEYS,BL_INCOME_KEYS,BL_EXP_KEYS);
+const BL_ALL_KEYS=[].concat(BL_AREA_KEYS,BL_KG_KEYS,BL_RATE_KEYS,BL_COUNT_KEYS,BL_INCOME_KEYS,BL_EXP_KEYS);
 const blSum=keys=>keys.reduce((s,k)=>{ const e=$('ff-'+k); return s+(e?(+e.value||0):0); },0);
 /* Baseline table → live totals. Gross income, expenditure and NET all update as
    you type, and each row shows its own net. */
 function recalcBaselineTotal(){
   let gTot=0,eTot=0;
-  for(const [k] of BL_SOURCES){
-    const inc=+((($('ff-bl_'+k+'_income')||{}).value)||0);
+  for(const [k,,land] of BL_SOURCES){
+    const incE=$('ff-bl_'+k+'_income');
+    /* CROPS: Income = Production (kg) × Rate (₹/kg), exactly as Production & Output
+       calculates it, so the before and after figures are arrived at the same way.
+       A figure the officer types themselves is respected and never overwritten. */
+    if(land && incE && incE.dataset.auto!=='0'){
+      const kg=+((($('ff-bl_'+k+'_kg')||{}).value)||0);
+      const rt=+((($('ff-bl_'+k+'_rate')||{}).value)||0);
+      const c=kg*rt;
+      if(kg && rt) incE.value=+c.toFixed(2);
+    }
+    const inc=+((incE||{}).value||0);
     const exp=+((($('ff-bl_'+k+'_expenditure')||{}).value)||0);
     gTot+=inc; eTot+=exp;
     const cell=$('bl-net-'+k);
@@ -1250,16 +1384,25 @@ function recalcBaselineTotal(){
   const land=$('ff-total_land_acre');
   if(land && land.dataset.auto==='1'){ const s=blSum(BL_AREA_KEYS); land.value=s?+s.toFixed(2):''; }
 }
-/* The whole baseline as ONE arranged table — replaces 25+ scattered boxes. */
+/* An income typed by hand stops being calculated for that row — the officer's own
+   figure always wins over the arithmetic. */
+function blIncomeTyped(k){ const e=$('ff-bl_'+k+'_income'); if(e) e.dataset.auto='0'; recalcBaselineTotal(); }
+/* The whole baseline as ONE arranged table — replaces 25+ scattered boxes.
+   Crop rows carry Area · Production · Rate, and their Income calculates itself.
+   Non-farm rows carry the NUMBER of livestock or units instead, because a goat herd
+   has no acreage and no price per kilogram; their income is typed directly. */
 function blTableHTML(row){
   const v=k=>{ const x=row[k]; return (x==null||x==='')?'':esc(x); };
-  const cell=(k,ph)=>`<td><input class="bl-in" id="ff-${k}" type="number" step="any" min="0" value="${v(k)}" placeholder="${ph||''}" oninput="recalcBaselineTotal()"></td>`;
+  const cell=(k,ph,cls)=>`<td><input class="bl-in ${cls||''}" id="ff-${k}" type="number" step="any" min="0" value="${v(k)}" placeholder="${ph||''}" oninput="recalcBaselineTotal()"></td>`;
+  const incCell=k=>`<td><input class="bl-in bl-inc" id="ff-bl_${k}_income" type="number" step="any" min="0" value="${v('bl_'+k+'_income')}" oninput="blIncomeTyped('${k}')" title="Crops: fills itself in as Production × Rate. Type your own figure to override it."></td>`;
   const rows=BL_SOURCES.map(([k,label,land])=>`
     <tr>
       <td class="bl-src">${esc(label)}</td>
-      ${land?cell('bl_'+k+'_area'):'<td class="bl-na">—</td>'}
-      ${land?cell('bl_'+k+'_kg'):'<td class="bl-na">—</td>'}
-      ${cell('bl_'+k+'_income')}
+      ${land?cell('bl_'+k+'_area','','bl-area')
+            :`<td class="bl-count" colspan="2">${`<input class="bl-in bl-cnt" id="ff-bl_${k}_count" type="number" step="any" min="0" value="${v('bl_'+k+'_count')}" placeholder="how many" title="Number of livestock or units — goats, birds, enterprise units">`}</td>`}
+      ${land?cell('bl_'+k+'_kg'):''}
+      ${land?cell('bl_'+k+'_rate','','bl-rate'):'<td class="bl-na">—</td>'}
+      ${incCell(k)}
       ${cell('bl_'+k+'_expenditure')}
       <td class="bl-net" id="bl-net-${k}">—</td>
     </tr>`).join('');
@@ -1267,13 +1410,20 @@ function blTableHTML(row){
     <div class="bl-wrap">
       <div class="bl-head">
         <div><div class="bl-title">🌱 Baseline livelihood — at registration</div>
-          <div class="bl-sub">Fill only what the household actually had. <b>Net</b> is calculated for you (income − expenditure); the Total must match the Annual Income above.</div></div>
+          <div class="bl-sub">Fill only what the household actually had. For a crop, type the Production and the Rate and the <b>Income works itself out</b>. For goats, poultry, an enterprise or other income, type <b>how many</b> and the income directly. <b>Net</b> is calculated for you (income − expenditure), and the Total must match the Annual Income above.</div></div>
       </div>
       <div class="bl-tblwrap"><table class="bl-tbl">
-        <thead><tr><th class="bl-src">Source</th><th>Area<span>acre</span></th><th>Production<span>kg</span></th><th>Income<span>₹ / year</span></th><th>Expenditure<span>₹ / year</span></th><th class="bl-net">Net<span>auto</span></th></tr></thead>
+        <thead><tr>
+          <th class="bl-src">Source</th>
+          <th>Area<span>acre</span></th>
+          <th>Production<span>kg &middot; or how many</span></th>
+          <th>Rate<span>₹ / kg</span></th>
+          <th>Income<span>₹ / year &middot; auto</span></th>
+          <th>Expenditure<span>₹ / year</span></th>
+          <th class="bl-net">Net<span>auto</span></th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr>
-          <td class="bl-src">TOTAL</td><td class="bl-na">—</td><td class="bl-na">—</td>
+          <td class="bl-src">TOTAL</td><td class="bl-na">—</td><td class="bl-na">—</td><td class="bl-na">—</td>
           <td><input class="bl-in bl-tot" id="bl-total-display" type="number" readonly title="Total baseline income — must equal the Annual Income at Registration"></td>
           <td class="bl-net" id="bl-exp-display">—</td>
           <td class="bl-net" id="bl-net-display">—</td>
@@ -1392,6 +1542,10 @@ function comboFilter(key){
       html = elsewhere.length
         ? `<div class="combo-more" style="line-height:1.6">Nobody in <b>${where}</b> matches “${esc(ci.value.trim())}”.<br>${elsewhere.length} matching ${elsewhere.length===1?'person belongs':'people belong'} to <b>another project or village</b>. A production record must be about a beneficiary of the same project, so register this person under <b>${esc(s.pLabel||'this project')}</b> first, or change the project on this form.</div>`
         : `<div class="combo-more" style="line-height:1.6">No beneficiary anywhere matches “${esc(ci.value.trim())}”. Check the spelling, or add them in <b>Beneficiaries</b> first.</div>`;
+    } else if(key==='geography_id' && c.geoProject){
+      html = (c.opts||[]).length
+        ? `<div class="combo-more" style="line-height:1.6">No place in <b>${esc(c.geoProjectLabel)}</b> matches “${esc(ci.value.trim())}”. Only places assigned to this project are offered. Assign more in <b>Projects → Geographies</b>, or add the place in <b>Geography</b> first.</div>`
+        : `<div class="combo-more" style="line-height:1.6">⚠ <b>No places are assigned to ${esc(c.geoProjectLabel)} yet.</b> Assign them in <b>Projects → Geographies</b> and they will appear here.</div>`;
     } else {
       html = `<div class="combo-more">No match for “${esc(ci.value.trim())}” — check the spelling, or clear the box to see the full list</div>`;
     }
@@ -1411,7 +1565,8 @@ function comboPick(key,id,label){
   comboClose(key);
   if(key==='programme_id') onProgrammeComboChange();
   else if(key==='project_id'){ autofillDonorFromProject(id); if(__COMBO['indicator_id']) filterIndicatorsByProject(id);
-    // A production record belongs to the project, so only that project's people may be offered
+    // The project narrows BOTH the places and the people that may be recorded against it
+    if(__COMBO['geography_id']) refreshGeographyScope();
     if(__COMBO['beneficiary_id']) refreshBeneficiaryScope(); }
   else if(key==='geography_id'){ autofillFromGeography(id); if(__COMBO['beneficiary_id']) filterBeneficiaryByGeography(id); }
   else if(key==='beneficiary_id') autofillFromBeneficiary(id);
@@ -1488,6 +1643,27 @@ function refreshBeneficiaryScope(){
 /* Kept as the name the rest of the app already calls; the village is now only one
    half of the scope, the project being the other. */
 function filterBeneficiaryByGeography(gid){ refreshBeneficiaryScope(); }
+
+/* ════════ The Geography picker follows the Project, in EVERY section ════════
+   Places are assigned to a project in Projects → 🌍 Geographies. Once a project is
+   chosen on a form, the Geography picker offers only that project's places, so a
+   record can never be filed against a village the project does not work in. With no
+   project chosen every place is offered, because there is nothing to narrow by. */
+function refreshGeographyScope(){
+  const c=__COMBO['geography_id']; if(!c) return;
+  const pid=String((($('ff-project_id')||{}).value)||'').trim();
+  const all=LOOKUPS.geographies||[];
+  c.geoProject=pid;
+  c.geoProjectLabel=pid?(lblOf(LOOKUPS.projects,pid)||'this project'):'';
+  c.opts = pid ? all.filter(g=>String(g.project_id||'')===pid) : all;
+  const ci=$('cin-geography_id');
+  if(ci) ci.placeholder = pid ? ('🔎 Places assigned to '+c.geoProjectLabel) : '🔎 Type to search…';
+  const h=$('ff-geography_id');
+  if(h && h.value && !(c.opts||[]).some(g=>String(g.id)===String(h.value))){
+    h.value=''; if(ci) ci.value='';
+    if(pid) toast('That place is not assigned to '+c.geoProjectLabel+' — pick one of its places, or assign it in Projects → Geographies','t-warn');
+  }
+}
 /* "Add another with the same data" — keep the shared context, blank the record-specific fields. */
 function pickCarryOver(key, payload){
   const KEEP = key==='beneficiaries'
@@ -1952,10 +2128,10 @@ function openInlineGeography(){
     <div class="modal-head"><div class="modal-title">＋ New geography</div><div class="modal-close" onclick="closeInlineGeography()">×</div></div>
     <div class="fg fg-2">
       <div class="f"><label>State</label><input id="ig-state" value="Odisha"></div>
-      <div class="f"><label>District <span style="color:var(--bad)">*</span></label><input id="ig-district"></div>
-      <div class="f"><label>Block <span style="color:var(--bad)">*</span></label><input id="ig-block"></div>
+      <div class="f"><label>District <span class="req-star">*</span></label><input id="ig-district"></div>
+      <div class="f"><label>Block <span class="req-star">*</span></label><input id="ig-block"></div>
       <div class="f"><label>Gram Panchayat</label><input id="ig-gram_panchayat"></div>
-      <div class="f" style="grid-column:1/-1"><label>Village / Ward <span style="color:var(--bad)">*</span></label><input id="ig-village_or_ward"></div>
+      <div class="f" style="grid-column:1/-1"><label>Village / Ward <span class="req-star">*</span></label><input id="ig-village_or_ward"></div>
     </div>
     <div class="form-actions"><span style="flex:1"></span><button class="btn btn-primary" onclick="saveInlineGeography()">Save &amp; select</button><button class="btn btn-ghost" onclick="closeInlineGeography()">Cancel</button></div>
   </div>`;
@@ -2003,7 +2179,7 @@ function openInlineAdd(resource){
   if(cfg.parentProg){ parentProg=($('ff-programme_id')||{}).value||''; if(!parentProg){ toast('⚠ Choose a Programme first, then add the project','t-warn'); return; } }
   const fh=cfg.fields.map(f=> f.sel
     ? `<div class="f"><label>${esc(f.l)}</label><select id="ia-${f.k}">${f.sel.map(o=>`<option ${o===f.def?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`
-    : `<div class="f"><label>${esc(f.l)}${f.req?' <span style="color:var(--bad)">*</span>':''}</label><input id="ia-${f.k}"></div>`).join('');
+    : `<div class="f"><label>${esc(f.l)}${f.req?' <span class="req-star">*</span>':''}</label><input id="ia-${f.k}"></div>`).join('');
   const note = cfg.parentProg ? `<div class="f" style="grid-column:1/-1;font-size:12px;color:var(--t3)">Under programme: <b>${esc(((LOOKUPS.programmes||[]).find(p=>String(p.id)===String(parentProg))||{}).label||parentProg)}</b></div>` : '';
   const ov=document.createElement('div'); ov.id='modal2-overlay'; ov.className='overlay show'; ov.style.zIndex='600';
   ov.innerHTML=`<div class="modal" style="max-width:520px" onclick="event.stopPropagation()">
@@ -2651,7 +2827,10 @@ async function openForm(key,id){
   }
   const idCol=AUTO_ID[key];
   const fields=cfg.fields.map(f=>{
-    const [k,l,type,opts]=f; let v=row[k]==null?'':row[k]; const req=(f[2]===1);
+    let [k,l,type,opts]=f; let v=row[k]==null?'':row[k]; let req=(f[2]===1);
+    // A label typed as "Project Year *" is a required field — strip the literal star
+    // so it renders as the SAME red marker as every other required field.
+    if(typeof l==='string' && /\s\*$/.test(l)){ l=l.replace(/\s*\*$/,''); req=true; }
     if(!id && (v===''||v==null) && (RES_DEFAULTS[key]||{})[k]!=null){ const dv=RES_DEFAULTS[key][k]; v=(typeof dv==='function')?dv():dv; }   // sensible defaults for NEW records (e.g. Country = India, Registration Date = today)
     // The business ID is auto-generated by the server — show it read-only, never typed
     if(k===idCol){
@@ -2692,7 +2871,7 @@ async function openForm(key,id){
     else if(type==='ref'&&k==='geography_id')inp=comboHTML('geography_id',(LOOKUPS.geographies||[]),v)+(canWriteResource('geographies')?`<div style="margin-top:6px"><button type="button" class="btn btn-ghost btn-xs" onclick="gotoNewRecord('geographies','geography_id')">＋ New geography (not in list)</button></div>`:'');
     else if(type==='ref')inp=comboHTML(k,(LOOKUPS[opts]||[]),v);
     else inp=`<input id="ff-${k}" value="${esc(v)}">`;
-    return `<div class="f"><label>${esc(l)}${req?' <span style="color:var(--bad)">*</span>':''}</label>${inp}</div>`;
+    return `<div class="f"><label>${esc(l)}${req?' <span class="req-star">*</span>':''}</label>${inp}</div>`;
   }).join('');
   // Resource-specific helper button shown inside the form (e.g. "Manage Members" inside SHG edit)
   let extraBtn = '';
@@ -2751,8 +2930,9 @@ async function openForm(key,id){
   }
   if(key==='beneficiaries'){ wireLandTotal(); recalcBaselineTotal(); }   // land auto-sum + baseline table totals
   if(key==='crops') wireCropTotals();                   // Income = qty × rate · Net Profit = income − expenditure
-  // The beneficiary picker is scoped to the project (and village) on the form, whether
-  // those came from the workspace, from an edited record or from a carry-over
+  // The place and people pickers are scoped to the project on the form, whether that
+  // came from the workspace, from an edited record or from a carry-over
+  if(__COMBO['geography_id']) refreshGeographyScope();
   if(__COMBO['beneficiary_id']) refreshBeneficiaryScope();
   if(key==='gramsabha') wireGSTotal();                  // Total participants = Male + Female (auto)
   // Only one thematic area? Fill it in and hide the picker — it is the same answer every time.
@@ -3051,10 +3231,10 @@ function foSetupHTML(){
     ${foHqAssignmentPickerHTML()}
     ${poolNote}
     <div class="fo-grid" style="margin-top:12px">
-      <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>
+      <div class="f"><label>Project <span class="req-star">*</span></label>
         <select class="r-inp" onchange="foDraftSet('project_id',this.value)"><option value="">— Select project —</option>${mappedProjects().map(p=>`<option value="${esc(p.id)}" ${String(d.project_id)===String(p.id)?'selected':''}>${esc(p.label)}</option>`).join('')}</select>
         ${unmappedProjects().length?`<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ ${unmappedProjects().length} project${unmappedProjects().length>1?'s':''} hidden — no donor linked yet (Donor Mapping)</div>`:''}${nb('projects','New project')}</div>
-      <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
+      <div class="f"><label>District <span class="req-star">*</span></label>
         <select class="r-inp" onchange="foDraftSet('district',this.value)"><option value="">— Select district —</option>${districts.map(o=>opt(o.id,d.district)).join('')}</select>${nb('geographies','New district')}</div>
       <div class="f"><label>Donor <span class="fo-auto">auto</span></label>
         <input class="r-inp" readonly value="${esc(der.donor_id?lblOf(LOOKUPS.donors,der.donor_id):'')}" placeholder="— shown after project —" style="background:var(--bg-soft)">${nb('donors','New donor')}</div>
@@ -3195,9 +3375,17 @@ function applyFieldOfficeContext(key){
   const f=getFO(); if(!f.active) return;
   const present=new Set((RES[key].fields||[]).map(x=>x[0]));
   if(present.has('programme_id') && f.programme_id){ comboSet('programme_id',f.programme_id); if(__COMBO['project_id']) __COMBO['project_id'].opts=projectListFor(f.programme_id); }
-  if(present.has('project_id') && f.project_id){ comboSet('project_id',f.project_id); if(__COMBO['indicator_id']) filterIndicatorsByProject(f.project_id); if(__COMBO['beneficiary_id']) refreshBeneficiaryScope(); }
+  if(present.has('project_id') && f.project_id){ comboSet('project_id',f.project_id); if(__COMBO['indicator_id']) filterIndicatorsByProject(f.project_id); if(__COMBO['geography_id']) refreshGeographyScope(); if(__COMBO['beneficiary_id']) refreshBeneficiaryScope(); }
   if(present.has('donor_id') && f.donor_id) comboSet('donor_id',f.donor_id);
-  if(present.has('geography_id') && f.geography_id){ if(__COMBO['geography_id']) __COMBO['geography_id'].opts=LOOKUPS.geographies||[]; comboSet('geography_id',f.geography_id); autofillFromGeography(f.geography_id); if(__COMBO['beneficiary_id']) filterBeneficiaryByGeography(f.geography_id); }
+  // The workspace's village: the picker keeps the PROJECT scope (it must never widen
+  // back to every place in the database) and simply selects the workspace's village.
+  if(present.has('geography_id') && f.geography_id){
+    if(__COMBO['geography_id']){
+      const pool=f.project_id?projectGeoPool(f.project_id):(LOOKUPS.geographies||[]);
+      __COMBO['geography_id'].opts = pool.some(g=>String(g.id)===String(f.geography_id)) ? pool : (LOOKUPS.geographies||[]);
+    }
+    comboSet('geography_id',f.geography_id); autofillFromGeography(f.geography_id);
+    if(__COMBO['beneficiary_id']) filterBeneficiaryByGeography(f.geography_id); }
   // Workspace saved WITHOUT a village → the Village picker stays on the form,
   // narrowed to the workspace's own place pool (project → district → block → GP)
   if(present.has('geography_id') && !f.geography_id && f.project_id && __COMBO['geography_id']){
@@ -3257,6 +3445,19 @@ function hqCancelEdit(){
   hqEditNote('');
 }
 function hqBlankRow(){ return {district:'',target_blocks:'',target_villages:'',target_beneficiaries:'',assigned_to:''}; }
+/* Take the figure the Geography master already knows. */
+function hqUseGeo(i,k,v){ if(HQ_ROWS[i]){ HQ_ROWS[i][k]=v; renderHQRows(); } }
+/* Choosing a district fills the block and village targets from the places assigned to
+   the project, unless the officer has already typed something there. */
+function hqSetDistrict(i,v){
+  const r=HQ_ROWS[i]; if(!r) return;
+  r.district=v;
+  const pid=($('hq-project')||{}).value||'';
+  const inD=v?foGeoPool(projectGeoPool(pid),{district:v}):[];
+  if(String(r.target_blocks||'').trim()===''){ const n=foDistinct(inD,'block').length; if(n) r.target_blocks=n; }
+  if(String(r.target_villages||'').trim()===''){ const n=inD.filter(g=>String(g.village||'').trim()).length; if(n) r.target_villages=n; }
+  renderHQRows();
+}
 function hqRowHTML(r,i){
   // Districts come from the PROJECT's assigned geographies (Projects → 🌍) — the same
   // pool field officers see, so HQ can only target places the project actually covers.
@@ -3268,19 +3469,32 @@ function hqRowHTML(r,i){
     : (districts.length
         ? `<div style="font-size:11.5px;color:var(--t3);margin-top:4px">🌍 ${districts.length} assigned district${districts.length>1?'s':''} — need another? Assign its geography in <b>Projects → 🌍 Geographies</b>.</div>`
         : '<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ No geographies assigned to this project yet — assign them in <b>Projects → 🌍 Geographies</b> first.</div>');
-  const numF=(k,lbl)=>`<div class="f"><label>${lbl}</label><input type="number" step="any" min="0" value="${esc(r[k])}" oninput="HQ_ROWS[${i}].${k}=this.value"></div>`;
+  /* The blocks and villages of the chosen district are counted from the geographies
+     assigned to this project, and offered as the target. HQ then plans against places
+     that actually exist rather than typing a number from memory. Any figure typed by
+     hand is left alone. */
+  const inD = r.district ? foGeoPool(pool,{district:r.district}) : [];
+  const realBlocks   = r.district ? foDistinct(inD,'block').length : 0;
+  const realVillages = r.district ? inD.filter(g=>String(g.village||'').trim()).length : 0;
+  const numF=(k,lbl,suggest)=>{
+    const has=String(r[k]==null?'':r[k]).trim()!=='';
+    const showSug = !!suggest && suggest>0 && (!has || +r[k]!==suggest);
+    return `<div class="f"><label>${lbl}</label>
+      <input type="number" step="any" min="0" value="${esc(r[k])}" oninput="HQ_ROWS[${i}].${k}=this.value">
+      ${showSug?`<div style="font-size:11.5px;color:var(--t3);margin-top:4px">🌍 Geography has <b>${suggest}</b> — <a onclick="hqUseGeo(${i},'${k}',${suggest})" style="color:var(--brand);cursor:pointer;text-decoration:underline">use this</a></div>`:''}
+    </div>`; };
   return `<div class="hq-row" style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;background:#fff">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-weight:700;color:var(--brand);font-size:13px">Project Geography${HQ_ROWS.length>1?' #'+(i+1):''}</div>
       ${HQ_ROWS.length>1?`<button class="btn btn-ghost btn-xs" type="button" onclick="hqRemoveRow(${i})">✕ Remove</button>`:''}
     </div>
     <div class="fo-grid">
-      <div class="f"><label>District <span style="color:var(--bad)">*</span></label>
-        <select onchange="HQ_ROWS[${i}].district=this.value"><option value="">— Select district —</option>${districts.map(o=>`<option value="${esc(o.id)}" ${r.district===o.id?'selected':''}>${esc(o.label)}</option>`).join('')}</select>
+      <div class="f"><label>District <span class="req-star">*</span></label>
+        <select onchange="hqSetDistrict(${i},this.value)"><option value="">— Select district —</option>${districts.map(o=>`<option value="${esc(o.id)}" ${r.district===o.id?'selected':''}>${esc(o.label)}</option>`).join('')}</select>
         ${geoHint}
         <div class="fo-newrow">${deNewBtn('geographies','New district')}</div></div>
-      ${numF('target_blocks','Total Blocks — target')}
-      ${numF('target_villages','Total Villages — target')}
+      ${numF('target_blocks','Total Blocks — target',realBlocks)}
+      ${numF('target_villages','Total Villages — target',realVillages)}
       ${numF('target_beneficiaries','Total Beneficiaries — target')}
       <div class="f"><label>Assigned to (officer)</label>
         <select onchange="HQ_ROWS[${i}].assigned_to=this.value"><option value="">— Unassigned —</option>${(LOOKUPS.staff||[]).map(s=>`<option value="${esc(s.id)}" ${String(r.assigned_to)===String(s.id)?'selected':''}>${esc(s.label)}</option>`).join('')}</select></div>
@@ -3363,7 +3577,7 @@ function renderHQSetupHTML(){
     <div class="card-title" style="margin:0">🏢 HQ Setup — Plan &amp; Targets</div>
     <div class="card-sub" style="margin-top:2px">One donor can fund many districts. Pick the Project (Donor &amp; Thematic Area fill in automatically), then add each District with its planned targets. Each district is saved as its own target row.</div>
     <div class="fo-grid" style="margin-top:14px">
-      <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>
+      <div class="f"><label>Project <span class="req-star">*</span></label>
         <select id="hq-project" onchange="hqOnProject()"><option value="">— Select project —</option>${projOpts}</select>
         ${unmappedProjects().length?`<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ ${unmappedProjects().length} project${unmappedProjects().length>1?'s':''} hidden — link ${unmappedProjects().length>1?'them':'it'} to a donor in <a onclick="goPage('mappings')" style="color:var(--brand);cursor:pointer;text-decoration:underline">Donor Mapping</a> first</div>`:''}
         <div class="fo-newrow">${deNewBtn('projects','New project')}</div></div>
@@ -3500,11 +3714,11 @@ async function openActivityForm(id){
         onkeydown="if(event.key==='Enter'&&event.target.tagName!=='TEXTAREA'&&!event.target.classList.contains('combo-input')&&event.target.tagName!=='BUTTON'){event.preventDefault();}">
         <div class="fg fg-2">
           <div class="f"><label>Activity ID</label><input value="${id?esc(v('activity_id')):'✦ Auto-generated on save'}" readonly style="background:var(--bg-soft);${id?"color:var(--t3);font-family:'JetBrains Mono'":'color:var(--brand);font-style:italic'}"></div>
-          <div class="f"><label>Project <span style="color:var(--bad)">*</span></label>${comboHTML('project_id',projectListFor(v('programme_id')),v('project_id'))+inlineAddBtn('projects','project')}
+          <div class="f"><label>Project <span class="req-star">*</span></label>${comboHTML('project_id',projectListFor(v('programme_id')),v('project_id'))+inlineAddBtn('projects','project')}
             ${_hidden?`<div style="font-size:11.5px;color:var(--warn);margin-top:4px">⚠ ${_hidden} project${_hidden>1?'s':''} hidden — no donor linked yet. <a onclick="goPage('mappings')" style="color:var(--brand);cursor:pointer;text-decoration:underline">Map in Donor Mapping</a> to use ${_hidden>1?'them':'it'} here.</div>`:''}</div>
           <div class="f"><label>Thematic Area <span class="fo-auto">auto</span></label>${comboHTML('programme_id',(LOOKUPS.programmes||[]),v('programme_id'))}</div>
           <div class="f"><label>Donor <span class="fo-auto">auto</span></label>${comboHTML('donor_id',(LOOKUPS.donors||[]),v('donor_id'))}</div>
-          <div class="f" style="grid-column:1/-1"><label>Project Activity <span style="color:var(--bad)">*</span></label><input id="ff-project_activity" value="${esc(v('project_activity'))}" placeholder="e.g. Construction of 100 porta homes"></div>
+          <div class="f" style="grid-column:1/-1"><label>Project Activity <span class="req-star">*</span></label><input id="ff-project_activity" value="${esc(v('project_activity'))}" placeholder="e.g. Construction of 100 porta homes"></div>
           <div class="f"><label>Unit of Measurement</label><select id="ff-unit_of_measurement"><option value="">— Select —</option>${units.map(u=>`<option ${u===v('unit_of_measurement')?'selected':''}>${u}</option>`).join('')}</select></div>
           <div class="f"><label>Total Target — whole project</label><input id="ff-total_target" type="number" step="any" min="0" value="${actHas(v('total_target'))?esc(v('total_target')):''}" oninput="actSummary()"></div>
           <div class="f"><label>Means of Verification</label><input id="ff-means_of_verification" value="${esc(v('means_of_verification'))}"></div>
@@ -3770,6 +3984,7 @@ const PERMISSION_SECTIONS = [
   ['activities','Activity Progress',null,null,'View shows the activity list and each year\'s figures. Edit allows recording achievements by quarter or by month. Changing a target, or adding or deleting an activity, needs the Targets row as well.'],
   ['shgs','Self Help Groups',null,null,'View shows the groups and their members. Edit allows creating groups and managing members, roles and savings. Delete removes a group.'],
   ['loans','SHG Loans',null,null,'View shows the loans with their village and block. Edit allows recording loans and repayment status. Delete removes a loan record.'],
+  ['fpos','FPO: Farmer Producer Organisations',null,null,'View shows the FPO list with its registration, shareholders and latest turnover. Edit allows recording an FPO, its office bearers, the support it has received and its audited turnover year by year. Delete removes an FPO record.'],
 
   ['gramsabha','Gram Sabha and VDC',null,'LOCAL GOVERNANCE: participation and convergence','View opens the Gram Sabha tab. Edit allows recording meetings, participant numbers and whether the Village Development Plan was submitted. The female participant figures produce indicator nine, so accuracy matters. Delete removes a meeting record.'],
   ['convergence','Convergence: Government Schemes',null,null,'View opens the Convergence tab. Edit allows recording the department, the scheme, households benefited and the amount mobilised. These figures produce indicators ten and eleven. Delete removes a convergence record.'],
@@ -3798,9 +4013,9 @@ async function openUserForm(id){
   }).join('');
   const f = (k,l,type,opts,v,req)=>{
     v=v==null?'':v;
-    if(type==='sel') return `<div class="f"><label>${esc(l)}${req?' <span style="color:var(--bad)">*</span>':''}</label><select id="ff-${k}"><option value="">— Select —</option>${opts.map(o=>`<option ${o==v?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
+    if(type==='sel') return `<div class="f"><label>${esc(l)}${req?' <span class="req-star">*</span>':''}</label><select id="ff-${k}"><option value="">— Select —</option>${opts.map(o=>`<option ${o==v?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
     if(type==='password') return `<div class="f"><label>${esc(l)}</label><input id="ff-${k}" type="password" value="" autocomplete="new-password" placeholder="${id?'Leave blank to keep current password':'Min 6 chars'}"></div>`;
-    return `<div class="f"><label>${esc(l)}${req?' <span style="color:var(--bad)">*</span>':''}</label><input id="ff-${k}" value="${esc(v)}"${type==='email'?' type="email"':''}></div>`;
+    return `<div class="f"><label>${esc(l)}${req?' <span class="req-star">*</span>':''}</label><input id="ff-${k}" value="${esc(v)}"${type==='email'?' type="email"':''}></div>`;
   };
   const lastLogin = row.last_login ? new Date(row.last_login).toLocaleString('en-IN') : 'never';
   const rootBadge = isRoot ? `<span class="pill pill-warn" style="margin-left:8px">🛡 ROOT — cannot be deleted</span>` : '';
@@ -3937,9 +4152,9 @@ async function saveUser(id){
 function openResetPassword(userId, username){
   showModal('Reset Password — '+username,
     `<div style="font-size:13px;color:var(--t3);margin-bottom:14px">Set a new password for <strong>${esc(username)}</strong>. All their open sessions will be terminated immediately and this action is recorded in the audit trail.</div>
-     <div class="f"><label>New Password <span style="color:var(--bad)">*</span></label>
+     <div class="f"><label>New Password <span class="req-star">*</span></label>
        <input id="rp-pw" type="password" autocomplete="new-password" placeholder="Min 6 characters"></div>
-     <div class="f"><label>Confirm New Password <span style="color:var(--bad)">*</span></label>
+     <div class="f"><label>Confirm New Password <span class="req-star">*</span></label>
        <input id="rp-pw2" type="password" autocomplete="new-password" placeholder="Re-type the password"></div>
      <div class="form-actions"><button class="btn btn-primary" onclick="doResetPassword(${userId})">🔑 Reset Password</button>
        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>`);
@@ -4131,7 +4346,7 @@ function pobjShowForm(r, id){
   formEl.innerHTML = `
     <div style="border:1.5px solid var(--brand);border-radius:11px;padding:16px;background:var(--brand-soft);margin-bottom:8px">
       <div style="font-weight:700;color:var(--brand);margin-bottom:10px">${id?'✎ Edit objective':'+ New objective'}</div>
-      <div class="f"><label>Objective <span style="color:var(--bad)">*</span></label>
+      <div class="f"><label>Objective <span class="req-star">*</span></label>
         <textarea id="pobj-obj" rows="3" placeholder="What does the project aim to achieve?">${esc(r.objective||'')}</textarea></div>
       <div class="fg fg-2">
         <div class="f"><label>Target Beneficiaries</label>
@@ -4246,7 +4461,7 @@ function pgobjShowForm(r, id){
   formEl.innerHTML = `
     <div style="border:1.5px solid var(--brand);border-radius:11px;padding:16px;background:var(--brand-soft);margin-bottom:8px">
       <div style="font-weight:700;color:var(--brand);margin-bottom:10px">${id?'✎ Edit objective':'+ New objective'}</div>
-      <div class="f"><label>Objective <span style="color:var(--bad)">*</span></label>
+      <div class="f"><label>Objective <span class="req-star">*</span></label>
         <textarea id="pgobj-obj" rows="3" placeholder="What does the programme aim to achieve?">${esc(r.objective||'')}</textarea></div>
       <div class="f"><label>Status</label>
         <select id="pgobj-st">${['Planned','Ongoing','Completed','On Hold'].map(s=>`<option ${s===(r.status||'Ongoing')?'selected':''}>${s}</option>`).join('')}</select></div>
@@ -4372,7 +4587,7 @@ function shgmShowForm(r, id){
     <div style="border:1.5px solid var(--brand);border-radius:11px;padding:16px;background:var(--brand-soft);margin-bottom:8px">
       <div style="font-weight:700;color:var(--brand);margin-bottom:10px">${id?'✎ Edit member':'+ New member'}</div>
       <div class="fg fg-2">
-        <div class="f"><label>Member Name <span style="color:var(--bad)">*</span></label>
+        <div class="f"><label>Member Name <span class="req-star">*</span></label>
           <input id="shgm-name" value="${esc(r.member_name||'')}" placeholder="Full name"></div>
         <div class="f"><label>Father / Spouse Name</label>
           <input id="shgm-fs" value="${esc(r.father_or_spouse_name||'')}"></div>
@@ -4611,12 +4826,27 @@ async function delRow(key,id){
         This donor <b>funds ${fund.length} project${fund.length>1?'s':''}</b>:<br>• ${fund.slice(0,6).map(p=>esc(p.project_name||p.project_id)).join('<br>• ')}${fund.length>6?'<br>• …':''}<br><br>
         Deleting the donor will automatically <b>unmap ${fund.length>1?'these projects':'this project'}</b> — their data stays, but it disappears from donor reports until they are re-mapped.</div>`;
     } else if(key==='projects'){
+      /* A project is the top of the chain, so deleting one removes the whole branch.
+         The exact counts are fetched and shown FIRST — a warning this serious must
+         name what will actually be destroyed, not describe it in general terms. */
       const d=await apiGet('?resource=projects&id='+id); const bid=(d.row||{}).project_id||'';
       const don=(LOOKUPS.project_donor||{})[bid];
       const geos=(LOOKUPS.geographies||[]).filter(g=>String(g.project_id||'')===String(bid)).length;
-      if(don||geos) msg+=`<div style="background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;padding:10px 13px;margin-top:12px">
-        ${don?`This project is funded by <b>${esc(lblOf(LOOKUPS.donors,don))}</b> — that mapping will be removed.`:''}
-        ${geos?`<br>${geos} assigned geograph${geos>1?'ies':'y'} will be unlinked (the places themselves are kept).`:''}</div>`;
+      const q='&project_id='+encodeURIComponent(bid)+'&limit=1';
+      const cnt=async r=>{ try{ const x=await apiGet('?resource='+r+q); return +x.total||((x.rows||[]).length); }catch(e){ return 0; } };
+      const [nBen,nCrop,nShg,nLoan,nAct,nGs,nCnv,nFpo,nVil]=await Promise.all(
+        ['beneficiaries','crops','shgs','loans','activities','gramsabha','convergence','fpos','villages'].map(cnt));
+      const lines=[[nBen,'beneficiaries, with their baseline'],[nCrop,'production and output records'],
+                   [nShg,'self help groups, with their members'],[nLoan,'SHG loans'],[nAct,'activities and their targets'],
+                   [nGs,'Gram Sabha records'],[nCnv,'convergence records'],[nFpo,'FPO records'],[nVil,'village demographic records']]
+                  .filter(x=>x[0]>0).map(x=>`• <b>${fmt(x[0])}</b> ${x[1]}`);
+      msg+=`<div style="background:#fee2e2;border:1.5px solid var(--bad);border-radius:9px;padding:11px 14px;margin-top:12px;line-height:1.7">
+        <b style="color:var(--bad)">Deleting a project deletes everything recorded under it.</b>
+        ${lines.length?`<div style="margin-top:7px">The following will be <b>permanently removed</b>:<div style="margin-top:5px">${lines.join('<br>')}</div></div>`
+                      :`<div style="margin-top:7px">Nothing has been recorded under this project yet.</div>`}
+        ${don?`<div style="margin-top:8px">Funded by <b>${esc(lblOf(LOOKUPS.donors,don))}</b> — that mapping will be removed.</div>`:''}
+        ${geos?`<div style="margin-top:4px">${geos} assigned place${geos>1?'s':''} will be <b>unlinked but kept</b>, because a village exists whether or not a project works there.</div>`:''}
+        <div style="margin-top:8px;color:var(--t2)">Every removal is written to the Audit Trail. If you only want to stop the project, set its Status to Completed instead of deleting it.</div></div>`;
     } else if(key==='beneficiaries'){
       // Their production records go too, so every figure derived from them disappears
       const d=await apiGet('?resource=beneficiaries&id='+id); const bid=(d.row||{}).beneficiary_id||'';
@@ -4667,6 +4897,9 @@ async function syncAfterChange(key, redrawList){
   bumpDataVersion();
   // caches that could still describe the record as it was
   LOOKUPS._benLoaded=false;
+  // Deleting a project takes its beneficiaries, production, groups and loans with it,
+  // so every picker list has to be rebuilt, not only the one for the section on screen.
+  if(key==='projects'){ LOOKUPS._loaded=false; try{ await ensureLookups(); }catch(e){} }
   if(MASTER_LK.includes(key)){ LOOKUPS._loaded=false; try{ await ensureLookups(); }catch(e){} }
   if(redrawList){ try{ reloadResource(key); }catch(e){} }
   // panels that show figures derived from the data
@@ -4689,7 +4922,106 @@ function dch(k){if(CH[k]){CH[k].destroy();delete CH[k];}}
 function _resizeAllCharts(){ try{ Object.values(CH).forEach(c=>{ try{ c.resize(); }catch(_){} }); }catch(_){} }
 window.addEventListener('beforeprint', _resizeAllCharts);
 window.addEventListener('afterprint', _resizeAllCharts);
-function kpiCard(label,val,meta,c,cs,path){return `<div class="kpi" style="--c-accent:var(${c});--c-soft:var(${cs})"><div class="kpi-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="${path}"/></svg></div><div class="kpi-label">${label}</div><div class="kpi-value">${val}</div><div class="kpi-meta">${meta}</div></div>`}
+function kpiCard(label,val,meta,c,cs,path,live){
+  /* `live` turns the card into a window onto what it counts: hover to see the actual
+     donors, projects, districts, blocks or villages behind the number, and click to
+     open the section they live in. A number you cannot look inside is just a claim. */
+  const L=live?` kpi-live" data-live="${esc(live.kind)}" onmouseenter="kpiPopOpen(this)" onmouseleave="kpiPopLeave()" onclick="kpiPopGo('${esc(live.kind)}')" tabindex="0" onkeydown="if(event.key==='Enter')kpiPopGo('${esc(live.kind)}')` : '';
+  return `<div class="kpi${L}" style="--c-accent:var(${c});--c-soft:var(${cs})">`
+    +`<div class="kpi-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="${path}"/></svg></div>`
+    +`<div class="kpi-label">${label}</div><div class="kpi-value">${val}</div><div class="kpi-meta">${meta}</div>`
+    +(live?`<div class="kpi-go">👆 hover to see them &nbsp;·&nbsp; click to open</div>`:'')
+    +`</div>`;
+}
+/* ════════ What each interactive card contains, and where it leads ════════
+   Everything is read from the lookups the page already holds, so opening a card
+   costs nothing and can never fail on a slow connection. */
+function kpiLiveData(kind){
+  const G=LOOKUPS.geographies||[];
+  const uniq=(arr)=>{ const seen=new Set(), out=[];
+    for(const v of arr){ const t=String(v==null?'':v).trim(); if(!t) continue; const k=placeFold(t); if(!seen.has(k)){ seen.add(k); out.push(t); } }
+    return out.sort((a,b)=>a.localeCompare(b,'en',{numeric:true,sensitivity:'base'})); };
+  if(kind==='donors'){
+    const dp=LOOKUPS.donor_projects||{};
+    return {title:'Donors', page:'donors', pageLabel:'Open Donors',
+      items:(LOOKUPS.donors||[]).map(d=>({t:d.label, n:((dp[d.id]||[]).length? (dp[d.id]||[]).length+' project'+((dp[d.id]||[]).length>1?'s':'') : 'no project mapped')})),
+      empty:'No donors recorded yet. Add one in Donors.'};
+  }
+  if(kind==='projects'){
+    const m=LOOKUPS.project_donor||{};
+    return {title:'Projects', page:'projects', pageLabel:'Open Projects',
+      items:(LOOKUPS.projects||[]).map(p=>({t:p.label, n:m[p.id]?lblOf(LOOKUPS.donors,m[p.id]):'⚠ no donor'})),
+      empty:'No projects recorded yet. Add one in Projects.'};
+  }
+  if(kind==='districts'){
+    const list=uniq(G.map(g=>g.district));
+    return {title:'Districts', page:'geographies', pageLabel:'Open Geography',
+      items:list.map(d=>({t:d, n:uniq(G.filter(g=>placeEq(g.district,d)).map(g=>g.block)).length+' blocks'})),
+      empty:'No places recorded yet. Add them in Geography.'};
+  }
+  if(kind==='blocks'){
+    const list=uniq(G.map(g=>g.block));
+    return {title:'Blocks', page:'geographies', pageLabel:'Open Geography',
+      items:list.map(b=>{ const one=G.find(g=>placeEq(g.block,b))||{}; return {t:b, n:one.district||''}; }),
+      empty:'No blocks recorded yet. Add them in Geography.'};
+  }
+  if(kind==='villages'){
+    const list=G.filter(g=>String(g.village||'').trim());
+    return {title:'Villages', page:'geographies', pageLabel:'Open Geography', page2:'villages', page2Label:'Open Village Demographics',
+      items:list.map(g=>({t:g.village, n:[g.block,g.district].filter(Boolean).join(' · ')})),
+      empty:'No villages recorded yet. Add them in Geography.'};
+  }
+  if(kind==='shgs'){
+    return {title:'Self Help Groups', page:'shgs', pageLabel:'Open SHGs', page2:'loans', page2Label:'Open SHG Loans',
+      items:(LOOKUPS.shgs||[]).map(x=>({t:x.label, n:''})),
+      empty:'No groups recorded yet. Add one in Self Help Groups.'};
+  }
+  if(kind==='beneficiaries'){
+    const b=LOOKUPS.beneficiaries||[];
+    // The full list is fetched lazily; if it has not arrived the card says so rather
+    // than pretending nobody is registered.
+    if(!LOOKUPS._benLoaded){ try{ ensureBeneficiaries(); }catch(e){} }
+    return {title:'Beneficiaries', page:'beneficiaries', pageLabel:'Open Beneficiaries', page2:'crops', page2Label:'Open Production & Output',
+      items:b.slice(0,60).map(x=>({t:x.label, n:''})), total:b.length,
+      empty: LOOKUPS._benLoaded ? 'No beneficiaries registered yet.' : 'Still loading the register — hover again in a moment, or open the section.'};
+  }
+  if(kind==='activities'){
+    return {title:'Activity Progress', page:'activities', pageLabel:'Open Activity Progress', items:[], empty:'Open Activity Progress to see every activity with its yearly targets, achievements and balance.'};
+  }
+  return null;
+}
+let __KPI_POP_T=null;
+function kpiPopEl(){ let el=$('kpi-pop'); if(!el){ el=document.createElement('div'); el.id='kpi-pop'; el.className='kpi-pop';
+    el.addEventListener('mouseenter',()=>{ clearTimeout(__KPI_POP_T); });
+    el.addEventListener('mouseleave',kpiPopLeave); document.body.appendChild(el); } return el; }
+function kpiPopOpen(card){
+  clearTimeout(__KPI_POP_T);
+  const kind=card&&card.dataset?card.dataset.live:''; const d=kpiLiveData(kind); if(!d) return;
+  const el=kpiPopEl();
+  const shown=(d.items||[]).slice(0,40);
+  const total=d.total||(d.items||[]).length;
+  el.innerHTML=`<div class="kpi-pop-head"><span>${esc(d.title)}</span><b>${fmt(total)}</b></div>`
+    +(shown.length
+      ? `<div class="kpi-pop-body">${shown.map(i=>`<div class="kpi-pop-item"><span>${esc(i.t)}</span>${i.n?`<i>${esc(i.n)}</i>`:''}</div>`).join('')}</div>`
+        +(total>shown.length?`<div class="kpi-pop-more">and ${fmt(total-shown.length)} more — open the section to see them all</div>`:'')
+      : `<div class="kpi-pop-empty">${esc(d.empty||'Nothing recorded yet')}</div>`)
+    +`<div class="kpi-pop-foot"><button type="button" class="kpi-pop-btn" onclick="kpiPopGo('${esc(kind)}')">${esc(d.pageLabel||'Open')}</button>`
+      +(d.page2?`<button type="button" class="kpi-pop-btn ghost" onclick="kpiPopGo('${esc(kind)}',2)">${esc(d.page2Label)}</button>`:'')
+    +`</div>`;
+  el.classList.add('show');
+  // Anchor under the card, nudged back inside the window if it would run off the edge
+  const r=card.getBoundingClientRect(); const w=el.offsetWidth||300;
+  let left=r.left+window.scrollX; if(left+w>window.scrollX+document.documentElement.clientWidth-14) left=window.scrollX+document.documentElement.clientWidth-w-14;
+  el.style.left=Math.max(10,left)+'px'; el.style.top=(r.bottom+window.scrollY+7)+'px';
+}
+function kpiPopLeave(){ clearTimeout(__KPI_POP_T); __KPI_POP_T=setTimeout(()=>{ const el=$('kpi-pop'); if(el) el.classList.remove('show'); },180); }
+function kpiPopGo(kind,which){
+  const d=kpiLiveData(kind); if(!d) return;
+  const page=(which===2&&d.page2)?d.page2:d.page;
+  const el=$('kpi-pop'); if(el) el.classList.remove('show');
+  if(!navAllowed(page)){ toast('You do not have permission to open that section — ask your administrator','t-warn'); return; }
+  goPage(page);
+}
 const baseOpts=(extra={})=>({plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',font:{family:"'Inter'",size:11}},grid:{display:false},border:{display:false}},y:{ticks:{color:'#64748b',font:{family:"'JetBrains Mono'",size:11}},grid:{color:'rgba(15,23,42,.05)'},border:{display:false},beginAtZero:true}},animation:{duration:700},maintainAspectRatio:false,responsive:true,...extra});
 let __SILENT=false; /* when true, charts/data refresh in place with no animation (silent live update) */
 function doughnut(id,labels,data){const el=$(id);if(!el)return;const c=CH[id];if(c&&c.canvas===el){c.data.labels=labels;c.data.datasets[0].data=data;c.data.datasets[0].backgroundColor=labels.map((_,i)=>PALETTE[i%PALETTE.length]);c.update(__SILENT?'none':undefined);return;}dch(id);CH[id]=new Chart(el,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:labels.map((_,i)=>PALETTE[i%PALETTE.length]),borderColor:'#fff',borderWidth:3,hoverOffset:12}]},options:{cutout:'64%',plugins:{legend:{display:true,position:'right',labels:{color:'#283449',font:{size:12},padding:11,usePointStyle:true,boxWidth:10}}},maintainAspectRatio:false,responsive:true}});}
@@ -5008,14 +5340,14 @@ async function loadDash(){
                       : 'no production income logged yet';
   const adn=(k.active_donors==null?k.donors:k.active_donors);
   $('dash-kpi').innerHTML=
-    kpiCard('Active Donors',fmt(adn),fmtCr(k.budget)+' committed','--violet','--violet-soft','M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78z')+
-    kpiCard('Projects',fmt(k.projects),'Implementation','--accent','--accent-soft','M9 11l3 3L22 4')+
-    kpiCard('Districts',fmt(k.districts),'Geography','--teal','--teal-soft','M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z')+
-    kpiCard('Blocks',fmt(k.blocks),'Geography','--accent','--accent-soft','M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z')+
-    kpiCard('Villages',fmt(k.villages),'Coverage areas','--brand','--brand-soft','M3 21h18M5 21V9l7-6 7 6v12')+
-    kpiCard('Beneficiaries',fmt(k.beneficiaries),'Registered','--ok','--ok-soft','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2')+
-    kpiCard('SHGs',fmt(k.shgs),fmtCr(k.loan_total)+' loans','--pink','--pink-soft','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z')+
-    kpiCard('Activities',fmt(k.activities),overall+'% achieved','--warn','--warn-soft','M22 12h-4l-3 9L9 3l-3 9H2')+
+    kpiCard('Active Donors',fmt(adn),fmtCr(k.budget)+' committed','--violet','--violet-soft','M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78z',{kind:'donors'})+
+    kpiCard('Projects',fmt(k.projects),'Implementation','--accent','--accent-soft','M9 11l3 3L22 4',{kind:'projects'})+
+    kpiCard('Districts',fmt(k.districts),'From Geography','--teal','--teal-soft','M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',{kind:'districts'})+
+    kpiCard('Blocks',fmt(k.blocks),'From Geography','--accent','--accent-soft','M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z',{kind:'blocks'})+
+    kpiCard('Villages',fmt(k.villages),'From Geography'+(k.village_forms!=null?(' · '+fmt(k.village_forms)+' with a demographic form'):''),'--brand','--brand-soft','M3 21h18M5 21V9l7-6 7 6v12',{kind:'villages'})+
+    kpiCard('Beneficiaries',fmt(k.beneficiaries),'Registered','--ok','--ok-soft','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',{kind:'beneficiaries'})+
+    kpiCard('SHGs',fmt(k.shgs),fmtCr(k.loan_total)+' loans','--pink','--pink-soft','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',{kind:'shgs'})+
+    kpiCard('Activities',fmt(k.activities),overall+'% achieved','--warn','--warn-soft','M22 12h-4l-3 9L9 3l-3 9H2',{kind:'activities'})+
     (mpN
       ? kpiCard('Avg. Income Change',(incPct>=0?'+':'−')+Math.abs(incPct).toFixed(2)+'%',incMeta,incPct>=0?'--ok':'--bad',incPct>=0?'--ok-soft':'--bad-soft',incPct>=0?'M12 19V5M5 12l7-7 7 7':'M12 5v14M5 12l7 7 7-7')
       : kpiCard('Avg. Income Change','—',incMeta,'--brand','--brand-soft','M18 20V10M12 20V4M6 20v-6'));
@@ -5249,7 +5581,7 @@ const AUD_ACT={
   bulk_import:['📥 BULK IMPORT','#0891b2'] };
 const AUD_UC=['#6366f1','#0891b2','#059669','#d97706','#db2777','#7c3aed','#dc2626','#0d9488','#4f46e5','#b45309'];
 function audUserColor(u){ let h=0; u=String(u||''); for(let i=0;i<u.length;i++) h=(h*31+u.charCodeAt(i))>>>0; return AUD_UC[h%AUD_UC.length]; }
-function audEntity(v){ return (RES[v]&&RES[v].label)||({auth:'Sign-in / Security',users:'Users & Access',hq_targets:'HQ Targets',workspaces:'Workspaces',charts:'Custom Charts',gramsabha:'Gram Sabha / VDC',convergence:'Convergence'})[v]||titleize(String(v||'')); }
+function audEntity(v){ return (RES[v]&&RES[v].label)||({auth:'Sign-in / Security',users:'Users & Access',hq_targets:'HQ Targets',workspaces:'Workspaces',charts:'Custom Charts',gramsabha:'Gram Sabha / VDC',convergence:'Convergence',fpos:'FPO'})[v]||titleize(String(v||'')); }
 function audDevice(ua){ if(!ua) return ''; ua=String(ua); let b=''; if(/edg/i.test(ua))b='Edge'; else if(/chrome|crios/i.test(ua))b='Chrome'; else if(/firefox|fxios/i.test(ua))b='Firefox'; else if(/safari/i.test(ua))b='Safari'; let os=''; if(/windows/i.test(ua))os='Windows'; else if(/android/i.test(ua))os='Android'; else if(/iphone|ipad/i.test(ua))os='iOS'; else if(/mac os|macintosh/i.test(ua))os='macOS'; else if(/linux/i.test(ua))os='Linux'; return [b,os].filter(Boolean).join(' · '); }
 /* field key → the human label used on the forms (built once from RES) */
 function audFieldLabel(k){
@@ -5428,6 +5760,57 @@ async function renderIndicators10(){
 }
 function li10Sync(){ smartFilterSync(null,$('li10-prj'),$('li10-don')); loadIndicators10(); }
 function li10Clear(){ ['li10-prj','li10-don'].forEach(i=>{ const e=$(i); if(e) e.value=''; }); smartFilterSync(null,$('li10-prj'),$('li10-don')); loadIndicators10(); }
+/* ════════ One picture per indicator ════════
+   Three honest shapes, chosen by what the indicator actually is:
+     · a BEFORE → AFTER pair of bars, where the indicator compares two figures
+     · a share dial, where the indicator is a percentage of a whole
+     · nothing at all, where the data has not been entered, because an empty
+       chart looks like a result of zero and that would be a lie.
+   Drawn as plain SVG, so there is no chart library to load and nothing to break. */
+function li10ChartHTML(x,has,col,isD){
+  if(!has) return '<div class="li10-chart li10-chart-empty">Enter the underlying data and the chart appears here</div>';
+  const b=(x.before==null||x.before==='')?null:+x.before;
+  const a=(x.after==null||x.after==='')?null:+x.after;
+  const fmtN=n=>Math.abs(n)>=1000?Math.round(n).toLocaleString('en-IN'):(Math.round(n*10)/10).toLocaleString('en-IN');
+  // BEFORE vs AFTER — two bars to the same scale
+  if(b!==null && a!==null && (b!==0||a!==0)){
+    const max=Math.max(Math.abs(b),Math.abs(a))||1;
+    const wB=Math.max(2,Math.round(Math.abs(b)/max*100)), wA=Math.max(2,Math.round(Math.abs(a)/max*100));
+    const up=a>=b;
+    return `<div class="li10-chart">
+      <div class="li10-bar-row"><span class="li10-bar-lab">Before</span>
+        <span class="li10-bar"><span style="width:${wB}%;background:#94a3b8"></span></span>
+        <span class="li10-bar-v">${fmtN(b)}</span></div>
+      <div class="li10-bar-row"><span class="li10-bar-lab">Now</span>
+        <span class="li10-bar"><span style="width:${wA}%;background:${up?'var(--ok)':'var(--bad)'}"></span></span>
+        <span class="li10-bar-v" style="color:${up?'var(--ok)':'var(--bad)'}">${fmtN(a)}</span></div>
+    </div>`;
+  }
+  // A SHARE of a whole — the part achieved against the households it was measured on
+  const pairs=+x.pairs||0, after=(a!==null?a:null);
+  if(x.unit==='%' && !isD && pairs>0 && after!==null){
+    const pct=Math.max(0,Math.min(100,Math.round(after/pairs*1000)/10));
+    const R=26, C=2*Math.PI*R, off=C*(1-pct/100);
+    return `<div class="li10-chart li10-dial">
+      <svg viewBox="0 0 68 68" width="68" height="68" aria-hidden="true">
+        <circle cx="34" cy="34" r="${R}" fill="none" stroke="#e8edf5" stroke-width="9"></circle>
+        <circle cx="34" cy="34" r="${R}" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round"
+                stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 34 34)"></circle>
+      </svg>
+      <div class="li10-dial-txt"><b style="color:${col}">${fmtN(after)}</b> of <b>${fmtN(pairs)}</b><span>${pct}% of the households this is measured on</span></div>
+    </div>`;
+  }
+  // A single measured figure — one bar, full width, with what it counts
+  if(after!==null){
+    return `<div class="li10-chart">
+      <div class="li10-bar-row"><span class="li10-bar-lab">Counted</span>
+        <span class="li10-bar"><span style="width:100%;background:${col}"></span></span>
+        <span class="li10-bar-v" style="color:${col}">${fmtN(after)}</span></div>
+      ${pairs?`<div class="li10-bar-foot">out of ${fmtN(pairs)} recorded</div>`:''}
+    </div>`;
+  }
+  return '<div class="li10-chart li10-chart-empty">No comparable figures for a chart</div>';
+}
 async function loadIndicators10(){
   const g=$('li10-grid'); if(!g) return;
   let qs='?action=logged_indicators';
@@ -5443,11 +5826,14 @@ async function loadIndicators10(){
       const isD=LI10_DELTA.has(+x.n);
       const val=!has?'—':(x.unit==='₹'?fmtINR(+x.value):((isD?((+x.value>=0?'+':'−')+Math.abs(+x.value).toLocaleString('en-IN')):(+x.value).toLocaleString('en-IN'))+'%'));
       const col=!has?'var(--t4)':(x.unit==='₹'?(+x.value>0?'var(--ok)':'var(--t2)'):(isD?(+x.value>=0?'var(--ok)':'var(--bad)'):'var(--brand)'));
+      /* The card shows the FIGURE and a picture of it. The development style
+         formula line and the working out have been taken off the card, as the
+         client asked, so the page reads as a result rather than a calculation.
+         They are still exported in the Excel, where the detail belongs. */
       return `<div class="li10-card${has?'':' li10-wait'}">
         <div class="li10-top"><span class="li10-n">${x.n}</span><span class="li10-name">${esc(x.name)}</span></div>
         <div class="li10-val" style="color:${col}">${val}${has?'':'<span class="li10-nodata">waiting for data</span>'}</div>
-        <div class="li10-detail">${esc(x.detail||'')}</div>
-        <div class="li10-formula">ƒ ${esc(x.formula||'')}</div>
+        ${li10ChartHTML(x,has,col,isD)}
       </div>`;
     }).join('') || '<div class="empty" style="grid-column:1/-1">No indicators returned</div>';
   }catch(e){ g.innerHTML='<div class="empty" style="grid-column:1/-1">⚠ '+esc(e.message)+'</div>'; }
@@ -5478,7 +5864,9 @@ const MANUAL_BOOK=[
    ['Two levels of data entry','Head office prepares the plan and sets the targets. Field offices record what actually happened against that plan. Targets cannot be changed from the field unless an administrator grants the Targets permission.'],
    ['Nothing is guessed','Every calculated figure, such as income change, achievement percentage or an indicator value, is arithmetic performed on the data you entered. Where the required data has not been entered, the system says so clearly instead of showing a number.'],
    ['Your workspace saves time','Set your Field Office Workspace once, by choosing your Project and District. After that every form opens already filled with that information, and you only type what is new.'],
-   ['Colour meaning','Green means on track, amber means needs attention, red means action is required. These three colours mean the same thing on every screen.']]},
+   ['Colour meaning','Green means on track, amber means needs attention, red means action is required. These three colours mean the same thing on every screen.'],
+   ['The dashboard cards are windows, not just numbers','Rest the pointer on Active Donors, Projects, Districts, Blocks, Villages, Beneficiaries or SHGs and the card shows you what is actually behind the figure: the donors with how many projects each funds, the projects with their donor, the districts with how many blocks each has, the villages with their block and district. Select the card and it opens that section. A figure you can look inside is a figure you can trust.'],
+   ['Where the Villages figure comes from','It counts the villages recorded in Geography, which is where the programme says it works. The card also says how many of those villages have a Village Demographic form completed, so the gap between the two is visible at a glance.']]},
  {icon:'2',title:'Signing in and moving around',intro:'The basics of getting in and finding your way.',items:[
    ['Signing in','Enter your username or email address and your password, then select Sign in.'],
    ['Account lock','If a wrong password is entered several times, the account locks for a few minutes. This protects your data from password guessing. Please wait, or ask your administrator to reset the password.'],
@@ -5541,6 +5929,7 @@ const MANUAL_BOOK=[
    ['Sheets you will find','Summary figures. Activities for every year with quarterly detail. Indicator sheets. Loans by financial year. Outputs by intervention. Income Impact with net figures for each source including the change in rupees and in percentage. Organic Farming before and now. Geographies covered. Gram Sabha summary and every meeting. Convergence by department and every record. A glossary.'],
    ['Logged Indicators sheet','All eleven indicators with the computed value, the before and now figures, how many records each is based on, the figures behind it in words, and the exact formula. Where the source data has not been entered the value is left blank and the status column reads Waiting for data, so a reader can never mistake an empty figure for a zero.'],
    ['Local Governance sheets','Gram Sabha Summary gives meetings, participants, the share of women and the rate at which the Village Development Plan was submitted. Gram Sabha Records lists every meeting with its own share of women. Convergence by Department totals households and money for each department with its share of the whole, and Convergence Records lists every scheme entry.'],
+   ['Every indicator has its own chart','Each of the eleven cards now carries a picture of its own figure instead of a written formula: two bars where the indicator compares a before with a now, a dial where it is a share of a group of households, and a single bar where it is a straight count. Where the underlying data has not been entered the card says so and draws nothing, because an empty chart would read as a result of zero. The full working out and the formula are still included in the Excel export, which is where that detail belongs.'],
    ['District and Block filters reach every figure','Choosing a District or a Block now narrows everything on the page and in the workbook: households, production, income, groups, loans, activities, projects, donors and the thematic area count. Tables that hold no district column of their own, such as Production and Loans, are reached through the household or the group that belongs to the place. Before this, those figures described the whole programme while the household count described one block, and the two could not be compared.'],
    ['District-wise and Block-wise sheets','Every workbook now contains a row for each district and each block in scope, with the households, the women among them, the land, the baseline income, how many production records exist and the net income those records represent.'],
    ['The two budget figures','Approved amount for the projects in this report is the amount approved for those projects in Donor Mapping, and it narrows properly with a project, district or block filter. Approved budget for the donors in this report is each donor\'s whole budget, which is an organisation level figure and does not divide between districts. Both are labelled in full so neither can be mistaken for the other.'],
@@ -5565,6 +5954,7 @@ const MANUAL_BOOK=[
    ['Pause','Lets you enter a record without any workspace. Forms then open blank.'],
    ['HQ Targets for this workspace','Shows the planned figures for your project and district, so you always know what you are working towards.'],
    ['Entry cards','New Beneficiary, Production and Output, Activity Progress, New SHG, New SHG Loan, Gram Sabha and Convergence. Each card shows a live count of existing records. The cards appear faded until a workspace is active, which is a reminder and not a restriction.'],
+   ['Deleting a project deletes everything under it','A project is the top of the chain. Removing one also removes its beneficiaries and their production, its groups with their members and loans, its activities and targets, its Gram Sabha, convergence, FPO and village demographic records, and its objectives. The places themselves are kept and simply unlinked, because a village exists whether or not a project works there. Before anything is removed the software shows the exact counts, and every removal is written to the Audit Trail. If you only want to stop a project, set its Status to Completed rather than deleting it.'],
    ['Workspace place lists','Choosing the Project narrows District, Block, Gram Panchayat and Village to that project\'s assigned places. Place names are matched ignoring capital letters and extra spaces, so a district saved as New Delhi with a trailing space is the same place as new delhi. If a list is empty the form says why and what to do, instead of leaving a dropdown that will not open.'],
    ['Import cards','Upload a section from an Excel or CSV file. The importer recognises your column headings even when the wording differs, converts names into codes, corrects number and date formats, and returns an Excel file listing any rows it could not accept together with the reason.']]},
  {icon:'8',title:'Beneficiaries',intro:'The people you serve, and the baseline that makes impact provable.',items:[
@@ -5572,6 +5962,8 @@ const MANUAL_BOOK=[
    ['Identity fields','Name, father or spouse name, age between 0 and 120, social order, gender and religion. These produce the inclusion charts that donors require.'],
    ['Contact number','Must be a valid ten digit Indian mobile number. A leading zero or a country code is accepted and cleaned automatically.'],
    ['Organic Farming, required','A Yes or No answer recorded at registration. This is the before position for the organic farming indicator.'],
+   ['Rate and the automatic income','For a crop, type the Production in kilograms and the Rate in rupees per kilogram, and the Income fills itself in as Production multiplied by Rate. This is exactly how Production and Output arrives at its income, so the before and after figures are worked out the same way. Type your own figure into Income at any time and that row stops calculating, because your figure is the one that matters.'],
+   ['Number of livestock or units','Goat Rearing, Backyard Poultry, Micro Enterprise and Other Income have no acreage and nothing weighed in kilograms, so instead of area and production they ask how many. Enter the number of goats, the number of birds or the number of units, then the income directly. The count is exported and reported alongside the income, so the figure can be judged against the size of the holding.'],
    ['Baseline livelihood table','One row for each source of income, and these eleven rows are the ONLY livelihood categories the software knows. Crop rows, which are Paddy, Millet, Vegetable, Tuber Crop, Pulses, Oilseeds and Mushroom Cultivation, take Area, Production in kilograms, Income and Expenditure. The non-farm rows, which are Goat Rearing, Backyard Poultry, Micro Enterprise and Other Income, take Income and Expenditure only, because nothing about them is weighed.'],
    ['The same eleven categories everywhere','Production and Output offers exactly these eleven categories and nothing else. A household can never be given a category at registration that does not exist when their production is recorded, so a before and after comparison always compares like with like.'],
    ['The Net column','Calculated for you on every row and on the total line, as income minus expenditure. It is never typed and never stored, so it can never disagree with the figures it comes from.'],
@@ -5584,6 +5976,7 @@ const MANUAL_BOOK=[
  {icon:'9',title:'Production and Output Progress',intro:'What actually happened, for each beneficiary, crop and season.',items:[
    ['Project Year is required on the form','Every production record must state its project year. Without one the record would sit outside every year filter and every year by year comparison, so the form will not save until a year is chosen.'],
    ['The Year filter changes the figures','With no year chosen, the Income Change column compares the baseline against the average of every year that has production. Choose Year 1 and it compares the baseline against Year 1 alone, and only Year 1 records are listed. The caption under each figure always names the period it describes, so a year view can never be mistaken for an average. The Income Impact panel above the list follows the same year.'],
+   ['Geography follows the Project','Once a Project is chosen, the Geography picker offers only the places assigned to that project in Projects and Geographies. A record therefore cannot be filed against a village the project does not work in. If the list is empty the picker says so and tells you where to assign the places.'],
    ['Beneficiary, search by name','The list offers ONLY the people who belong to the project on the form, and only that village when a village is chosen. A production record belongs to a project, so the household it is about must belong to the same project. If a name cannot be found the list says why, and how many people were kept out because they belong to another project or have no project linked. Words may be typed in any order, and a name pasted from a document is cleaned before it is matched.'],
    ['Livelihood or Season filter, required','No records are shown until you choose a Livelihood or a Season. One person correctly has several production rows, for example paddy in Kharif and millet in Rabi. Filtering shows each person once in the view, so a donor can never mistake them for a duplicate. This affects the display only. Reports always include every record.'],
    ['Livelihood or Crop, required','The list holds the same eleven categories as the beneficiary baseline table: Paddy, Millet, Vegetable, Tuber Crop, Pulses, Oilseeds, Mushroom Cultivation, Goat Rearing, Backyard Poultry, Micro Enterprise and Other Income. There is no second list and no other wording. If you open an old record that was saved under a category the list no longer offers, the old wording is kept, marked clearly, and counted under Other Income until you choose one of the eleven.'],
@@ -5604,6 +5997,14 @@ const MANUAL_BOOK=[
    ['Achieved column, calculated','Each year\'s achievement is the total of its quarters or months. The cumulative total and the percentage bar against the overall target are calculated for you.'],
    ['Update progress','The everyday field task. Quarters and months can be edited. The target cells stay locked unless you hold the Targets permission.'],
    ['Year and Quarter switch on the list','The list shows Year 1 by default. Choosing a year changes the columns to that year\'s target and achievement. Adding a quarter shows that quarter alone. This keeps unused year columns off the screen.']]},
+ {icon:'11a',title:'FPO: Farmer Producer Organisations',intro:'Each producer organisation, how it is registered, who runs it and what it turns over.',items:[
+   ['New FPO','Choose the Project first. The Geography picker then offers only that project\'s places, and choosing the village fills in the district, block and gram panchayat.'],
+   ['Identity and registration','The name of the FPO, whether it is registered as a Cooperative, a Company, a Producer Company, a Society, a Trust or something else, the date of incorporation, the address, and the CIN, PAN, TAN and GST numbers.'],
+   ['Office bearers and contact','The number of board members, and the names of the Managing Director, the Chairperson and the Chief Executive Officer, with the FPO contact number and mail address.'],
+   ['Shareholders and governance','The number of shareholders and how many of them are women, whether the Annual General Meeting has been conducted, and any awards or recognition the FPO has received. The share of women shareholders is calculated for you in the report.'],
+   ['Support received','Who supported the FPO, under which government or donor scheme, and the amount.'],
+   ['Audited turnover, year by year','Five year boxes with a remarks line for each, so the trading history reads as a series rather than a single figure. Leave the later years empty until they are audited.'],
+   ['In the reports','The FPO sheet in every workbook carries every field above along with the share of women shareholders, so a donor can see the governance position without asking for it separately.']]},
  {icon:'11',title:'Self Help Groups and Loans',intro:'Groups, their members, their savings and their credit.',items:[
    ['Self Help Groups list','Each group with its village, project, date of formation, number of members, monthly savings and bank details.'],
    ['Members button','Manages the members of that group, including name, role such as President, Secretary, Treasurer or Member, age, social order, savings contribution and date of joining.'],
@@ -5856,7 +6257,9 @@ const HEADER_SYN = {
   ...Object.fromEntries(BL_SOURCES.flatMap(([k,label,land])=>{
     const L=label.toLowerCase();
     const e=[['bl_'+k+'_expenditure',[L+' expenditure',L+' cost',L+' expense','baseline '+L+' expenditure','expenditure '+L]]];
-    if(land) e.push(['bl_'+k+'_kg',[L+' production',L+' kg',L+' quantity','baseline '+L+' production',L+' output']]);
+    if(land){ e.push(['bl_'+k+'_kg',[L+' production',L+' kg',L+' quantity','baseline '+L+' production',L+' output']]);
+              e.push(['bl_'+k+'_rate',[L+' rate',L+' price',L+' rate per kg','baseline '+L+' rate']]); }
+    else    { e.push(['bl_'+k+'_count',[L+' number',L+' count','number of '+L,'no of '+L,L+' units','baseline '+L+' count']]); }
     return e;
   })),
 };
@@ -5965,7 +6368,9 @@ function buildAutoMapping(key, sourceHeaders){
   // Beneficiaries: the baseline table's fields live outside cfg.fields — keep them importable
   if(key==='beneficiaries') for(const [k,label,land] of BL_SOURCES){
     if(land){ targets.push({key:'bl_'+k+'_area',label:'Baseline · '+label+' Area (acre)',required:false,type:'num'},
-                           {key:'bl_'+k+'_kg',label:'Baseline · '+label+' Production (kg)',required:false,type:'num'}); }
+                           {key:'bl_'+k+'_kg',label:'Baseline · '+label+' Production (kg)',required:false,type:'num'},
+                           {key:'bl_'+k+'_rate',label:'Baseline · '+label+' Rate (₹/kg)',required:false,type:'num'}); }
+    else    { targets.push({key:'bl_'+k+'_count',label:'Baseline · '+label+' Number of livestock / units',required:false,type:'num'}); }
     targets.push({key:'bl_'+k+'_income',label:'Baseline · '+label+' Income (₹)',required:false,type:'num'},
                  {key:'bl_'+k+'_expenditure',label:'Baseline · '+label+' Expenditure (₹)',required:false,type:'num'});
   }
@@ -6713,6 +7118,7 @@ const ENTRY_GROUPS = [
   ['SHG &amp; Finance', [
     ['shgs','+ New SHG','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z','--pink'],
     ['loans','+ New SHG Loan','M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6','--pink'],
+    ['fpos','+ New FPO','M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5M9 12h6','--pink'],
   ]],
   ['Local Governance', [
     ['gramsabha','+ New Gram Sabha / VDC record','M3 21h18M5 21V9l7-6 7 6v12M9 21v-6h6v6','--accent'],
@@ -6750,7 +7156,7 @@ function renderDataEntry(){
     ['geographies','Geography'],['villages','Village Demographics'],
     ['beneficiaries','Beneficiaries'],['crops','Production / Outputs'],
     ['activities','Activity Progress'],
-    ['shgs','SHGs'],['shg_members','SHG Members'],['loans','SHG Loans'],
+    ['shgs','SHGs'],['shg_members','SHG Members'],['loans','SHG Loans'],['fpos','FPO'],
     ['gramsabha','Gram Sabha / VDC'],['convergence','Convergence (Govt Schemes)'],
   ];
   const importCards = importTargets
@@ -6867,9 +7273,9 @@ async function renderMisStatus(){
       <div class="card-title" style="margin:0">📌 Assign a workspace</div>
       <div class="card-sub" style="margin-top:2px">Pick the officer, the Project and the District — Donor &amp; Thematic Area come from the Project automatically. Village is optional (the officer can pick it when they start).</div>
       <div class="fo-grid" style="margin-top:14px">
-        <div class="f"><label>Officer <span style="color:var(--bad)">*</span></label><select id="mis-user"><option value="">— Select officer —</option>${staffOpts}</select></div>
-        <div class="f"><label>Project <span style="color:var(--bad)">*</span></label><select id="mis-project" onchange="misOnProject()"><option value="">— Select project —</option>${projOpts}</select></div>
-        <div class="f"><label>District <span style="color:var(--bad)">*</span></label><select id="mis-district" onchange="misOnDistrict()"><option value="">— Select district —</option>${distOpts}</select></div>
+        <div class="f"><label>Officer <span class="req-star">*</span></label><select id="mis-user"><option value="">— Select officer —</option>${staffOpts}</select></div>
+        <div class="f"><label>Project <span class="req-star">*</span></label><select id="mis-project" onchange="misOnProject()"><option value="">— Select project —</option>${projOpts}</select></div>
+        <div class="f"><label>District <span class="req-star">*</span></label><select id="mis-district" onchange="misOnDistrict()"><option value="">— Select district —</option>${distOpts}</select></div>
         <div class="f"><label>Village / Ward <span class="fo-auto">optional</span></label><select id="mis-village"><option value="">— Officer picks later —</option></select></div>
         <div class="f"><label>Workspace name <span class="fo-auto">optional</span></label><input id="mis-name" placeholder="Auto if left blank"></div>
         <div class="f"><label>Donor · Thematic <span class="fo-auto">auto</span></label><input id="mis-auto" readonly placeholder="— shown after project —" style="background:var(--bg-soft)"></div>
@@ -7467,13 +7873,13 @@ async function generateDonorReport(){
   const inDateRange = d => { if(!repFrom && !repTo) return true; const v=(d||'').slice(0,10); if(!v) return false; if(repFrom && v<repFrom) return false; if(repTo && v>repTo) return false; return true; };
 
   // ── Fetch everything in parallel ──
-  let r, donorRes, programmesRes, projectsRes, allProgObjRes, allProjObjRes, mappingsRes, villagesRes, indicatorsRes, beneficiariesRes, shgsRes, allMembersRes, loansRes, cropsRes, activitiesRes, progressRes;
+  let r, donorRes, programmesRes, projectsRes, allProgObjRes, allProjObjRes, mappingsRes, villagesRes, indicatorsRes, beneficiariesRes, shgsRes, allMembersRes, loansRes, cropsRes, activitiesRes, progressRes, fposRes;
   let loggedInd={};
   try{
     // The eleven logged indicators come from their own endpoint. It fails soft, so a
     // missing table can never stop the rest of the workbook from being produced.
     loggedInd = await apiGet('?action=logged_indicators'+filterQS()).catch(()=>({}));
-    [r, donorRes, programmesRes, projectsRes, allProgObjRes, allProjObjRes, mappingsRes, villagesRes, indicatorsRes, beneficiariesRes, shgsRes, allMembersRes, loansRes, cropsRes, activitiesRes, progressRes] = await Promise.all([
+    [r, donorRes, programmesRes, projectsRes, allProgObjRes, allProjObjRes, mappingsRes, villagesRes, indicatorsRes, beneficiariesRes, shgsRes, allMembersRes, loansRes, cropsRes, activitiesRes, progressRes, fposRes] = await Promise.all([
       apiGet('?action=report&period='+period+filterQS()),
       donor ? apiGet('?resource=donors&donor_id='+encodeURIComponent(donor)+'&limit=2') : Promise.resolve({rows:[]}),
       apiGet('?resource=programmes&limit=200'+filterQS()),
@@ -7490,6 +7896,8 @@ async function generateDonorReport(){
       apiGet('?resource=crops&limit=20000'+filterQS()),
       apiGet('?resource=activities&limit=5000'+filterQS()),
       apiGet('?resource=progress&limit=10000'+filterQS()),
+      // FPOs fail soft: a database that has not run upgrade17 yet simply has no FPO sheet
+      apiGet('?resource=fpos&limit=5000'+filterQS()).catch(()=>({rows:[]})),
     ]);
   }catch(e){ toast('⚠ '+e.message,'t-err'); return; }
 
@@ -8241,6 +8649,47 @@ async function generateDonorReport(){
     }
   }
 
+  // 21e.  FPO — Farmer Producer Organisations
+  {
+    const fpos=(fposRes&&fposRes.rows)||[];
+    if(fpos.length) sheets.push({
+      name:'FPO', title:'Farmer Producer Organisations',
+      subtitle:fpos.length+' FPO'+(fpos.length===1?'':'s')+' · registration, office bearers, shareholders and audited turnover · '+nowIST(),
+      rows: fpos.map(f=>({
+        'FPO ID':f.fpo_id,'Name of FPO':f.fpo_name,'Registration':f.registration_type,
+        'Date of Incorporation':f.date_of_incorporation,
+        'District':f.district,'Block':f.block,'Gram Panchayat':f.gram_panchayat,'Village':f.village,
+        'CIN':f.cin,'PAN':f.pan,'TAN':f.tan,'GST':f.gst_number,
+        'BoD Members':f.no_of_bod_members,'Managing Director':f.managing_director,'Chairperson':f.chairperson,'CEO':f.ceo_name,
+        'Contact':f.contact_number,'Mail ID':f.mail_id,
+        'Shareholders':f.no_of_shareholders,'Women Shareholders':f.no_of_women_shareholders,
+        'Women %': (+f.no_of_shareholders>0)? Math.round(1000*(+f.no_of_women_shareholders||0)/(+f.no_of_shareholders))/10 : 0,
+        'AGM Conducted':f.agm_conducted,'Awards / Recognition':f.awards_received,
+        'Supported By':f.supported_by,'Scheme':f.scheme_name,'Amount Supported (₹)':f.amount_supported,
+        'Turnover Y1 (₹)':f.turnover_y1,'Turnover Y2 (₹)':f.turnover_y2,'Turnover Y3 (₹)':f.turnover_y3,
+        'Turnover Y4 (₹)':f.turnover_y4,'Turnover Y5 (₹)':f.turnover_y5,
+        'Project':f.project_id__name || f.project_id,'Donor':f.donor_id__name || f.donor_id,'Remarks':f.remarks,
+      })),
+      cols:[{key:'FPO ID',label:'FPO ID',type:'text'},{key:'Name of FPO',label:'Name of FPO',type:'text'},
+            {key:'Registration',label:'Registration',type:'text'},{key:'Date of Incorporation',label:'Date of Incorporation',type:'date'},
+            {key:'District',label:'District',type:'text'},{key:'Block',label:'Block',type:'text'},
+            {key:'Gram Panchayat',label:'Gram Panchayat',type:'text'},{key:'Village',label:'Village',type:'text'},
+            {key:'CIN',label:'CIN',type:'text'},{key:'PAN',label:'PAN',type:'text'},{key:'TAN',label:'TAN',type:'text'},{key:'GST',label:'GST',type:'text'},
+            {key:'BoD Members',label:'BoD Members',type:'num'},{key:'Managing Director',label:'Managing Director',type:'text'},
+            {key:'Chairperson',label:'Chairperson',type:'text'},{key:'CEO',label:'CEO',type:'text'},
+            {key:'Contact',label:'Contact',type:'text'},{key:'Mail ID',label:'Mail ID',type:'text'},
+            {key:'Shareholders',label:'Shareholders',type:'num'},{key:'Women Shareholders',label:'Women Shareholders',type:'num'},
+            {key:'Women %',label:'Women %',type:'pct'},
+            {key:'AGM Conducted',label:'AGM Conducted',type:'text'},{key:'Awards / Recognition',label:'Awards / Recognition',type:'text'},
+            {key:'Supported By',label:'Supported By',type:'text'},{key:'Scheme',label:'Scheme',type:'text'},
+            {key:'Amount Supported (₹)',label:'Amount Supported (₹)',type:'inr'},
+            {key:'Turnover Y1 (₹)',label:'Turnover Y1 (₹)',type:'inr'},{key:'Turnover Y2 (₹)',label:'Turnover Y2 (₹)',type:'inr'},
+            {key:'Turnover Y3 (₹)',label:'Turnover Y3 (₹)',type:'inr'},{key:'Turnover Y4 (₹)',label:'Turnover Y4 (₹)',type:'inr'},
+            {key:'Turnover Y5 (₹)',label:'Turnover Y5 (₹)',type:'inr'},
+            {key:'Project',label:'Project',type:'text'},{key:'Donor',label:'Donor',type:'text'},{key:'Remarks',label:'Remarks',type:'text'}],
+    });
+  }
+
   // 22.  SHGs + 23.  MEMBERS
   if(shgs.length){
     sheets.push({
@@ -8616,7 +9065,9 @@ function prettyCols(key, sample){
   // Beneficiaries: the baseline table's own columns (area · kg · income · expenditure · net)
   if(key==='beneficiaries') for(const [k,label,land] of BL_SOURCES){
     if(land){ out.push({key:'bl_'+k+'_area',label:'Baseline · '+label+' Area (acre)',type:'num'},
-                       {key:'bl_'+k+'_kg',label:'Baseline · '+label+' Production (kg)',type:'num'}); }
+                       {key:'bl_'+k+'_kg',label:'Baseline · '+label+' Production (kg)',type:'num'},
+                       {key:'bl_'+k+'_rate',label:'Baseline · '+label+' Rate (₹/kg)',type:'inr'}); }
+    else    { out.push({key:'bl_'+k+'_count',label:'Baseline · '+label+' Number of livestock / units',type:'num'}); }
     out.push({key:'bl_'+k+'_income',label:'Baseline · '+label+' Income (₹)',type:'inr'},
              {key:'bl_'+k+'_expenditure',label:'Baseline · '+label+' Expenditure (₹)',type:'inr'},
              {key:'bl_'+k+'_net',label:'Baseline · '+label+' NET (₹)',type:'inr'});
@@ -8638,7 +9089,8 @@ function prettyRow(row, key){
     else o[k] = row[k];
   }
   if(key==='beneficiaries') for(const [k,,land] of BL_SOURCES){
-    if(land){ o['bl_'+k+'_area']=row['bl_'+k+'_area']; o['bl_'+k+'_kg']=row['bl_'+k+'_kg']; }
+    if(land){ o['bl_'+k+'_area']=row['bl_'+k+'_area']; o['bl_'+k+'_kg']=row['bl_'+k+'_kg']; o['bl_'+k+'_rate']=row['bl_'+k+'_rate']; }
+    else    { o['bl_'+k+'_count']=row['bl_'+k+'_count']; }
     const inc=+row['bl_'+k+'_income']||0, exp=+row['bl_'+k+'_expenditure']||0;
     o['bl_'+k+'_income']=row['bl_'+k+'_income']; o['bl_'+k+'_expenditure']=row['bl_'+k+'_expenditure'];
     o['bl_'+k+'_net']=(inc||exp)? +(inc-exp).toFixed(2) : '';

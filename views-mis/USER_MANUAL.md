@@ -107,6 +107,12 @@ The interface carries the organisation's two colours — a deep navy for identit
 
 The Dashboard answers one question: *"How is the programme doing right now?"* Every element on it obeys the filter bar, so it can answer that question for the whole organisation, one donor, or one project.
 
+### The number cards are windows, not just numbers
+
+Rest the pointer on **Active Donors, Projects, Districts, Blocks, Villages, Beneficiaries** or **SHGs** and the card opens a panel showing what is actually behind the figure — the donors with how many projects each funds, the projects with their donor, the districts with their block count, the villages with their block and district. Select the card and it takes you to that section.
+
+**Villages** counts the villages recorded in **Geography**, which is where the programme says it works, and the card also states how many of those have a Village Demographic form completed — so the gap between coverage and paperwork is visible at a glance.
+
 ### The filter bar
 
 - **Project** — narrow everything to a single project.
@@ -311,6 +317,8 @@ Master Data is set up early and touched rarely — but understanding it explains
 - **Identity** — name, father/spouse, gender, age (0–120), social order (SC/ST/OBC/General), religion — these power the inclusion charts and breakdowns donors require.
 - **Contact number** — must be a real 10-digit Indian mobile; +91 or a leading 0 are accepted and cleaned automatically.
 - **Geography** — pick the village; district/block/GP fill themselves.
+- **Baseline Rate and automatic income** — for a crop, type the **Production (kg)** and the **Rate (₹/kg)** and the **Income fills itself in**, exactly as Production & Output calculates it. Type your own figure into Income and that row stops calculating — your figure wins.
+- **Number of livestock or units** — Goat Rearing, Backyard Poultry, Micro Enterprise and Other Income have no acreage and nothing weighed, so instead of Area and Production they ask **how many**: goats, birds, enterprise units. The count is exported and reported beside the income, so the figure can be judged against the size of the holding.
 - **Land & livelihood** — landholding and income source classifications. **Total Land (acres) adds itself up** from the paddy/millet/vegetable areas you type in the baseline section (you can still overtype it if the household holds other land).
 - **Organic Farming (Yes / No)** — required. This is the "before" half of the organic-farming indicator; the "after" comes from the production records.
 - **Baseline livelihood — one table, not a wall of boxes.** Every income source is a row, and **these eleven rows are the only livelihood categories the whole system knows**: the seven **crops** (Paddy, Millet, Vegetable, Tuber Crop, Pulses, Oilseeds, Mushroom Cultivation) with *Area · Production kg · Income · Expenditure*, then the four **non-farm livelihoods** (Goat Rearing, Backyard Poultry, Micro Enterprise, Other Income) with *Income · Expenditure* only. Fill only what the household actually had.
@@ -350,6 +358,21 @@ Two things make this list donor-proof:
 **Activity Progress** — delivery tracked year by year in one compact table. A **Balance** column sits at the end of every year's row and beside the cumulative total: **target − achieved**, shown **green** once the target is met (with anything above it as a surplus) and **red** while work is outstanding (showing exactly how much is left). Where no target has been set for a year it reads *no target*. **Quarterly and Monthly are mutually exclusive** — an activity is reported one way or the other, never both, so the same delivery can never be counted twice; switching asks first and says exactly which figures will be cleared. Set the activity's total target, then fill each year's row: its target and the **Q1–Q4** achievements (or flip the switch to **Monthly** and type the 12 months — they roll up into the quarters automatically). **＋ Add Year** extends the table up to six years. Each year's achievement and the cumulative total **calculate themselves**, and a live progress bar shows the % achieved against the total target — always arithmetic, never opinion. From the field-office page, the *Activity Progress* card opens this full section (filters, search, **✎ Update progress** on each row, and ＋ New activity) so progress is updated on the existing activity rather than re-created. **The target boxes — and adding or deleting activities — need the 🎯 Targets right (§12):** without it the plan is read-only 🔒 and only the achievements can be typed.
 
 On the list, the **Year / Quarter switcher** in the filter bar changes what the columns show: the overview shows Year 1; pick *Year 3* and the table shows Y3's target and achievement; add *Q2* and that quarter's figure appears too — every year you entered is one click away, with no blank Y2–Y6 columns cluttering the default view (the quarter picker unlocks only after a year is chosen).
+
+---
+
+## 8b. FPO — Farmer Producer Organisations
+
+A full section for each producer organisation, sitting directly below SHG Loans and built field for field from your FPO Information sheet.
+
+- **Where it belongs** — pick the **Project first**; the Geography picker then offers only that project's places, and choosing the village fills in district, block and gram panchayat.
+- **Identity & registration** — name, type of registration (Cooperative, Company, Producer Company, Society, Trust, Other), date of incorporation, address, CIN, PAN, TAN, GST.
+- **Office bearers** — number of board members, Managing Director, Chairperson, CEO, contact number, mail ID.
+- **Shareholders & governance** — total shareholders, women shareholders, whether the AGM was conducted, awards and recognition. The **share of women shareholders is calculated for you** in the report.
+- **Support received** — supported by, scheme name, amount.
+- **Audited turnover** — five year boxes each with their own remarks line, so the trading history reads as a series. Leave later years empty until they are audited.
+
+The FPO sheet appears in every workbook with all of the above, so a donor can see the governance position without asking separately.
 
 ---
 

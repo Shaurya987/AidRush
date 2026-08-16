@@ -74,6 +74,7 @@ $RES = [
   'workspaces'=>'workspaces',
   'gramsabha'=>'gram_sabha',
   'convergence'=>'convergence',
+  'fpos'=>'fpos',
 ];
 
 /* ════════ ONE livelihood vocabulary, the same eleven the browser uses ════════
@@ -143,7 +144,7 @@ function liv_nonfarm_keys(){ global $LIVELIHOODS; return array_keys(array_filter
    Each table is now scoped through the shortest TRUE relationship to a place:
      geographies                              its own district / block / id
      beneficiaries · shgs · gram_sabha ·      its own district / block, OR the place its
-       convergence · villages                   geography_id points at
+       convergence · villages · fpos            geography_id points at
      crops                                    its own geography, or its beneficiary's place
      loans · shg_members                      their group's place
      activities · indicators · progress ·     the projects that operate in that place
@@ -178,7 +179,7 @@ function place_scope($table, $district='', $block='', $geo=''){
     case 'geographies':
       return [$gW, $gV];
 
-    case 'beneficiaries': case 'shgs': case 'gram_sabha': case 'convergence': case 'villages':
+    case 'beneficiaries': case 'shgs': case 'gram_sabha': case 'convergence': case 'villages': case 'fpos':
       if($own && $hasGeo) return ['(('.implode(' AND ',$own).") OR `$table`.`geography_id` IN ($GEO))", array_merge($ownV,$gV)];
       if($own)            return ['('.implode(' AND ',$own).')', $ownV];
       if($hasGeo)         return ["`$table`.`geography_id` IN ($GEO)", $gV];
@@ -231,6 +232,7 @@ $ID_GEN = [
   'workspaces'=>['workspace_id','WS',4],
   'gramsabha'=>['gramsabha_id','GS',4],
   'convergence'=>['convergence_id','CNV',4],
+  'fpos'=>['fpo_id','FPO',4],
 ];
 
 /* Foreign key → [table, id_col, name_col]  — used by enrich_names() */
@@ -1134,12 +1136,16 @@ if ($action==='dashboard') {
     $wG = $gw ? (' WHERE '.implode(' AND ',$gw)) : '';
     $dq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(district),'')) c FROM geographies$wG"); $dq->execute($vG); $kpi['districts']=(int)$dq->fetch()['c'];
     $bq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(block),'')) c FROM geographies$wG"); $bq->execute($vG); $kpi['blocks']=(int)$bq->fetch()['c'];
-    if($gw){
-      // A chain filter is active → Villages follows the same geography set as
-      // Districts & Blocks (unfiltered keeps the Village Demographics count).
-      $vq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(village_or_ward),'')) c FROM geographies$wG"); $vq->execute($vG);
-      $kpi['villages']=(int)$vq->fetch()['c'];
-    }
+    /* Villages ALWAYS comes from the Geography master, filtered or not. It used to
+       fall back to the Village Demographics table when nothing was filtered, so the
+       card counted demographic forms filled in rather than the villages the
+       programme actually works in — two quite different things, and the smaller one
+       made coverage look worse than it is. */
+    $vq=$pdo->prepare("SELECT COUNT(DISTINCT NULLIF(TRIM(village_or_ward),'')) c FROM geographies$wG"); $vq->execute($vG);
+    $kpi['villages']=(int)$vq->fetch()['c'];
+    // Kept separately so the card can say how many of those villages have a
+    // demographic form completed.
+    try{ $dq2=$pdo->prepare("SELECT COUNT(*) c FROM villages"); $dq2->execute(); $kpi['village_forms']=(int)$dq2->fetch()['c']; }catch(Exception $e){ $kpi['village_forms']=0; }
   }catch(Exception $e){ $kpi['districts']=0; $kpi['blocks']=0; }
   // ── Thematic Areas & Projects KPIs must follow the Donor / Project filters through
   //    the mapping chain — their own tables have no donor_id column, so $whereFor
@@ -1807,7 +1813,7 @@ if ($method==='GET') {
     $noSearch=['password_hash','active_session_token','active_tab_id','password','token'];
     $searchCols=array_values(array_diff($cols,$noSearch));
     // Friendly aliases so a user can type what they see on screen
-    $alias=['name'=>['beneficiary_farmer_name','shg_name','project_name','donor_name','programme_name','indicator_name','vdc_name','scheme_name','member_name','user_name'],
+    $alias=['name'=>['beneficiary_farmer_name','shg_name','project_name','donor_name','programme_name','indicator_name','vdc_name','scheme_name','member_name','user_name','fpo_name'],
             'phone'=>['contact_number','phone','village_contact_person_cell_no'],
             'id'=>[$ownIdCol ?? 'id'],
             'village'=>['village','village_or_ward'],
@@ -1881,7 +1887,7 @@ if ($method==='GET') {
   $LABEL_COL = ['beneficiaries'=>'beneficiary_farmer_name','shgs'=>'shg_name','shg_members'=>'member_name',
     'projects'=>'project_name','donors'=>'donor_name','programmes'=>'programme_name','indicators'=>'indicator_name',
     'geographies'=>'village_or_ward','villages'=>'village','crops'=>'crop','activities'=>'project_activity',
-    'gramsabha'=>'vdc_name','convergence'=>'scheme_name','users'=>'user_name'];
+    'gramsabha'=>'vdc_name','convergence'=>'scheme_name','users'=>'user_name','fpos'=>'fpo_name'];
   $orderBy = ' ORDER BY id DESC';
   $orderParams = [];
   if($firstTerm!==null && isset($LABEL_COL[$resource]) && in_array($LABEL_COL[$resource],$cols)){
@@ -2284,6 +2290,45 @@ if ($method==='DELETE') {
       $n=db()->prepare("UPDATE geographies SET project_id=NULL WHERE project_id=?"); $n->execute([$before['project_id']]);
       if($n->rowCount()) audit('update','geographies',$before['project_id'],"Unlinked ".$n->rowCount()." geographies (places kept) because project ".$before['project_id']." was deleted");
     }}catch(Exception $e){}
+
+    /* ── DELETING A PROJECT DELETES EVERYTHING BENEATH IT ──
+       A project is the top of the chain that every field record hangs from. If its
+       records were left behind they would have no project, no donor and no plan, yet
+       they would still be counted in every total, so the reports would describe work
+       that no longer belongs to anything. The whole branch goes.
+       The production of the project's beneficiaries is removed FIRST, so no
+       production is ever left pointing at a household that has just gone.
+       The places themselves are KEPT and merely unlinked above, because a village
+       exists whether or not a project works there.
+       Every step is written to the Audit Trail, so a deletion can be traced. */
+    $pid=$before['project_id'];
+    $wiped=[];
+    $delWhere=function($tbl,$where,$params,$label) use(&$wiped,$pid){
+      try{ if(count(table_columns($tbl))===0) return; }catch(Exception $e){ return; }
+      try{
+        $st=db()->prepare("DELETE FROM `$tbl` WHERE $where"); $st->execute($params);
+        $c=$st->rowCount(); if($c){ $wiped[]=$c.' '.$label; audit('delete',$tbl,$pid,"Removed $c $label because project $pid was deleted"); }
+      }catch(Exception $e){}
+    };
+    // 1 · production of this project's beneficiaries, and production filed against the project itself
+    $delWhere('crops', "project_id=? OR beneficiary_id IN (SELECT beneficiary_id FROM beneficiaries WHERE project_id=?)", [$pid,$pid], 'production records');
+    // 2 · loans and members of this project's groups, then the groups
+    $delWhere('loans', "project_id=? OR shg_id IN (SELECT shg_id FROM shgs WHERE project_id=?)", [$pid,$pid], 'SHG loans');
+    $delWhere('shg_members', "shg_id IN (SELECT shg_id FROM shgs WHERE project_id=?)", [$pid], 'SHG members');
+    $delWhere('shgs', "project_id=?", [$pid], 'self help groups');
+    // 3 · the households themselves
+    $delWhere('beneficiaries', "project_id=?", [$pid], 'beneficiaries');
+    // 4 · the plan and the local governance records that belonged to the project
+    $delWhere('activities', "project_id=?", [$pid], 'activities');
+    $delWhere('indicator_progress', "project_id=?", [$pid], 'indicator progress rows');
+    $delWhere('indicators', "project_id=?", [$pid], 'indicators');
+    $delWhere('gram_sabha', "project_id=?", [$pid], 'Gram Sabha records');
+    $delWhere('convergence', "project_id=?", [$pid], 'convergence records');
+    $delWhere('fpos', "project_id=?", [$pid], 'FPO records');
+    $delWhere('villages', "project_id=?", [$pid], 'village demographic records');
+    $delWhere('project_objectives', "project_id=?", [$pid], 'project objectives');
+    $delWhere('hq_targets', "project_id=?", [$pid], 'HQ target rows');
+    if($wiped) audit('delete','projects',$pid,"Project $pid deleted with everything beneath it: ".implode(', ',$wiped));
   }
   /* ── DERIVED DATA MUST NOT OUTLIVE ITS SOURCE ──
      Every figure the system reports (income change, the eleven indicators,
