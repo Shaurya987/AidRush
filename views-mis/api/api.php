@@ -1781,6 +1781,14 @@ if ($method==='GET') {
     foreach($ap as $apv) $params[]=$apv;
   }
   $baseParams = $params;   // filters and any project restriction, shared by both passes
+  /* The cleaned search text is echoed back in the response so the list can show what
+     it actually searched for. It MUST be declared here, outside the search block: on
+     a plain list request with no query the block never runs, and reading an undefined
+     variable in the response wrote a PHP warning to the server error log on every
+     single request. Harmless to the data, but it buried any real error under
+     thousands of identical lines, and on a host with error display switched on the
+     warning text would be printed ahead of the JSON and break the whole list. */
+  $raw = '';
   if(!empty($_GET['q'])){
     /* ── SMART SEARCH ──────────────────────────────────────────────
        Two bugs made search useless before:
