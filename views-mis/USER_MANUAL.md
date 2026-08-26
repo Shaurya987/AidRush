@@ -184,6 +184,16 @@ Two consequences worth knowing:
 - **District-wise and Block-wise sheets** now exist in every workbook, with households, women, land, baseline income, production records and net income for each place.
 - **Two budget figures**, both labelled in full. *Approved amount — projects in this report* comes from Donor Mapping and narrows properly with a project, district or block filter. *Approved budget — donors in this report* is each donor's whole budget, an organisation-level figure that does not divide between districts. Quoting only one of them was misleading.
 
+### Starting fresh before real data goes in
+
+`sql/fresh_start.sql` empties every table and leaves **exactly one administrator**, so the system can be handed over with no practice data in it. It keeps the structure untouched — every table, column and index stays exactly as it is — and identity codes start again from `BEN-0001`.
+
+**It cannot be undone.** Take a backup first: phpMyAdmin → select the database → Export → Go.
+
+The administrator it keeps is the root administrator, or failing that any account with an admin role, or failing that the first account created — which is then promoted to administrator so you can never be locked out. Its **username and password are unchanged**; change the password immediately after signing in. Any lockout or stale session on that account is cleared.
+
+When the script finishes it prints a table of counts. Every line must read **0** except *Administrators kept*, which must read **1**.
+
 ### One source of truth: reports are never out of date
 
 **Nothing in this system stores a total.** Every figure on every screen and in every Excel file is calculated from the database at the moment you look at it. That is a deliberate design decision, and it is what makes the following true:

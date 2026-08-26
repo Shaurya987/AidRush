@@ -575,6 +575,19 @@ tbody tr:last-child td{border-bottom:none}
 #print-header .ph-gen{font-size:11px;color:#5b6a85;margin-top:2px;font-family:'JetBrains Mono'}
 #print-header .ph-filter{margin-top:11px;font-size:12px;color:#283449;background:#f4f6fb;border:1px solid #e4e9f2;border-radius:8px;padding:8px 12px}
 #print-header .ph-filter-lbl{font-weight:700;color:var(--brand);text-transform:uppercase;font-size:10px;letter-spacing:.5px;margin-right:7px}
+/* ════════ Preparing to print ════════
+   Applied for a moment BEFORE the print dialog opens. It narrows the page to the
+   real paper width so every chart can be re-measured against it. Without this the
+   charts were measured at screen width, kept that width on paper, and painted
+   outside their cards. A4 portrait with 10mm margins leaves about 190mm, which is
+   roughly 718 pixels. */
+body.is-printing .sidebar{display:none}
+body.is-printing .main{margin-left:0;max-width:718px;padding:0 4px}
+body.is-printing .chart-grid-3{grid-template-columns:repeat(2,1fr)}
+body.is-printing .kpi-grid.kg-5{grid-template-columns:repeat(4,1fr)}
+body.is-printing .chart-wrap{height:190px;max-width:100%;overflow:hidden}
+body.is-printing .chart-wrap canvas{max-width:100%!important;max-height:100%!important}
+body.is-printing .chart-card{overflow:hidden}
 @media print{
   @page{size:A4 portrait;margin:11mm 10mm}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
@@ -587,14 +600,27 @@ tbody tr:last-child td{border-bottom:none}
   #print-header{margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--brand)}
   .kpi,.chart-card,.card,.geo-stat,.ent-card,.prog-row{break-inside:avoid;page-break-inside:avoid;box-shadow:none!important}
   .chart-card,.card,.kpi{border:1px solid #d9e0ec!important}
-  .chart-wrap{height:220px!important}
   .kpi-grid.kg-5{grid-template-columns:repeat(4,1fr)!important}
+  /* A4 portrait leaves about 190mm of usable width. Three charts across that is
+     roughly 60mm each, which a doughnut with a donor legend cannot fit into, so it
+     spilled out of its card. Two across is the widest that stays inside the box. */
   .chart-grid-2{grid-template-columns:repeat(2,1fr)!important}
-  .chart-grid-3{grid-template-columns:repeat(3,1fr)!important}
+  .chart-grid-3{grid-template-columns:repeat(2,1fr)!important}
   .kpi-grid,.chart-grid-2,.chart-grid-3{gap:10px!important;margin-bottom:12px!important}
+  /* Nothing may paint outside its own card, whatever size the canvas thinks it is. */
+  .chart-card{overflow:hidden!important;padding:12px!important}
+  .chart-wrap{height:190px!important;max-width:100%!important;overflow:hidden!important;position:relative!important}
+  .chart-wrap canvas{max-width:100%!important;max-height:100%!important;width:100%!important;height:100%!important;display:block!important}
+  .chart-head{margin-bottom:8px!important}
+  .chart-title{font-size:12.5px!important}
+  .chart-sub{font-size:10px!important;line-height:1.35!important}
   .page-head{margin-bottom:12px!important}
   .page-title{font-size:24px!important}
   .card-title{font-size:15px!important}
+  /* Tables and wide panels stay inside the paper as well */
+  .tbl-wrap,.act-tblwrap,.bl-tblwrap{overflow:visible!important}
+  table{width:100%!important;table-layout:fixed!important;word-break:break-word}
+  .man-jump,.kpi-pop,.combo-list{display:none!important}
 }
 /* ════════ Professional motion & polish — subtle, GPU-smooth, fast ════════ */
 @media (prefers-reduced-motion: no-preference){
@@ -1018,7 +1044,7 @@ const RES={
     fields:[['beneficiary_id','Beneficiary ID',1],['registration_date','Registration Date','date'],['programme_id','Thematic Area','ref','programmes'],['project_id','Project','ref','projects'],['donor_id','Donor','ref','donors'],['geography_id','Geography','ref','geographies'],['district','District'],['block','Block'],['gram_panchayat','Gram Panchayat'],['village','Village'],['beneficiary_farmer_name','Beneficiary Name',1],['father_or_spouse_name','Father / Spouse Name'],['age','Age','num'],['gender','Gender','sel',['Male','Female','Other']],['caste','Social Order','sel',['SC','ST','OBC','General','Other']],['religion','Religion','dl',['Hindu','Muslim','Christian','Sikh','Buddhist','Other']],['ration_card','Ration Card','sel',['Yes','No','APL','BPL','Antyodaya']],['contact_number','Contact Number'],['family_members','Family Members','num'],['primary_income_source','Primary Income Source'],['secondary_income_source','Secondary Income Source'],['alternative_livelihood','Alternative Livelihood (non-farm)','dl',['Goat Rearing','Backyard Poultry','Micro Enterprise','Mushroom Cultivation','Other Income','None']],['current_income_per_annum_inr','Annual Income at Registration (₹)','num'],['organic_farming','Organic Farming at registration *','sel',['Yes','No']],['__bl_tbl','Baseline livelihood — at registration','bltable'],['total_land_acre','Total Land (acres) — auto-sums the crop areas','num'],['source_of_irrigation','Source of Irrigation'],['remarks','Remarks']]},
   crops:{label:'Production & Output Progress',sub:'Progress against the HQ output targets — the same eleven livelihood categories the beneficiary baseline uses, nothing else',icon:'M2 22c1.5-2.5 5-3 8-3s6.5.5 8 3M12 12V2M8 7l4-5 4 5',
     cols:[['beneficiary_id','Beneficiary'],['_livelihood','Livelihood / Crop','liv'],['season','Season'],['production_kg','Output Qty (kg)','num'],['income_inr','Income','inr'],['net_profit_inr','Net Profit','inr'],['_incchg','Income Change','incchg']],
-    filters:['project_id','donor_id',['project_year','All Years (baseline comparison)',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Livelihoods / Crops',LIVELIHOOD_LABELS],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
+    filters:['project_id','donor_id',['project_year','Years (baseline comparison)',['Year-1','Year-2','Year-3','Year-4','Year-5','Year-6']],['crop','Livelihoods / Crops',LIVELIHOOD_LABELS],['season','Seasons',['Kharif','Rabi','Summer','Round-the-year','Not Applicable']]],
     /* The client's required order: Project → Donor → District → Block → GP → Village →
        Beneficiary. Each step narrows the next, so by the time the officer reaches the
        person, only the right people are on offer. */
@@ -2304,6 +2330,17 @@ function cellRender(row,col){
 let CURRENT_ROWS=[];
 /* Signature accent colour per section — shown on the page header so you always know where you are. */
 const SECTION_ACCENT={beneficiaries:'--ok',crops:'--ok',activities:'--warn',shgs:'--pink',loans:'--pink',indicators:'--accent',progress:'--accent',programmes:'--brand',objectives:'--brand',projects:'--accent',project_objectives:'--accent',donors:'--violet',mappings:'--violet',geographies:'--teal',villages:'--teal',users:'--brand',gramsabha:'--accent',convergence:'--violet'};
+/* Lowercase a section name for a sentence, but NEVER an acronym: "Beneficiaries"
+   becomes "beneficiaries" while FPO, SHG and VDC keep their capitals. Writing
+   "No fpo yet" reads as a typo, because it is one. */
+function softLower(s){
+  return String(s==null?'':s).split(' ').map(w=>{
+    const bare=w.replace(/[^A-Za-z]/g,'');
+    // two or more letters, all capitals → an acronym, leave it exactly as it is
+    if(bare.length>=2 && bare===bare.toUpperCase()) return w;
+    return w.toLowerCase();
+  }).join(' ');
+}
 function emptyStateHTML(key){
   const cfg=RES[key]||{}; const canW=can(key==='users'?'users':'write'); const label=(cfg.label||'records');
   // If a search is active, say plainly that nothing matched. Showing the usual
@@ -2324,7 +2361,7 @@ function emptyStateHTML(key){
   }
   return `<div class="empty-state">
     <div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
-    <div class="empty-title">No ${esc(String(label).toLowerCase())} yet</div>
+    <div class="empty-title">No ${esc(softLower(label))} yet</div>
     <div class="empty-sub">Records you add will appear here automatically.</div>
     ${canW?`<button class="btn btn-primary btn-sm" style="margin-top:13px" onclick="openForm('${key}')">+ New</button>`:''}
   </div>`;
@@ -4920,8 +4957,37 @@ function dch(k){if(CH[k]){CH[k].destroy();delete CH[k];}}
 /* When the browser switches to / from print layout, nudge every live chart to
    redraw at the new container width so canvases print crisp and correctly sized. */
 function _resizeAllCharts(){ try{ Object.values(CH).forEach(c=>{ try{ c.resize(); }catch(_){} }); }catch(_){} }
-window.addEventListener('beforeprint', _resizeAllCharts);
-window.addEventListener('afterprint', _resizeAllCharts);
+/* ════════ Printing the charts ════════
+   A chart canvas is sized in pixels when it is drawn, at the width of the screen.
+   The printed page is far narrower, so unless every chart is re-measured against
+   the paper it keeps its screen width and paints straight out of its card. That is
+   what made the printed dashboard look broken.
+   Each chart is therefore re-measured against its container at print time, the
+   legends are moved underneath and shrunk so a long donor list cannot squeeze the
+   doughnut out of shape, and everything is put back afterwards. */
+const __PRINT_LEGEND={};
+function _printPrepCharts(){
+  try{ Object.values(CH).forEach((c,i)=>{ try{
+    const lg=c.options&&c.options.plugins&&c.options.plugins.legend;
+    if(lg && lg.display!==false){
+      __PRINT_LEGEND[i]={position:lg.position,font:(lg.labels&&lg.labels.font)?{...lg.labels.font}:null,box:lg.labels?lg.labels.boxWidth:null};
+      lg.position='bottom';
+      lg.labels=lg.labels||{};
+      lg.labels.boxWidth=8; lg.labels.padding=6;
+      lg.labels.font=Object.assign({},lg.labels.font||{},{size:8});
+    }
+    c.resize(); c.update('none');
+  }catch(_){ } }); }catch(_){ }
+}
+function _printRestoreCharts(){
+  try{ Object.values(CH).forEach((c,i)=>{ try{
+    const saved=__PRINT_LEGEND[i]; const lg=c.options&&c.options.plugins&&c.options.plugins.legend;
+    if(saved && lg){ lg.position=saved.position; if(lg.labels){ if(saved.font) lg.labels.font=saved.font; if(saved.box!=null) lg.labels.boxWidth=saved.box; lg.labels.padding=undefined; } delete __PRINT_LEGEND[i]; }
+    c.resize(); c.update('none');
+  }catch(_){ } }); }catch(_){ }
+}
+window.addEventListener('beforeprint', _printPrepCharts);
+window.addEventListener('afterprint', _printRestoreCharts);
 function kpiCard(label,val,meta,c,cs,path,live){
   /* `live` turns the card into a window onto what it counts: hover to see the actual
      donors, projects, districts, blocks or villages behind the number, and click to
@@ -5195,10 +5261,15 @@ function printDashboard(){
     <div class="ph-filter"><span class="ph-filter-lbl">Filter</span>${esc(filterTxt)}</div>`;
   const main=$('main'); if(main) main.insertBefore(hdr, main.firstChild);
   // 3 · clean the header up once the dialog closes
-  const cleanup=()=>{ const h=$('print-header'); if(h) h.remove(); _resizeAllCharts(); window.removeEventListener('afterprint', cleanup); };
+  const cleanup=()=>{ const h=$('print-header'); if(h) h.remove(); document.body.classList.remove('is-printing'); _printRestoreCharts(); window.removeEventListener('afterprint', cleanup); };
   window.addEventListener('afterprint', cleanup);
-  // give the layout a beat to settle the injected header, then open the dialog
-  setTimeout(()=>{ _resizeAllCharts(); window.print(); setTimeout(cleanup, 1500); }, 90);
+  /* Narrow the page to the paper width FIRST, re-measure every chart against it,
+     and only then open the dialog. Measuring before the layout has narrowed was
+     why the charts printed at screen width and overflowed their cards. */
+  document.body.classList.add('is-printing');
+  setTimeout(()=>{ _printPrepCharts();
+    setTimeout(()=>{ window.print(); setTimeout(cleanup, 1500); }, 160);
+  }, 60);
 }
 
 /* Dashboard export — picks up the active programme/project/donor filters and
@@ -5866,6 +5937,7 @@ const MANUAL_BOOK=[
    ['Your workspace saves time','Set your Field Office Workspace once, by choosing your Project and District. After that every form opens already filled with that information, and you only type what is new.'],
    ['Colour meaning','Green means on track, amber means needs attention, red means action is required. These three colours mean the same thing on every screen.'],
    ['The dashboard cards are windows, not just numbers','Rest the pointer on Active Donors, Projects, Districts, Blocks, Villages, Beneficiaries or SHGs and the card shows you what is actually behind the figure: the donors with how many projects each funds, the projects with their donor, the districts with how many blocks each has, the villages with their block and district. Select the card and it opens that section. A figure you can look inside is a figure you can trust.'],
+   ['Print, or save as PDF','The Print button narrows the page to the paper width first, re-measures every chart against it and adds a branded report header, so the charts print inside their boxes instead of running over the edge. Choose Save as PDF in the print dialog to keep a copy. Switch on Background graphics in that dialog if you want the colours to appear in the printed copy.'],
    ['Where the Villages figure comes from','It counts the villages recorded in Geography, which is where the programme says it works. The card also says how many of those villages have a Village Demographic form completed, so the gap between the two is visible at a glance.']]},
  {icon:'2',title:'Signing in and moving around',intro:'The basics of getting in and finding your way.',items:[
    ['Signing in','Enter your username or email address and your password, then select Sign in.'],
